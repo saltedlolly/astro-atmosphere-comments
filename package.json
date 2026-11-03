@@ -1,0 +1,60 @@
+{
+  "name": "astro-atmosphere-comments",
+  "version": "0.1.0",
+  "description": "Bluesky comments, likes, reposts and quote posts for Astro sites: readers sign in with their Atmosphere (AT Protocol) account and respond without leaving the page.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Olly Stedall (https://saltedlolly.com)",
+  "homepage": "https://github.com/saltedlolly/astro-atmosphere-comments#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saltedlolly/astro-atmosphere-comments.git"
+  },
+  "bugs": "https://github.com/saltedlolly/astro-atmosphere-comments/issues",
+  "keywords": [
+    "astro-integration",
+    "astro-component",
+    "withastro",
+    "bluesky",
+    "atproto",
+    "atmosphere",
+    "comments",
+    "likes",
+    "oauth"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.mjs"
+    },
+    "./AtmosphereComments.astro": "./components/AtmosphereComments.astro"
+  },
+  "types": "./index.d.ts",
+  "bin": {
+    "astro-atmosphere-comments": "./bin/cli.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "index.d.ts",
+    "virtual.d.ts",
+    "bin",
+    "components",
+    "lib",
+    "routes",
+    "assets",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "peerDependencies": {
+    "astro": "^7.0.0"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.25.0",
+    "@atproto/oauth-client": "^0.9.0",
+    "@atproto/oauth-client-node": "^0.5.13"
+  }
+}
