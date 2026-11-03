@@ -5,8 +5,10 @@
 //
 // Props:
 //   post   the announcement's AT URI (at://did/app.bsky.feed.post/rkey).
-//   label  the small words on the button above "Atmosphere Account"
-//          (default "Respond with your").
+//   label   the small words on the button above "Atmosphere Account"
+//           (default "Respond with your").
+//   credit  a small "Comments by astro-atmosphere-comments" link under the
+//           comments (default true; false hides it).
 //
 // Quote shows a preview of the reader's post with the announcement quoted
 // inside, avatars and link-card picture included (passed on by this site).
@@ -39,9 +41,12 @@ interface Props {
   label?: string;
   /** The badge on comments by the site's own accounts. */
   authorLabel?: string;
+  /** A small "Comments by astro-atmosphere-comments" link under the comments. Default true. */
+  credit?: boolean;
 }
 
-const { post = "", label = "Respond with your", authorLabel = "Author" } = Astro.props;
+const { post = "", label = "Respond with your", authorLabel = "Author", credit = true } = Astro.props;
+const CREDIT_URL = "https://saltedlolly.com/2026/11/03/comment-like-and-repost-with-your-bluesky-account/";
 const { base } = settings;
 const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 ---
@@ -161,6 +166,12 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
   {/* Anything the site wants after the comments (other responses, say). */}
   <slot />
+
+  {credit && (
+    <p class="atmo__credit" data-credit data-pagefind-ignore>
+      Comments by <a href={CREDIT_URL}>astro-atmosphere-comments</a>
+    </p>
+  )}
 </atmosphere-comments>
 
 <script>
@@ -326,7 +337,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // Nothing to respond to: hide the box and likes, but keep whatever the
       // site put in the slots.
       const deactivate = () => {
-        for (const part of this.querySelectorAll<HTMLElement>("[data-view], [data-reactions], [data-replies]")) part.hidden = true;
+        for (const part of this.querySelectorAll<HTMLElement>("[data-view], [data-reactions], [data-replies], [data-credit]")) {
+          part.hidden = true;
+        }
         this.classList.add("is-inactive");
       };
       const loadThread = async () => {
@@ -1089,6 +1102,17 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
   .atmo__status:not(:empty) {
     margin-top: 10px;
+  }
+
+  .atmo__credit {
+    margin: 14px 0 0;
+    color: var(--atmo-muted, inherit);
+    font-size: 0.75em;
+    opacity: 0.8;
+  }
+
+  .atmo__credit a {
+    color: inherit;
   }
 
   /* @mention suggestions, under the text box. */

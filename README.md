@@ -111,6 +111,7 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | `post` | The announcement: bsky.app address or AT URI. Optional with Standard.site (above). |
 | `label` | The small words on the button above "Atmosphere Account". Default "Respond with your". |
 | `authorLabel` | The badge on your own comments. Default "Author". |
+| `credit` | A small "Comments by astro-atmosphere-comments" link at the end. Default `true`; set `credit={false}` to hide it. |
 
 **Slots:** `after-box` goes between the comment box and the comments (a note about other ways to respond, say); the default slot goes after the comments (other responses, older comments).
 
@@ -159,6 +160,10 @@ The component fires (bubbling):
 - Quoting individual comments isn't supported.
 
 If you only want readers to sign in with their Atmosphere account, without comments, see [AuthProto](https://www.npmjs.com/package/@fujocoded/authproto).
+
+## Saying thanks
+
+It's free to use (MIT), with no strings attached. If it's useful to you, I'd be grateful if you kept the small credit link, or linked to [saltedlolly.com](https://saltedlolly.com) somewhere on your site. You can also [sponsor me on GitHub](https://github.com/sponsors/saltedlolly) or [buy me a coffee on Ko-fi](https://ko-fi.com/saltedlolly).
 
 ## Credits
 
