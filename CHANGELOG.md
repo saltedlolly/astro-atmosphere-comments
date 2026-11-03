@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 (3 November 2026)
+
+- The credit link now goes to a permanent address, saltedlolly.com/atmosphere-comments-for-astro/.
+
 ## 0.1.0 (3 November 2026)
 
 First release, as used on [saltedlolly.com](https://saltedlolly.com).
