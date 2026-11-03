@@ -180,7 +180,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   const count = (text: string) => [...graphemes.segment(text.trim())].length;
 
   const MESSAGES: Record<string, string> = {
-    "signed-in": "You're signed in. You can comment, like or repost below.",
+    "signed-in": "You're signed in. You can comment, like or repost above.",
     "sign-in-failed": "Signing in didn't finish. Please try again.",
     "account-not-found": "We couldn't find that account. Check the handle and try again.",
     "invalid-handle": "That doesn't look like a handle. It's usually something like alice.bsky.social.",
