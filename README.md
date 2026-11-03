@@ -1,6 +1,6 @@
-# astro-atmosphere-comments
+# Atmosphere Comments for Astro
 
-Bluesky comments for your Astro site, without the reader leaving the page.
+Bluesky comments for your Astro site, without the reader leaving the page. (On npm: [`astro-atmosphere-comments`](https://www.npmjs.com/package/astro-atmosphere-comments).)
 
 Readers press **Respond with your Atmosphere Account**, sign in with their Bluesky handle (or any other [Atmosphere account](https://atmosphereaccount.com)), and can then:
 
@@ -111,7 +111,7 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | `post` | The announcement: bsky.app address or AT URI. Optional with Standard.site (above). |
 | `label` | The small words on the button above "Atmosphere Account". Default "Respond with your". |
 | `authorLabel` | The badge on your own comments. Default "Author". |
-| `credit` | A small "Comments by astro-atmosphere-comments" link at the end. Default `true`; set `credit={false}` to hide it. |
+| `credit` | A small "Powered by Atmosphere Comments for Astro" link at the end. Default `true`; set `credit={false}` to hide it. |
 
 **Slots:** `after-box` goes between the comment box and the comments (a note about other ways to respond, say); the default slot goes after the comments (other responses, older comments).
 

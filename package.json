@@ -1,7 +1,7 @@
 {
   "name": "astro-atmosphere-comments",
   "version": "0.1.0",
-  "description": "Bluesky comments, likes, reposts and quote posts for Astro sites: readers sign in with their Atmosphere (AT Protocol) account and respond without leaving the page.",
+  "description": "Atmosphere Comments for Astro: Bluesky comments, likes, reposts and quote posts for Astro sites; readers sign in with their Atmosphere (AT Protocol) account and respond without leaving the page.",
   "type": "module",
   "license": "MIT",
   "author": "Olly Stedall (https://saltedlolly.com)",

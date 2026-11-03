@@ -9,4 +9,4 @@ First release, as used on [saltedlolly.com](https://saltedlolly.com).
 - Shows the thread: likes and reposts with faces, and nested comments with their own Reply, Like and Repost.
 - Finds the post's Bluesky announcement from an AT URI, a bsky.app address, or the page's Standard.site record.
 - `npx astro-atmosphere-comments keygen` creates the site's signing key.
-- A small "Comments by astro-atmosphere-comments" credit link, which `credit={false}` hides.
+- A small "Powered by Atmosphere Comments for Astro" credit link, which `credit={false}` hides.

@@ -7,7 +7,7 @@
 //   post   the announcement's AT URI (at://did/app.bsky.feed.post/rkey).
 //   label   the small words on the button above "Atmosphere Account"
 //           (default "Respond with your").
-//   credit  a small "Comments by astro-atmosphere-comments" link under the
+//   credit  a small "Powered by Atmosphere Comments for Astro" link under the
 //           comments (default true; false hides it).
 //
 // Quote shows a preview of the reader's post with the announcement quoted
@@ -41,7 +41,7 @@ interface Props {
   label?: string;
   /** The badge on comments by the site's own accounts. */
   authorLabel?: string;
-  /** A small "Comments by astro-atmosphere-comments" link under the comments. Default true. */
+  /** A small "Powered by Atmosphere Comments for Astro" link under the comments. Default true. */
   credit?: boolean;
 }
 
@@ -169,7 +169,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
   {credit && (
     <p class="atmo__credit" data-credit data-pagefind-ignore>
-      Comments by <a href={CREDIT_URL}>astro-atmosphere-comments</a>
+      Powered by <a href={CREDIT_URL}>Atmosphere Comments for Astro</a>
     </p>
   )}
 </atmosphere-comments>
