@@ -68,5 +68,11 @@
   "messages.tooLong": "投稿は{{max}}文字までです。",
   "messages.tooMany": "操作が早すぎます。1分待ってから、もう一度お試しください。",
   "messages.error": "うまくいきませんでした。もう一度お試しください。",
+  "postActions.replyLabel": "Blueskyで返信",
+  "postActions.quoteLabel": "Blueskyで引用",
+  "postActions.likeLabel": "この投稿にいいね",
+  "postActions.repostLabel": "この投稿をリポスト",
+  "dialog.heading": "ログインしていいねやリポストをする",
+  "dialog.close": "閉じる",
   "credit": "{{link}}で動作しています"
 }

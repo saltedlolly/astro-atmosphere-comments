@@ -74,5 +74,11 @@
   "messages.tooLong": "Les publications peuvent contenir jusqu'à {{max}} caractères.",
   "messages.tooMany": "Tu vas un peu vite. Attends une minute et réessaie.",
   "messages.error": "Ça n'a pas marché. Réessaie.",
+  "postActions.replyLabel": "Répondre sur Bluesky",
+  "postActions.quoteLabel": "Citer sur Bluesky",
+  "postActions.likeLabel": "Aimer cette publication",
+  "postActions.repostLabel": "Republier cette publication",
+  "dialog.heading": "Connecte-toi pour aimer ou republier",
+  "dialog.close": "Fermer",
   "credit": "Propulsé par {{link}}"
 }

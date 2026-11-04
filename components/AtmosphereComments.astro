@@ -31,8 +31,8 @@
 // text, author, createdAt, quote, parent }), and after a like or repost (or
 // undoing one) `atmosphere:reacted` (detail: { kind, on, author }), so a site
 // can show it straight away.
-import logo from "../assets/union.svg?url";
 import settings from "../lib/settings";
+import SignInForm from "./SignInForm.astro";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
 
@@ -88,45 +88,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   <div class="atmo-reactions" data-reactions data-pagefind-ignore hidden></div>
 
   <div class="atmo__signed-out" data-view="signed-out" data-pagefind-ignore>
-    <form class="atmo__login" id="atmo-login" method="post" action={`${base}/login`} data-login-form>
-      <label for="atmo-handle">{t("signIn.heading")}</label>
-      <p
-        class="atmo__hint"
-        set:html={th("signIn.anyAccount", {
-          atmosphereAccount: link("https://atmosphereaccount.com", t("signIn.atmosphereAccount")),
-          bluesky: link("https://bsky.app", "Bluesky"),
-        })}
-      />
-      <div class="atmo__row">
-        <span class="atmo__handle">
-          <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
-          <input
-          id="atmo-handle"
-          name="handle"
-          type="text"
-          inputmode="url"
-          data-1p-ignore
-          data-lpignore="true"
-          data-bwignore
-          data-form-type="other"
-          autocapitalize="none"
-          spellcheck="false"
-          placeholder="alice.bsky.social"
-          required
-          />
-          <ul class="atmo__suggestions" id="atmo-handle-suggestions" role="listbox" aria-label={t("signIn.matchingAccounts")} data-handle-suggestions hidden></ul>
-        </span>
-        <input type="hidden" name="returnTo" value={returnTo} />
-        <button type="submit" class="atmo__button atmo__button--sign-in">
-          <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
-          {t("signIn.button")}
-        </button>
-      </div>
-      <p
-        class="atmo__hint"
-        set:html={th("signIn.privacy", { createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")) })}
-      />
-    </form>
+    <SignInForm id="atmo" returnTo={returnTo} messages={messages} lang={lang} />
     {blueskyLink && (
       <p
         class="atmo__elsewhere"
@@ -226,6 +188,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
 <script>
   import { translate } from "../lib/translate";
+  import { enhanceHandleBox } from "../lib/client/handle-suggestions";
 
   const MAX = 300;
   const graphemes = new Intl.Segmenter();
@@ -471,98 +434,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
       const openLogin = () => loginForm.querySelector("input")?.focus({ preventScroll: true });
 
-      // Matching accounts under the handle box as the reader types, with their
-      // avatars, so they can see they've found the right one. Picking one signs
-      // in with it. Without JavaScript the box works as a plain text box.
-      {
-        const input = loginForm.querySelector<HTMLInputElement>("#atmo-handle")!;
-        const list = loginForm.querySelector<HTMLUListElement>("[data-handle-suggestions]")!;
-        let found: Suggestion[] = [];
-        let active = -1;
-        let latest = "";
-        let timer: number | undefined;
-        input.setAttribute("role", "combobox");
-        input.setAttribute("aria-autocomplete", "list");
-        input.setAttribute("aria-controls", list.id);
-        input.setAttribute("aria-expanded", "false");
-
-        const close = () => {
-          list.hidden = true;
-          list.replaceChildren();
-          found = [];
-          active = -1;
-          input.setAttribute("aria-expanded", "false");
-          input.removeAttribute("aria-activedescendant");
-        };
-        const highlight = (index: number) => {
-          active = index;
-          list.querySelectorAll("li").forEach((item, i) => item.setAttribute("aria-selected", String(i === index)));
-          if (index >= 0) input.setAttribute("aria-activedescendant", `${list.id}-option-${index}`);
-          else input.removeAttribute("aria-activedescendant");
-        };
-        const choose = (index: number) => {
-          const option = found[index];
-          if (!option) return;
-          input.value = option.handle;
-          close();
-          loginForm.requestSubmit();
-        };
-        const show = (actors: Suggestion[]) => {
-          found = actors.slice(0, 5);
-          if (!found.length || document.activeElement !== input) return close();
-          list.replaceChildren(
-            ...found.map((option, index) => {
-              const item = make("li");
-              item.id = `${list.id}-option-${index}`;
-              item.setAttribute("role", "option");
-              const avatar = make("span", "atmo__avatar atmo__avatar--small");
-              avatar.setAttribute("aria-hidden", "true");
-              setAvatar(avatar, option.displayName || option.handle, option.avatar);
-              item.append(avatar, make("strong", "", option.displayName || option.handle), make("span", "", `@${option.handle}`));
-              // mousedown keeps the focus in the handle box.
-              item.addEventListener("mousedown", (event) => event.preventDefault());
-              item.addEventListener("click", () => choose(index));
-              return item;
-            }),
-          );
-          list.hidden = false;
-          input.setAttribute("aria-expanded", "true");
-          // Nothing is picked until the reader chooses, so Enter still signs in
-          // with exactly what they typed.
-          highlight(-1);
-        };
-
-        input.addEventListener("input", () => {
-          window.clearTimeout(timer);
-          const query = input.value.trim().replace(/^@/, "");
-          latest = query;
-          if (query.length < 2 || query.startsWith("did:") || /\s/.test(query)) return close();
-          timer = window.setTimeout(async () => {
-            try {
-              const response = await fetch(`${base}/typeahead?q=${encodeURIComponent(query)}`, { credentials: "same-origin" });
-              const data = (await response.json()) as { actors?: Suggestion[] };
-              if (query === latest) show(data.actors ?? []);
-            } catch {
-              close();
-            }
-          }, 250);
-        });
-        input.addEventListener("keydown", (event) => {
-          if (list.hidden) return;
-          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-            event.preventDefault();
-            const step = event.key === "ArrowDown" ? 1 : -1;
-            highlight(active < 0 && step < 0 ? found.length - 1 : (active + step + found.length) % found.length);
-          } else if (event.key === "Enter" && active >= 0) {
-            event.preventDefault();
-            choose(active);
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            close();
-          }
-        });
-        input.addEventListener("blur", () => window.setTimeout(close, 150));
-      }
+      enhanceHandleBox(loginForm, base);
 
       // An avatar picture, or the name's first letter if there isn't one.
       const setAvatar = (slot: HTMLElement, name: string, src?: string) => {
@@ -1143,51 +1015,6 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     display: none !important;
   }
 
-  /* The Atmosphere Account logo inside the handle box, on the left, and at
-     the start of the sign-in button. It is single-colour, so it is drawn in
-     the muted text colour in the box and the button's text colour on it. */
-  .atmo__handle {
-    position: relative;
-    display: flex;
-    flex: 1 1 220px;
-    min-width: 0;
-  }
-
-  /* Matching accounts sit under the handle box, as wide as it. */
-  .atmo__handle .atmo__suggestions {
-    width: 100%;
-  }
-
-  .atmo__handle .atmo__logo {
-    position: absolute;
-    top: 50%;
-    left: 11px;
-    width: 20px;
-    height: 20px;
-    transform: translateY(-50%);
-    background-color: var(--atmo-muted, currentColor);
-    mask: var(--atmo-logo) center / contain no-repeat;
-    pointer-events: none;
-  }
-
-  .atmo .atmo__handle input[type="text"] {
-    padding-left: 40px;
-  }
-
-  .atmo__button--sign-in {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .atmo__button--sign-in .atmo__logo {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    background-color: currentColor;
-    mask: var(--atmo-logo) center / contain no-repeat;
-  }
-
   /* The comment box when it sits under a comment being replied to. */
   .atmo--inline {
     margin: 4px 0 6px;
@@ -1207,7 +1034,6 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     font-weight: 700;
   }
 
-  .atmo__login,
   .atmo__composer {
     display: grid;
     gap: 8px;

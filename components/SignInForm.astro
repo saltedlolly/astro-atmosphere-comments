@@ -1,0 +1,218 @@
+---
+// The sign-in form: a handle box (which suggests matching accounts, see
+// lib/client/handle-suggestions.ts) and a "Sign in with Atmosphere" button.
+// Used under posts by AtmosphereComments and in the sign-in overlay of
+// AtmosphereReactions; not meant to be used on its own.
+//
+// Props:
+//   id        prefix for the form's ids, unique on the page
+//   returnTo  where the reader comes back to after signing in
+//   messages, lang  the wording (see lib/i18n.ts)
+//   heading   the form's heading, instead of "signIn.heading"
+import logo from "../assets/union.svg?url";
+import settings from "../lib/settings";
+import { translate, translateHtml } from "../lib/i18n";
+import { escapeHtml } from "../lib/translate";
+
+interface Props {
+  id: string;
+  returnTo: string;
+  messages: Record<string, string>;
+  lang: string;
+  heading?: string;
+}
+
+const { id, returnTo, messages, lang, heading } = Astro.props;
+const { base } = settings;
+const t = (key: string) => translate(messages, lang, key);
+const th = (key: string, html: Record<string, string>) => translateHtml(messages, lang, key, html);
+const link = (href: string, text: string) => `<a href="${escapeHtml(href)}">${escapeHtml(text)}</a>`;
+---
+
+<form class="atmo__login" id={`${id}-login`} method="post" action={`${base}/login`} data-login-form>
+  <label for={`${id}-handle`}>{heading ?? t("signIn.heading")}</label>
+  <p
+    class="atmo__hint"
+    set:html={th("signIn.anyAccount", {
+      atmosphereAccount: link("https://atmosphereaccount.com", t("signIn.atmosphereAccount")),
+      bluesky: link("https://bsky.app", "Bluesky"),
+    })}
+  />
+  <div class="atmo__row">
+    <span class="atmo__handle">
+      <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
+      <input
+        id={`${id}-handle`}
+        name="handle"
+        type="text"
+        inputmode="url"
+        data-1p-ignore
+        data-lpignore="true"
+        data-bwignore
+        data-form-type="other"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="alice.bsky.social"
+        required
+      />
+      <ul
+        class="atmo__suggestions"
+        id={`${id}-handle-suggestions`}
+        role="listbox"
+        aria-label={t("signIn.matchingAccounts")}
+        data-handle-suggestions
+        hidden
+      ></ul>
+    </span>
+    <input type="hidden" name="returnTo" value={returnTo} data-return-to />
+    <button type="submit" class="atmo__button atmo__button--sign-in">
+      <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
+      {t("signIn.button")}
+    </button>
+  </div>
+  <p
+    class="atmo__hint"
+    set:html={th("signIn.privacy", { createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")) })}
+  />
+</form>
+
+<style>
+  .atmo__login {
+    display: grid;
+    gap: 8px;
+    max-width: 560px;
+    margin-top: 14px;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  label {
+    font-weight: 700;
+  }
+
+  .atmo__hint {
+    margin: 0;
+    color: var(--atmo-muted, inherit);
+    font-size: 0.9em;
+  }
+
+  .atmo__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* The Atmosphere Account logo inside the handle box, on the left, and at
+     the start of the sign-in button. It is single-colour, so it is drawn in
+     the muted text colour in the box and the button's text colour on it. */
+  .atmo__handle {
+    position: relative;
+    display: flex;
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+
+  .atmo__handle .atmo__logo {
+    position: absolute;
+    top: 50%;
+    left: 11px;
+    width: 20px;
+    height: 20px;
+    transform: translateY(-50%);
+    background-color: var(--atmo-muted, currentColor);
+    mask: var(--atmo-logo) center / contain no-repeat;
+    pointer-events: none;
+  }
+
+  input[type="text"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 10px 12px 10px 40px;
+    border: 1px solid var(--atmo-border, #8886);
+    border-radius: var(--atmo-radius, 10px);
+    background: var(--atmo-field-bg, transparent);
+    color: inherit;
+    font: inherit;
+  }
+
+  .atmo__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: var(--atmo-radius, 10px);
+    background: var(--atmo-accent, #1185fe);
+    color: var(--atmo-on-accent, #fff);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .atmo__button .atmo__logo {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    mask: var(--atmo-logo) center / contain no-repeat;
+  }
+
+  /* Matching accounts, under the handle box and as wide as it. */
+  .atmo__suggestions {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    border: 1px solid var(--atmo-border, #8886);
+    border-radius: var(--atmo-radius, 10px);
+    background: var(--atmo-menu-bg, Canvas);
+    box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+  }
+
+  .atmo__suggestions :global(li) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: calc(var(--atmo-radius, 10px) - 4px);
+    cursor: pointer;
+  }
+
+  .atmo__suggestions :global(li[aria-selected="true"]),
+  .atmo__suggestions :global(li:hover) {
+    background: color-mix(in srgb, var(--atmo-accent, #1185fe) 14%, transparent);
+  }
+
+  .atmo__suggestions :global(li span:last-child) {
+    overflow: hidden;
+    color: var(--atmo-muted, inherit);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .atmo__suggestions :global(.atmo__avatar) {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--atmo-border, #8886);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .atmo__suggestions :global(.atmo__avatar img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>

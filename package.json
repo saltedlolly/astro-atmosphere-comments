@@ -1,6 +1,6 @@
 {
   "name": "astro-atmosphere-comments",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Atmosphere Comments for Astro: Bluesky comments, likes, reposts and quote posts for Astro sites; readers sign in with their Atmosphere (AT Protocol) account and respond without leaving the page.",
   "type": "module",
   "license": "MIT",
@@ -20,14 +20,18 @@
     "atmosphere",
     "comments",
     "likes",
-    "oauth"
+    "oauth",
+    "at-protocol",
+    "reposts",
+    "i18n"
   ],
   "exports": {
     ".": {
       "types": "./index.d.ts",
       "default": "./index.mjs"
     },
-    "./AtmosphereComments.astro": "./components/AtmosphereComments.astro"
+    "./AtmosphereComments.astro": "./components/AtmosphereComments.astro",
+    "./AtmosphereReactions.astro": "./components/AtmosphereReactions.astro"
   },
   "types": "./index.d.ts",
   "bin": {

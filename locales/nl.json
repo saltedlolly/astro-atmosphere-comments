@@ -71,5 +71,11 @@
   "messages.tooLong": "Berichten mogen maximaal {{max}} tekens lang zijn.",
   "messages.tooMany": "Je gaat wel snel. Wacht een minuut en probeer het opnieuw.",
   "messages.error": "Dat is niet gelukt. Probeer het opnieuw.",
+  "postActions.replyLabel": "Reageren op Bluesky",
+  "postActions.quoteLabel": "Citeren op Bluesky",
+  "postActions.likeLabel": "Dit bericht liken",
+  "postActions.repostLabel": "Dit bericht reposten",
+  "dialog.heading": "Log in om te liken of te reposten",
+  "dialog.close": "Sluiten",
   "credit": "Mogelijk gemaakt door {{link}}"
 }

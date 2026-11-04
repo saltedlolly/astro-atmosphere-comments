@@ -86,6 +86,29 @@ import AtmosphereComments from "astro-atmosphere-comments/AtmosphereComments.ast
 
 `post` can be the announcement's **bsky.app address** or its **AT URI**. Leave it out and the component uses the page's **Standard.site** record instead: if your page has `<link rel="site.standard.document" href="at://…">` and that record's `bskyPostRef` points to the announcement (as Standard.site publishers do), it just works. With no announcement to respond to, the component shows nothing (apart from your slot content).
 
+### 4. Optional: likes and reposts on your other Bluesky posts
+
+If your pages show your Bluesky posts elsewhere (a "latest posts" feed on your homepage, say), readers can like and repost them there too. Put `AtmosphereReactions` once in your layout, and mark each post's element:
+
+```astro
+---
+import AtmosphereReactions from "astro-atmosphere-comments/AtmosphereReactions.astro";
+---
+
+<article
+  data-atmosphere-post="at://did:plc:…/app.bsky.feed.post/…"
+  data-atmosphere-url="https://bsky.app/profile/you.bsky.social/post/…"
+  data-atmosphere-likes="3"
+  data-atmosphere-reposts="1"
+>
+  …the post…
+</article>
+
+<AtmosphereReactions />
+```
+
+Each marked post gets a row of icons: Reply and Quote (which open the post on Bluesky), and Repost and Like with their counts. Readers already signed in on your site like and repost straight away. Anyone else is offered the sign-in form in an overlay, and their like or repost is done when they come back. It works with posts from loaders such as [`@ascorbic/bluesky-loader`](https://www.npmjs.com/package/@ascorbic/bluesky-loader) or embeds such as [`@astro-community/astro-embed-bluesky`](https://www.npmjs.com/package/@astro-community/astro-embed-bluesky) (wrap the embed in the marked element). Only posts by your `allowedAuthors` can be liked or reposted through your site.
+
 ### Trying it on your own computer
 
 Run the dev server on `127.0.0.1` and open the site there, not at `localhost`:
@@ -118,6 +141,7 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | `authorLabel` | The badge on your own comments. Default "Author". |
 | `blueskyLink` | "Rather not sign in here? Reply on Bluesky instead →" under the sign-in form, linking to the announcement (with `u-syndication`, so microformats readers learn it's the post's copy on Bluesky). Default `true`; `blueskyLink={false}` hides it. |
 | `locale`, `messages` | The same as the integration's options, for this one component. |
+| `locale`, `messages` (also on `AtmosphereReactions`) | See Languages. |
 | `credit` | A small "Powered by Atmosphere Comments for Astro" link at the end. Default `true`; set `credit={false}` to hide it. |
 
 **Slots:** `after-box` goes between the comment box and the comments (a note about other ways to respond, say); the default slot goes after the comments (other responses, older comments).
@@ -156,11 +180,12 @@ It has a plain default look and takes your text colour. Colours come from CSS cu
   --atmo-menu-bg: #fff;       /* account and @mention suggestions */
   --atmo-ring: #fff;          /* the outline round faces */
   --atmo-danger: #c0392b;     /* Delete, when confirming */
+  --atmo-dialog-bg: #fff;     /* the sign-in overlay (defaults to --atmo-menu-bg) */
   --atmo-radius: 10px;
 }
 ```
 
-The likes and comments are drawn with classes you can style directly (`.atmo-reactions`, `.atmo-facepile`, `.atmo-comments`, `.atmo-comment`, `.atmo-comment--nested`, `.atmo-comment--author`, `.atmo-comment__header`, `__avatar`, `__author`, `__badge`, `__date`, `__body`, and `.atmo-comment-actions` for Reply, Like and Repost). Their defaults carry no CSS weight, so your rules always win.
+The likes and comments are drawn with classes you can style directly (`.atmo-reactions`, `.atmo-facepile`, `.atmo-comments`, `.atmo-comment`, `.atmo-comment--nested`, `.atmo-comment--author`, `.atmo-comment__header`, `__avatar`, `__author`, `__badge`, `__date`, `__body`, and `.atmo-comment-actions` for Reply, Like and Repost, and `.atmo-post-actions` / `.atmo-post-action` for the row `AtmosphereReactions` adds). Their defaults carry no CSS weight, so your rules always win.
 
 ## Events
 

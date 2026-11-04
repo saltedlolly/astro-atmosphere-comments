@@ -71,5 +71,11 @@
   "messages.tooLong": "Posts can be up to {{max}} characters.",
   "messages.tooMany": "You're going quickly. Please wait a minute and try again.",
   "messages.error": "That didn't work. Please try again.",
+  "postActions.replyLabel": "Reply on Bluesky",
+  "postActions.quoteLabel": "Quote on Bluesky",
+  "postActions.likeLabel": "Like this post",
+  "postActions.repostLabel": "Repost this post",
+  "dialog.heading": "Sign in to like or repost",
+  "dialog.close": "Close",
   "credit": "Powered by {{link}}"
 }

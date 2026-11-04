@@ -1,0 +1,344 @@
+---
+// Like and Repost (with their counts), and Reply and Quote links to Bluesky,
+// under any Bluesky post your page shows: a feed of your latest posts, say.
+// Put it once in your layout, and mark each post's element with its AT URI:
+//
+//   <article data-atmosphere-post="at://did:plc:…/app.bsky.feed.post/…"
+//            data-atmosphere-url="https://bsky.app/profile/…/post/…"
+//            data-atmosphere-likes="3" data-atmosphere-reposts="1">
+//
+// Signed-in readers like and repost from your page. Anyone else who presses
+// Like or Repost is offered the sign-in form in an overlay, and the like or
+// repost is done once they're back. Only posts by the integration's
+// `allowedAuthors` can be liked or reposted through your site.
+//
+// Props: locale, messages (as for AtmosphereComments).
+import settings from "../lib/settings";
+import { messagesFor, pickLocale, translate } from "../lib/i18n";
+import SignInForm from "./SignInForm.astro";
+
+interface Props {
+  /** The language of the wording, e.g. "fr". Overrides the integration's `locale`. */
+  locale?: string;
+  /** Your own wording for any line, by its key in locales/en.json. */
+  messages?: Record<string, string>;
+}
+
+const lang = pickLocale(Astro.props.locale, settings.locale, Astro.currentLocale);
+const messages = messagesFor(lang, { ...settings.messages, ...Astro.props.messages });
+const t = (key: string) => translate(messages, lang, key);
+const { base } = settings;
+---
+
+<atmosphere-reactions data-base={base} data-locale={lang} data-messages={JSON.stringify(messages)}>
+  <dialog class="atmo atmo-signin" aria-label={t("dialog.heading")} data-signin-dialog>
+    <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
+    <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} />
+    <p class="atmo-signin__status" role="status" data-dialog-status></p>
+  </dialog>
+</atmosphere-reactions>
+
+<script>
+  import { translate } from "../lib/translate";
+  import { enhanceHandleBox } from "../lib/client/handle-suggestions";
+
+  const HEART = '<path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" />';
+  const ARROWS = '<path d="M7 8h10l-3-3M17 16H7l3 3M5 13V9.5A1.5 1.5 0 0 1 6.5 8M19 11v3.5a1.5 1.5 0 0 1-1.5 1.5" />';
+  const BUBBLE = '<path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h0.5A2.5 2.5 0 0 1 5 13.5Z" />';
+  const QUOTE = '<path d="M5 18h5v-5H6.5A4.5 4.5 0 0 1 11 8.5V7a6 6 0 0 0-6 6Zm9 0h5v-5h-3.5A4.5 4.5 0 0 1 20 8.5V7a6 6 0 0 0-6 6Z" />';
+  // Messages the sign-in round trip can bring back (?atmosphere=…).
+  const SIGN_IN_PROBLEMS: Record<string, string> = {
+    "sign-in-failed": "messages.signInFailed",
+    "account-not-found": "messages.accountNotFound",
+    "invalid-handle": "messages.invalidHandle",
+  };
+
+  type Kind = "like" | "repost";
+
+  class AtmosphereReactions extends HTMLElement {
+    connectedCallback() {
+      const base = this.dataset.base ?? "/atmosphere";
+      const lang = this.dataset.locale || "en";
+      const wording = JSON.parse(this.dataset.messages || "{}") as Record<string, string>;
+      const t = (key: string, vars?: Record<string, string | number>) => translate(wording, lang, key, vars);
+      const dialog = this.querySelector<HTMLDialogElement>("[data-signin-dialog]")!;
+      const form = dialog.querySelector<HTMLFormElement>("[data-login-form]")!;
+      const status = dialog.querySelector<HTMLElement>("[data-dialog-status]")!;
+      let signedIn = false;
+      // What the reader has liked or reposted, by post.
+      const known: Record<string, { liked: boolean; reposted: boolean }> = {};
+
+      enhanceHandleBox(form, base);
+      dialog.querySelector("[data-close]")!.addEventListener("click", () => dialog.close());
+      // A click on the dimmed page around the overlay closes it.
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+
+      const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className = "", text?: string) => {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text !== undefined) element.textContent = text;
+        return element;
+      };
+
+      // Not signed in: the sign-in form, coming back to finish this like or repost.
+      const askToSignIn = (kind: Kind, uri: string, problem = "") => {
+        form.querySelector<HTMLInputElement>("[data-return-to]")!.value =
+          `${location.pathname}${location.search}#atmo-react=${kind}:${encodeURIComponent(uri)}`;
+        status.textContent = problem;
+        if (!dialog.open) dialog.showModal();
+        form.querySelector<HTMLInputElement>('input[name="handle"]')!.focus();
+      };
+
+      const send = (body: unknown) =>
+        fetch(`${base}/react`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+      const icon = (paths: string) => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+
+      const setCount = (button: HTMLElement, value: number) => {
+        button.dataset.count = String(value);
+        button.querySelector("span")!.textContent = value ? String(value) : "";
+      };
+
+      const react = async (post: HTMLElement, button: HTMLButtonElement, kind: Kind, on: boolean) => {
+        const uri = post.dataset.atmospherePost!;
+        if (!signedIn) return askToSignIn(kind, uri);
+        const before = Number(button.dataset.count || 0);
+        button.setAttribute("aria-pressed", String(on));
+        setCount(button, Math.max(0, before + (on ? 1 : -1)));
+        try {
+          const response = await send({ post: uri, kind, on });
+          if (response.ok) {
+            known[uri] = { ...(known[uri] ?? { liked: false, reposted: false }), [kind === "like" ? "liked" : "reposted"]: on };
+            return;
+          }
+          const data = (await response.json().catch(() => ({}))) as { error?: string };
+          button.setAttribute("aria-pressed", String(!on));
+          setCount(button, before);
+          if (data.error === "signed-out" || data.error === "new-permissions") {
+            signedIn = false;
+            askToSignIn(kind, uri, t(data.error === "signed-out" ? "messages.signedOut" : "messages.newPermissions"));
+          }
+        } catch {
+          button.setAttribute("aria-pressed", String(!on));
+          setCount(button, before);
+        }
+      };
+
+      const reactButton = (post: HTMLElement, kind: Kind) => {
+        const button = make("button", "atmo-post-action");
+        button.type = "button";
+        button.dataset.kind = kind;
+        button.title = t(kind === "like" ? "postActions.likeLabel" : "postActions.repostLabel");
+        button.setAttribute("aria-label", button.title);
+        const seen = known[post.dataset.atmospherePost!];
+        button.setAttribute("aria-pressed", String(!!(kind === "like" ? seen?.liked : seen?.reposted)));
+        button.innerHTML = `${icon(kind === "like" ? HEART : ARROWS)}<span></span>`;
+        setCount(button, Number(post.dataset[kind === "like" ? "atmosphereLikes" : "atmosphereReposts"] || 0));
+        button.addEventListener("click", () => react(post, button, kind, button.getAttribute("aria-pressed") !== "true"));
+        return button;
+      };
+
+      // Reply and Quote open the post on Bluesky. Icons only, as on Bluesky,
+      // with their names for screen readers and as tooltips.
+      const bskyLink = (post: HTMLElement, paths: string, label: string) => {
+        const link = make("a", "atmo-post-action");
+        link.href = post.dataset.atmosphereUrl ?? "#";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.dataset.kind = paths === BUBBLE ? "reply" : "quote";
+        link.title = label;
+        link.setAttribute("aria-label", label);
+        link.innerHTML = icon(paths);
+        return link;
+      };
+
+      const posts = () => [...document.querySelectorAll<HTMLElement>("[data-atmosphere-post]")];
+
+      // Returns how many posts got buttons, so new arrivals can be checked.
+      const addActions = (): number => {
+        let added = 0;
+        for (const post of posts()) {
+          if (post.querySelector(":scope > .atmo-post-actions")) continue;
+          added += 1;
+          const actions = make("div", "atmo-post-actions");
+          actions.append(
+            bskyLink(post, BUBBLE, t("postActions.replyLabel")),
+            reactButton(post, "repost"),
+            bskyLink(post, QUOTE, t("postActions.quoteLabel")),
+            reactButton(post, "like"),
+          );
+          post.append(actions);
+        }
+        return added;
+      };
+
+      // Which of the posts the reader has already liked or reposted.
+      const loadState = async () => {
+        const uris = posts().map((post) => post.dataset.atmospherePost!);
+        if (!signedIn || !uris.length) return;
+        try {
+          const query = uris.map((uri) => `post=${encodeURIComponent(uri)}`).join("&");
+          const response = await fetch(`${base}/state?${query}`, { credentials: "same-origin" });
+          if (!response.ok) return;
+          const state = ((await response.json()) as { posts?: typeof known }).posts ?? {};
+          Object.assign(known, state);
+          for (const post of posts()) {
+            const seen = state[post.dataset.atmospherePost!];
+            if (!seen) continue;
+            post.querySelector(".atmo-post-action[data-kind='like']")?.setAttribute("aria-pressed", String(seen.liked));
+            post.querySelector(".atmo-post-action[data-kind='repost']")?.setAttribute("aria-pressed", String(seen.reposted));
+          }
+        } catch {
+          // The buttons stay as they are; a click still works.
+        }
+      };
+
+      // Back from signing in: finish the like or repost they pressed.
+      const finishPending = async () => {
+        const pending = location.hash.match(/^#atmo-react=(like|repost):(.+)$/);
+        if (!pending) return;
+        const [, kind, encoded] = pending;
+        const uri = decodeURIComponent(encoded);
+        const url = new URL(location.href);
+        const problem = url.searchParams.get("atmosphere") ?? "";
+        // The comments component tidies this away on post pages; elsewhere, do it here.
+        if (!document.querySelector("atmosphere-comments")) url.searchParams.delete("atmosphere");
+        // The page may still be loading its posts (a server island, say).
+        for (let tries = 0; tries < 40 && !posts().some((post) => post.dataset.atmospherePost === uri); tries++) {
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+        const post = posts().find((candidate) => candidate.dataset.atmospherePost === uri);
+        history.replaceState(history.state, "", `${url.pathname}${url.search}`);
+        if (!post) return;
+        post.scrollIntoView({ block: "center" });
+        if (!signedIn) {
+          if (SIGN_IN_PROBLEMS[problem]) askToSignIn(kind as Kind, uri, t(SIGN_IN_PROBLEMS[problem]));
+          return;
+        }
+        const button = post.querySelector<HTMLButtonElement>(`.atmo-post-action[data-kind='${kind}']`);
+        if (button && button.getAttribute("aria-pressed") !== "true") await react(post, button, kind as Kind, true);
+      };
+
+      fetch(`${base}/me`, { credentials: "same-origin" })
+        .then((response) => response.json())
+        .then((me: { signedIn?: boolean }) => {
+          signedIn = !!me.signedIn;
+        })
+        .catch(() => undefined)
+        .finally(async () => {
+          addActions();
+          await loadState();
+          await finishPending();
+        });
+
+      // Posts that arrive later (a server island, say) get buttons too.
+      let recheck: number | undefined;
+      new MutationObserver(() => {
+        if (!addActions() || !signedIn) return;
+        window.clearTimeout(recheck);
+        recheck = window.setTimeout(loadState, 300);
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
+  if (!customElements.get("atmosphere-reactions")) customElements.define("atmosphere-reactions", AtmosphereReactions);
+</script>
+
+<style>
+  .atmo-signin {
+    /* Centred on the screen, whatever margin a site gives .atmo. */
+    margin: auto;
+    width: min(92vw, 520px);
+    padding: 22px 22px 18px;
+    border: 1px solid var(--atmo-border, #8886);
+    border-radius: calc(var(--atmo-radius, 10px) + 6px);
+    background: var(--atmo-dialog-bg, var(--atmo-menu-bg, Canvas));
+    color: var(--atmo-text, CanvasText);
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+  }
+
+  .atmo-signin::backdrop {
+    background: rgb(0 0 0 / 0.55);
+  }
+
+  .atmo-signin :global(.atmo__login) {
+    margin-top: 0;
+  }
+
+  .atmo-signin__close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    padding: 4px 8px;
+    border: 0;
+    background: none;
+    color: var(--atmo-muted, inherit);
+    font: inherit;
+    font-size: 1.4em;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .atmo-signin__status {
+    margin: 10px 0 0;
+    color: var(--atmo-muted, inherit);
+    font-size: 0.9em;
+  }
+
+  .atmo-signin__status:empty {
+    display: none;
+  }
+
+  /* The row under each post. Defaults carry no weight, so a site's own
+     rules always win. */
+  :global(:where(.atmo-post-actions)) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 10px;
+  }
+
+  :global(:where(.atmo-post-action)) {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--atmo-muted, inherit);
+    font: inherit;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  :global(:where(.atmo-post-action:hover, .atmo-post-action:focus-visible)) {
+    color: var(--atmo-accent, #1185fe);
+  }
+
+  :global(:where(.atmo-post-action svg)) {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  :global(:where(.atmo-post-action[aria-pressed="true"])) {
+    color: var(--atmo-accent, #1185fe);
+  }
+
+  :global(:where(.atmo-post-action[data-kind="like"][aria-pressed="true"] svg)) {
+    fill: currentColor;
+  }
+</style>

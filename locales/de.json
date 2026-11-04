@@ -71,5 +71,11 @@
   "messages.tooLong": "Beiträge können bis zu {{max}} Zeichen lang sein.",
   "messages.tooMany": "Du bist ziemlich schnell. Bitte warte eine Minute und versuche es noch einmal.",
   "messages.error": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
+  "postActions.replyLabel": "Auf Bluesky antworten",
+  "postActions.quoteLabel": "Auf Bluesky zitieren",
+  "postActions.likeLabel": "Diesen Beitrag liken",
+  "postActions.repostLabel": "Diesen Beitrag reposten",
+  "dialog.heading": "Melde dich an, um zu liken oder zu reposten",
+  "dialog.close": "Schließen",
   "credit": "Bereitgestellt von {{link}}"
 }

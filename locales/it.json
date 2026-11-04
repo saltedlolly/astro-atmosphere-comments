@@ -74,5 +74,11 @@
   "messages.tooLong": "I post possono avere fino a {{max}} caratteri.",
   "messages.tooMany": "Stai andando un po' veloce. Aspetta un minuto e riprova.",
   "messages.error": "Non ha funzionato. Riprova.",
+  "postActions.replyLabel": "Rispondi su Bluesky",
+  "postActions.quoteLabel": "Cita su Bluesky",
+  "postActions.likeLabel": "Metti mi piace a questo post",
+  "postActions.repostLabel": "Ripubblica questo post",
+  "dialog.heading": "Accedi per mettere mi piace o ripubblicare",
+  "dialog.close": "Chiudi",
   "credit": "Realizzato con {{link}}"
 }

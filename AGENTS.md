@@ -9,6 +9,9 @@ It is maintained by [Olly Stedall](https://saltedlolly.com) and used live on [sa
 | Path | What it is |
 | --- | --- |
 | `index.mjs`, `index.d.ts` | The Astro integration: checks the options, adds the routes, and passes the settings to the routes and component through a virtual module (`virtual:atmosphere-comments/settings`, read by `lib/settings.ts`). |
+| `components/SignInForm.astro` | The sign-in form (handle box with account suggestions, the Sign in with Atmosphere button). Shared by the two components below; ids are prefixed by its `id` prop so both can be on one page. |
+| `components/AtmosphereReactions.astro` | Reply, Repost, Quote and Like under any element marked `data-atmosphere-post` (a site's feed of its Bluesky posts), and the sign-in overlay for readers who aren't signed in. Placed once in a site's layout. |
+| `lib/client/` | Browser code shared by the components (the account suggestions under the handle box). |
 | `components/AtmosphereComments.astro` | The component under each post: the sign-in form, the comment box, Like, Repost and Quote, and the thread (likes, reposts and nested comments, drawn in the browser). One file, with its script and styles. |
 | `routes/` | The server routes, under `/atmosphere` by default (`login`, `callback`, `logout`, `me`, `comment`, `react`, `delete`, `state`, `thread`, `typeahead`, `media`, `post`, plus `jwks.json`). Each one is listed in `ROUTES` in `index.mjs`. The client metadata is the exception: it's served at the site's root, `/oauth-client-metadata.json`, because Bluesky's approval page names an app by its address alone only when its metadata is there (otherwise it shows the full file address). |
 | `lib/` | Shared server code: OAuth (`oauth.ts`), the signed-in reader and their permissions (`reader.ts`), the thread (`thread.ts`), stores, profiles, rich text. |
@@ -54,6 +57,12 @@ If you change the field, say so in `CHANGELOG.md`, because sites may style or sc
 - **Other languages are to be translated on Weblate** (Hosted Weblate project `astro-atmosphere-comments`, requested November 2026), which will commit them back here as pull requests. Once Weblate manages them, don't edit the other language files by hand: changes would clash with Weblate's. A new English key shows up in Weblate for translators; until it's translated, English is shown.
 - `lib/i18n.ts` loads the files and picks the language (server only); `lib/translate.ts` fills in placeholders and plurals, and is the only part the browser script imports, so a page ships one language, as JSON in `data-messages`.
 - The starting translations of French, German, Spanish, Portuguese, Italian, Dutch and Japanese were drafted by an AI model and are marked for review in Weblate.
+
+## The credit link and saying thanks
+
+- The component ends with a small "Powered by Atmosphere Comments for Astro" link to the [announcement post](https://saltedlolly.com/atmosphere-comments-for-astro/) (a permanent address on saltedlolly.com that forwards to the post). It's **on by default and optional**: `credit={false}` hides it. Keep it that way: the licence is plain MIT, and the credit must never become a condition of use.
+- The README's **Saying thanks** section asks, politely, for the credit link or a link to saltedlolly.com, and mentions GitHub Sponsors and Ko-fi. Keep that tone: a request, not a requirement.
+- If the credit's address or wording changes, update the component, the README's component table and Saying thanks, and the CHANGELOG.
 
 ## Styling
 

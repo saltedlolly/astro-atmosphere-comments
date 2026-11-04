@@ -74,5 +74,11 @@
   "messages.tooLong": "As publicações podem ter até {{max}} caracteres.",
   "messages.tooMany": "Você está indo rápido demais. Espere um minuto e tente de novo.",
   "messages.error": "Não deu certo. Tente de novo.",
+  "postActions.replyLabel": "Responder no Bluesky",
+  "postActions.quoteLabel": "Citar no Bluesky",
+  "postActions.likeLabel": "Curtir esta publicação",
+  "postActions.repostLabel": "Repostar esta publicação",
+  "dialog.heading": "Entre para curtir ou repostar",
+  "dialog.close": "Fechar",
   "credit": "Feito com {{link}}"
 }
