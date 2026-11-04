@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 (4 November 2026)
+
+- Links open in a new tab: those in the sign-in form, "Reply on Bluesky instead", the credit, and the thread's names, dates, faces and links in comments, so readers don't lose their place (and a half-written comment).
+
 ## 0.4.1 (4 November 2026)
 
 - Fixed: the sign-in and reply overlays of `AtmosphereReactions` showed at the bottom of the page instead of staying hidden until opened (the shared stylesheet made every `.atmo` element a block, dialogs included).

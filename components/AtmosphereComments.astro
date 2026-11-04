@@ -71,8 +71,9 @@ const messages = messagesFor(lang, {
 });
 const t = (key: string, vars?: Record<string, string | number>) => translate(messages, lang, key, vars);
 const th = (key: string, html: Record<string, string>) => translateHtml(messages, lang, key, html);
+// Links lead off the page, so they open in a new tab.
 const link = (href: string | undefined, text: string, attributes = "") =>
-  `<a${href ? ` href="${escapeHtml(href)}"` : ""}${attributes}>${escapeHtml(text)}</a>`;
+  `<a${href ? ` href="${escapeHtml(href)}"` : ""} target="_blank" rel="noopener"${attributes}>${escapeHtml(text)}</a>`;
 // The announcement on bsky.app, when the page is given it (otherwise the
 // script fills it in once the thread has loaded).
 const atUri = post.match(/^at:\/\/([^/]+)\/app\.bsky\.feed\.post\/([^/]+)$/);
@@ -254,7 +255,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             group.append(make("p", "atmo-reactions__count", t(kind === "like" ? "reactions.likes" : "reactions.reposts", { count })));
             const faces = make("ul", "atmo-facepile");
             for (const person of people) {
-              const link = Object.assign(make("a"), { href: person.url, title: nameOf(person), rel: "ugc nofollow noopener" });
+              const link = Object.assign(make("a"), { href: person.url, title: nameOf(person), rel: "ugc nofollow noopener", target: "_blank" });
               link.setAttribute("aria-label", nameOf(person));
               link.append(avatarOf(person, "atmo-facepile__avatar"));
               const item = make("li");
@@ -278,11 +279,12 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         const author = Object.assign(make("a", "atmo-comment__author", nameOf(reply.author)), {
           href: reply.author.url,
           rel: "ugc nofollow noopener",
+          target: "_blank",
         });
         const who = make("div", "atmo-comment__who");
         who.append(author);
         if (reply.byAuthor) who.append(make("span", "atmo-comment__badge", authorLabel));
-        const date = Object.assign(make("a", "atmo-comment__date"), { href: reply.url, rel: "ugc nofollow noopener" });
+        const date = Object.assign(make("a", "atmo-comment__date"), { href: reply.url, rel: "ugc nofollow noopener", target: "_blank" });
         const time = Object.assign(make("time"), { dateTime: reply.createdAt, textContent: reply.createdAt ? dates.format(new Date(reply.createdAt)) : "" });
         date.append(time, make("span", "", ` · ${t("comment.viewOnBluesky")}`));
         const names = make("div");
@@ -293,7 +295,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         const paragraph = make("p");
         for (const piece of reply.text) {
           paragraph.append(
-            piece.href ? Object.assign(make("a", "", piece.text), { href: piece.href, rel: "ugc nofollow noopener" }) : piece.text,
+            piece.href ? Object.assign(make("a", "", piece.text), { href: piece.href, rel: "ugc nofollow noopener", target: "_blank" }) : piece.text,
           );
         }
         body.append(paragraph);
@@ -401,7 +403,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const postedMessage = (where: HTMLElement, data: Posted) =>
         where.replaceChildren(
           `${t(data.quote ? "posted.quote" : "posted.comment")} `,
-          Object.assign(document.createElement("a"), { href: data.url, textContent: t("posted.see") }),
+          Object.assign(document.createElement("a"), { href: data.url, textContent: t("posted.see"), target: "_blank", rel: "noopener noreferrer" }),
         );
 
       // The comment box (lib/client/composer.ts): posts as a reply to the

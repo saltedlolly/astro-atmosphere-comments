@@ -26,7 +26,9 @@ const { id, returnTo, messages, lang, heading } = Astro.props;
 const { base } = settings;
 const t = (key: string) => translate(messages, lang, key);
 const th = (key: string, html: Record<string, string>) => translateHtml(messages, lang, key, html);
-const link = (href: string, text: string) => `<a href="${escapeHtml(href)}">${escapeHtml(text)}</a>`;
+// Links lead off the page, so they open in a new tab.
+const link = (href: string, text: string) =>
+  `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text)}</a>`;
 ---
 
 <form class="atmo__login" id={`${id}-login`} method="post" action={`${base}/login`} data-login-form>
