@@ -73,5 +73,6 @@ If you change the field, say so in `CHANGELOG.md`, because sites may style or sc
 1. Bump `version` in `package.json` and add a dated section to `CHANGELOG.md` (say what changed for sites, and anything they need to do).
 2. Commit, tag `vX.Y.Z`, and push the commit and the tag.
 3. The maintainer publishes to npm (`npm publish`).
+4. Add a short, reader-friendly entry to the **Release notes** at the end of the [announcement post](https://saltedlolly.com/atmosphere-comments-for-astro/) on saltedlolly.com, and update the post if anything it describes has changed.
 
 Until 1.0, a release that changes how a site uses the package (an option's meaning, the markup sites style) bumps the middle number.
