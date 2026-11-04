@@ -87,5 +87,10 @@
   "posted.notHere": "It won't show on this page, but it's on Bluesky.",
   "postActions.replyAs": "Reply as {{handle}}",
   "postActions.quoteAs": "Quote as {{handle}}",
+  "follow.follow": "Follow {{handle}}",
+  "follow.following": "Following",
+  "follow.unfollow": "Unfollow",
+  "follow.followAs": "Follow {{handle}} as {{me}}",
+  "follow.followingLabel": "You follow {{handle}}. Press to unfollow.",
   "credit": "Powered by {{link}}"
 }

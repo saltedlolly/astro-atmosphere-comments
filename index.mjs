@@ -41,6 +41,7 @@ const ROUTES = {
   state: "state.ts",
   react: "react.ts",
   delete: "delete.ts",
+  follow: "follow.ts",
   post: "post.ts",
   media: "media.ts",
   typeahead: "typeahead.ts",

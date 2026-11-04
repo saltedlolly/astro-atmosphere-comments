@@ -12,6 +12,12 @@
 // saying who they're signed in as, with Sign out. Signed out, the element
 // stays empty (give it `hidden` so it takes no space).
 //
+// A link marked `data-atmosphere-follow="<DID>"` (and
+// `data-atmosphere-follow-handle="you.bsky.social"`), such as "Follow me on
+// Bluesky", becomes a Follow / Following button for signed-in readers; a
+// second press unfollows. The first follow asks for one more permission. Only
+// `allowedAuthors` can be followed through your site.
+//
 // Signed-in readers like and repost from your page. Anyone else who presses
 // Like or Repost is offered the sign-in form in an overlay, and the like or
 // repost is done once they're back. Only posts by the integration's
@@ -93,7 +99,7 @@ const { base } = settings;
       const status = dialog.querySelector<HTMLElement>("[data-dialog-status]")!;
       let signedIn = false;
       let handle = "";
-      let me: { handle?: string; displayName?: string; avatar?: string } = {};
+      let me: { did?: string; handle?: string; displayName?: string; avatar?: string } = {};
       // What the reader has liked or reposted, by post.
       const known: Record<string, { liked: boolean; reposted: boolean }> = {};
 
@@ -331,6 +337,91 @@ const { base } = settings;
         }
       };
 
+      // Follow buttons in place of links marked data-atmosphere-follow, for
+      // signed-in readers: "Follow @handle", then "Following" (which says
+      // "Unfollow" when pointed at, and unfollows on a second press).
+      const followButtons = new Map<string, { following: boolean; set: (on: boolean) => void; press: () => Promise<void> }>();
+      // Following isn't part of signing in: the first follow asks the
+      // reader's account host for it, then carries on when they're back.
+      const askFollowPermission = (subject: string) => {
+        const permit = Object.assign(document.createElement("form"), { method: "post", action: `${base}/login` });
+        permit.hidden = true;
+        const field = (name: string, value: string) =>
+          permit.append(Object.assign(document.createElement("input"), { type: "hidden", name, value }));
+        field("handle", me.did || me.handle || "");
+        field("permission", "follow");
+        field("returnTo", `${location.pathname}${location.search}#atmo-follow=${encodeURIComponent(subject)}`);
+        document.body.append(permit);
+        permit.submit();
+      };
+      const setUpFollow = async () => {
+        for (const link of document.querySelectorAll<HTMLElement>("[data-atmosphere-follow]")) {
+          const subject = link.dataset.atmosphereFollow!;
+          if (followButtons.has(subject) || link.nextElementSibling?.matches(".atmo-follow")) continue;
+          const who = link.dataset.atmosphereFollowHandle ? `@${link.dataset.atmosphereFollowHandle}` : t("comment.someone");
+          const button = make("button", "atmo-follow");
+          button.type = "button";
+          let following = false;
+          let pointing = false;
+          const render = () => {
+            button.setAttribute("aria-pressed", String(following));
+            button.textContent = following ? (pointing ? t("follow.unfollow") : `✓ ${t("follow.following")}`) : t("follow.follow", { handle: who });
+            button.title = following ? t("follow.followingLabel", { handle: who }) : t("follow.followAs", { handle: who, me: handle });
+            button.setAttribute("aria-label", button.title);
+          };
+          const set = (on: boolean) => {
+            following = on;
+            render();
+          };
+          for (const [event, on] of [["mouseenter", true], ["mouseleave", false], ["focus", true], ["blur", false]] as const) {
+            button.addEventListener(event, () => {
+              pointing = on;
+              render();
+            });
+          }
+          const press = async () => {
+            button.disabled = true;
+            try {
+              const response = await fetch(`${base}/follow`, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ subject, on: !following }),
+              });
+              const data = (await response.json().catch(() => ({}))) as { following?: boolean; error?: string };
+              if (response.ok) return set(!!data.following);
+              if (data.error === "needs-permission") return askFollowPermission(subject);
+              if (data.error === "signed-out" || data.error === "new-permissions") location.reload();
+            } finally {
+              button.disabled = false;
+            }
+          };
+          button.addEventListener("click", () => void press());
+          followButtons.set(subject, { get following() { return following; }, set, press });
+          render();
+          link.hidden = true;
+          link.after(button);
+          try {
+            const response = await fetch(`${base}/follow?subject=${encodeURIComponent(subject)}`, { credentials: "same-origin" });
+            if (response.ok) set(!!((await response.json()) as { following?: boolean }).following);
+          } catch {
+            // Shown as Follow; pressing it still works.
+          }
+        }
+      };
+
+      // Back from approving following: follow as they asked.
+      const finishPendingFollow = async () => {
+        const pending = location.hash.match(/^#atmo-follow=(.+)$/);
+        if (!pending) return;
+        const subject = decodeURIComponent(pending[1]);
+        const url = new URL(location.href);
+        if (!document.querySelector("atmosphere-comments")) url.searchParams.delete("atmosphere");
+        history.replaceState(history.state, "", `${url.pathname}${url.search}`);
+        const follow = followButtons.get(subject);
+        if (signedIn && follow && !follow.following) await follow.press();
+      };
+
       // Back from signing in: finish the like or repost they pressed.
       const finishPending = async () => {
         const pending = location.hash.match(/^#atmo-react=(like|repost):(.+)$/);
@@ -435,6 +526,10 @@ const { base } = settings;
           addActions();
           await loadState();
           await finishPending();
+          if (signedIn) {
+            await setUpFollow();
+            await finishPendingFollow();
+          }
         });
 
       // Posts that arrive later (a server island, say) get buttons too.
@@ -551,6 +646,34 @@ const { base } = settings;
 
   :global(:where(.atmo-post-action[data-kind="like"][aria-pressed="true"] svg)) {
     fill: currentColor;
+  }
+
+  /* Follow / Following, in place of a "Follow me" link. */
+  :global(:where(.atmo-follow)) {
+    padding: 7px 14px;
+    border: 1px solid var(--atmo-accent, #1185fe);
+    border-radius: 999px;
+    background: var(--atmo-accent, #1185fe);
+    color: var(--atmo-on-accent, #fff);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  :global(:where(.atmo-follow[aria-pressed="true"])) {
+    border-color: var(--atmo-border, #8886);
+    background: none;
+    color: var(--atmo-text, inherit);
+  }
+
+  :global(:where(.atmo-follow[aria-pressed="true"]:hover, .atmo-follow[aria-pressed="true"]:focus-visible)) {
+    border-color: var(--atmo-danger, #c0392b);
+    color: var(--atmo-danger, #c0392b);
+  }
+
+  :global(:where(.atmo-follow:disabled)) {
+    opacity: 0.6;
+    cursor: progress;
   }
 
   /* The signed-in reader's avatar and its menu. */

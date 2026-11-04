@@ -36,8 +36,12 @@ export const SCOPE = [
 // is only used on the reader's own comments under the site's posts.)
 export const DELETE_SCOPE = "repo:app.bsky.feed.post?action=delete";
 
+// Following (and unfollowing) the site's own accounts is asked for the same
+// way, the first time a reader presses Follow.
+export const FOLLOW_SCOPE = "repo:app.bsky.graph.follow?action=create&action=delete";
+
 // Everything the site may ask for, which its client metadata has to list.
-const ALL_SCOPES = `${SCOPE} ${DELETE_SCOPE}`;
+const ALL_SCOPES = `${SCOPE} ${DELETE_SCOPE} ${FOLLOW_SCOPE}`;
 
 const KEY_ID = "atmosphere-comments-1";
 

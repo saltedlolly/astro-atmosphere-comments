@@ -87,5 +87,10 @@
   "posted.notHere": "Hij verschijnt niet op deze pagina, maar staat wel op Bluesky.",
   "postActions.replyAs": "Reageren als {{handle}}",
   "postActions.quoteAs": "Citeren als {{handle}}",
+  "follow.follow": "{{handle}} volgen",
+  "follow.following": "Volgend",
+  "follow.unfollow": "Ontvolgen",
+  "follow.followAs": "{{handle}} volgen als {{me}}",
+  "follow.followingLabel": "Je volgt {{handle}}. Druk om te ontvolgen.",
   "credit": "Mogelijk gemaakt door {{link}}"
 }

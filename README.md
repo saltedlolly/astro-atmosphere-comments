@@ -20,7 +20,7 @@ See it on [saltedlolly.com](https://saltedlolly.com/2005/07/13/summer-jam-party-
 
 1. You announce each post on Bluesky (a post linking to it). That post's thread is the comment section.
 2. A reader signs in with **AT Protocol OAuth, straight to their own account host** (Bluesky's, for most people), which asks them to approve your site, named by its address (example.com). There is no third-party login service in between, and your site never sees a password.
-3. Your site asks only for what commenting needs: to create posts, to create and delete likes and reposts, and to see which posts the reader has already liked or reposted. Permission to delete posts is asked for separately, only the first time a reader deletes one of their comments on your site, and the site only ever uses it on their own comments under your posts. Readers can revoke it all at any time in their Bluesky settings.
+3. Your site asks only for what commenting needs: to create posts, to create and delete likes and reposts, and to see which posts the reader has already liked or reposted. Permission to delete posts is asked for separately, only the first time a reader deletes one of their comments on your site, and the site only ever uses it on their own comments under your posts. Permission to follow is asked for the same way, the first time a reader presses Follow, and only your own accounts can be followed through it. Readers can revoke it all at any time in their Bluesky settings.
 4. Your server keeps each reader's sign-in (a random cookie in their browser; their tokens on your server), and posts on their behalf when they press a button.
 
 Readers who'd rather not sign in can use the **Reply on Bluesky instead** link under the form.
@@ -108,6 +108,13 @@ import AtmosphereReactions from "astro-atmosphere-comments/AtmosphereReactions.a
 ```
 
 Each marked post gets a row of icons: Reply, Repost, Quote and Like, with counts for Repost and Like. Readers already signed in on your site like and repost straight away, and Reply and Quote open the comment box in an overlay (with the quote preview); what they post goes to Bluesky, not your page, and the overlay says so with a link to it. Anyone else is offered the sign-in form in an overlay when they press Like or Repost (their like or repost is done when they come back), and Reply and Quote open the post on Bluesky. It works with posts from loaders such as [`@ascorbic/bluesky-loader`](https://www.npmjs.com/package/@ascorbic/bluesky-loader) or embeds such as [`@astro-community/astro-embed-bluesky`](https://www.npmjs.com/package/@astro-community/astro-embed-bluesky) (wrap the embed in the marked element). Only posts by your `allowedAuthors` can be liked or reposted through your site.
+
+A "follow me" link can become a **Follow** button for signed-in readers: mark it with the account's DID and handle. It shows "Following" once they do, and a second press unfollows. The first follow asks the reader's account host for one more permission. Only your `allowedAuthors` can be followed through your site.
+
+```astro
+<a href="https://bsky.app/profile/you.bsky.social"
+   data-atmosphere-follow="did:plc:…" data-atmosphere-follow-handle="you.bsky.social">Follow me on Bluesky</a>
+```
 
 So readers can see which account they're using, `AtmosphereReactions` also fills any element marked `data-atmosphere-account` (in your header, say) with the signed-in reader's avatar. Clicking it opens a small menu: "Signed in as @handle" and Sign out. When nobody's signed in it stays empty, so give it `hidden`:
 

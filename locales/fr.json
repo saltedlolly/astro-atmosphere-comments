@@ -90,5 +90,10 @@
   "posted.notHere": "Elle ne s'affichera pas sur cette page, mais elle est sur Bluesky.",
   "postActions.replyAs": "Répondre en tant que {{handle}}",
   "postActions.quoteAs": "Citer en tant que {{handle}}",
+  "follow.follow": "Suivre {{handle}}",
+  "follow.following": "Abonné",
+  "follow.unfollow": "Se désabonner",
+  "follow.followAs": "Suivre {{handle}} en tant que {{me}}",
+  "follow.followingLabel": "Tu suis {{handle}}. Appuie pour te désabonner.",
   "credit": "Propulsé par {{link}}"
 }

@@ -84,5 +84,10 @@
   "posted.notHere": "このページには表示されませんが、Blueskyに投稿されています。",
   "postActions.replyAs": "{{handle}}として返信",
   "postActions.quoteAs": "{{handle}}として引用",
+  "follow.follow": "{{handle}}をフォロー",
+  "follow.following": "フォロー中",
+  "follow.unfollow": "フォロー解除",
+  "follow.followAs": "{{me}}として{{handle}}をフォロー",
+  "follow.followingLabel": "{{handle}}をフォローしています。押すとフォローを解除します。",
   "credit": "{{link}}で動作しています"
 }
