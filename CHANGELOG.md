@@ -4,6 +4,7 @@
 
 - **`AtmosphereReactions`:** likes and reposts on your other Bluesky posts (a feed of your latest posts, say). Mark each post with `data-atmosphere-post` (and its bsky.app address and counts) and put the component once in your layout: each post gets Reply and Quote (opening it on Bluesky), and Repost and Like with counts. Readers who aren't signed in get the sign-in form in an overlay, and their like or repost is done once they're back. Only posts by `allowedAuthors` can be liked or reposted.
 - **Which account you're using:** `AtmosphereReactions` fills any element marked `data-atmosphere-account` with the signed-in reader's avatar, opening a menu with "Signed in as @handle" and Sign out.
+- The Like and Repost buttons say whose account they use ("Like as @handle") when the reader is signed in.
 - The sign-in form is now its own component (`SignInForm.astro`), shared by the comments and the overlay; nothing changes for sites.
 - New wording keys for the overlay and the post actions, in all eight languages.
 

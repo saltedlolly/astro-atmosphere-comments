@@ -78,6 +78,8 @@
   "postActions.quoteLabel": "Cita su Bluesky",
   "postActions.likeLabel": "Metti mi piace a questo post",
   "postActions.repostLabel": "Ripubblica questo post",
+  "postActions.likeAs": "Metti mi piace come {{handle}}",
+  "postActions.repostAs": "Ripubblica come {{handle}}",
   "dialog.heading": "Accedi per mettere mi piace o ripubblicare",
   "dialog.close": "Chiudi",
   "account.signedInAs": "Accesso effettuato come {{handle}}",

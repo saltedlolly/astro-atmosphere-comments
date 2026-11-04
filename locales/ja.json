@@ -72,6 +72,8 @@
   "postActions.quoteLabel": "Blueskyで引用",
   "postActions.likeLabel": "この投稿にいいね",
   "postActions.repostLabel": "この投稿をリポスト",
+  "postActions.likeAs": "{{handle}}としていいね",
+  "postActions.repostAs": "{{handle}}としてリポスト",
   "dialog.heading": "ログインしていいねやリポストをする",
   "dialog.close": "閉じる",
   "account.signedInAs": "{{handle}}としてログイン中",

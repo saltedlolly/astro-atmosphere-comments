@@ -78,6 +78,8 @@
   "postActions.quoteLabel": "Citar en Bluesky",
   "postActions.likeLabel": "Dar me gusta a esta publicación",
   "postActions.repostLabel": "Compartir esta publicación",
+  "postActions.likeAs": "Dar me gusta como {{handle}}",
+  "postActions.repostAs": "Compartir como {{handle}}",
   "dialog.heading": "Inicia sesión para dar me gusta o compartir",
   "dialog.close": "Cerrar",
   "account.signedInAs": "Sesión iniciada como {{handle}}",

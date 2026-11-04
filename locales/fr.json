@@ -78,6 +78,8 @@
   "postActions.quoteLabel": "Citer sur Bluesky",
   "postActions.likeLabel": "Aimer cette publication",
   "postActions.repostLabel": "Republier cette publication",
+  "postActions.likeAs": "Aimer en tant que {{handle}}",
+  "postActions.repostAs": "Republier en tant que {{handle}}",
   "dialog.heading": "Connecte-toi pour aimer ou republier",
   "dialog.close": "Fermer",
   "account.signedInAs": "Connecté en tant que {{handle}}",

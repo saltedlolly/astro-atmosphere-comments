@@ -78,6 +78,8 @@
   "postActions.quoteLabel": "Citar no Bluesky",
   "postActions.likeLabel": "Curtir esta publicação",
   "postActions.repostLabel": "Repostar esta publicação",
+  "postActions.likeAs": "Curtir como {{handle}}",
+  "postActions.repostAs": "Repostar como {{handle}}",
   "dialog.heading": "Entre para curtir ou repostar",
   "dialog.close": "Fechar",
   "account.signedInAs": "Conectado como {{handle}}",

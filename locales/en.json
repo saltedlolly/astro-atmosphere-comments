@@ -75,6 +75,8 @@
   "postActions.quoteLabel": "Quote on Bluesky",
   "postActions.likeLabel": "Like this post",
   "postActions.repostLabel": "Repost this post",
+  "postActions.likeAs": "Like as {{handle}}",
+  "postActions.repostAs": "Repost as {{handle}}",
   "dialog.heading": "Sign in to like or repost",
   "dialog.close": "Close",
   "account.signedInAs": "Signed in as {{handle}}",

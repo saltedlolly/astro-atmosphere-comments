@@ -70,6 +70,7 @@ const { base } = settings;
       const form = dialog.querySelector<HTMLFormElement>("[data-login-form]")!;
       const status = dialog.querySelector<HTMLElement>("[data-dialog-status]")!;
       let signedIn = false;
+      let handle = "";
       // What the reader has liked or reposted, by post.
       const known: Record<string, { liked: boolean; reposted: boolean }> = {};
 
@@ -128,6 +129,7 @@ const { base } = settings;
           setCount(button, before);
           if (data.error === "signed-out" || data.error === "new-permissions") {
             signedIn = false;
+            labelButton(button, kind);
             askToSignIn(kind, uri, t(data.error === "signed-out" ? "messages.signedOut" : "messages.newPermissions"));
           }
         } catch {
@@ -136,12 +138,20 @@ const { base } = settings;
         }
       };
 
+      // "Like as @handle" when signed in (so readers know which account),
+      // "Like this post" otherwise; the same for screen readers.
+      const labelButton = (button: HTMLElement, kind: Kind) => {
+        button.title = signedIn && handle
+          ? t(kind === "like" ? "postActions.likeAs" : "postActions.repostAs", { handle })
+          : t(kind === "like" ? "postActions.likeLabel" : "postActions.repostLabel");
+        button.setAttribute("aria-label", button.title);
+      };
+
       const reactButton = (post: HTMLElement, kind: Kind) => {
         const button = make("button", "atmo-post-action");
         button.type = "button";
         button.dataset.kind = kind;
-        button.title = t(kind === "like" ? "postActions.likeLabel" : "postActions.repostLabel");
-        button.setAttribute("aria-label", button.title);
+        labelButton(button, kind);
         const seen = known[post.dataset.atmospherePost!];
         button.setAttribute("aria-pressed", String(!!(kind === "like" ? seen?.liked : seen?.reposted)));
         button.innerHTML = `${icon(kind === "like" ? HEART : ARROWS)}<span></span>`;
@@ -292,7 +302,12 @@ const { base } = settings;
         .then((response) => response.json())
         .then((me: { signedIn?: boolean; handle?: string; displayName?: string; avatar?: string }) => {
           signedIn = !!me.signedIn;
+          handle = me.handle ? `@${me.handle}` : "";
           if (signedIn) showAccount(me);
+          // Buttons added before we knew get the signed-in wording too.
+          for (const button of document.querySelectorAll<HTMLElement>(".atmo-post-action[data-kind='like'], .atmo-post-action[data-kind='repost']")) {
+            labelButton(button, button.dataset.kind as Kind);
+          }
         })
         .catch(() => undefined)
         .finally(async () => {
