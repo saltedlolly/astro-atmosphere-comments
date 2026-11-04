@@ -121,6 +121,15 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       </button>
     </div>
 
+    {/* Signed in only to like and repost: posting needs one more permission. */}
+    <div class="atmo__permission" data-permission hidden>
+      <p>{t("composer.needsPermission")}</p>
+      <div class="atmo__row">
+        <button type="button" class="atmo__button" data-permission-continue>{t("comment.continue")}</button>
+        <button type="button" class="atmo__link-button" data-permission-sign-out>{t("composer.signOut")}</button>
+      </div>
+    </div>
+
     <Composer id="atmo" messages={messages} lang={lang} signOut />
   </div>
 
@@ -143,6 +152,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   import { translate } from "../lib/translate";
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
   import { MAX, quotePreview, setUpComposer, type ComposerBehaviour, type Posted } from "../lib/client/composer";
+  import { handleSignInForm, me as whoIsSignedIn, send, signIn, signOut, state } from "../lib/client/account";
+  import type { Permission } from "../lib/permissions";
+  import { authorOf } from "../lib/uris";
 
 
   // The error and status codes the routes and the sign-in round trip send,
@@ -155,7 +167,6 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     "signed-out": "messages.signedOut",
     "needs-permission": "messages.needsPermission",
     "not-allowed": "messages.notAllowed",
-    "new-permissions": "messages.newPermissions",
     "too-long": "messages.tooLong",
     "too-many": "messages.tooMany",
     error: "messages.error",
@@ -177,23 +188,22 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const signedOut = $<HTMLElement>("[data-view='signed-out']");
       const signedIn = $<HTMLElement>("[data-view='signed-in']");
       const composer = $<HTMLFormElement>("[data-composer]");
+      const permissionPanel = $<HTMLElement>("[data-permission]");
       // A clean copy of the comment box, for reply boxes under comments.
       const template = composer.cloneNode(true) as HTMLFormElement;
       const loginForm = $<HTMLFormElement>("[data-login-form]");
       const status = $<HTMLElement>("[data-status]");
       let isSignedIn = false;
-      let me: { did?: string; handle?: string; displayName?: string; avatar?: string } = {};
+      let me: { did?: string; handle?: string; displayName?: string; avatar?: string; can?: string[] } = {};
+      const can = (permission: Permission) => !!me.can?.includes(permission);
       // What the main box is doing: a comment on the post, or a quote post.
       let mainMode: "comment" | "quote" = "comment";
 
       const say = (message: string) => (status.textContent = message);
-      const send = (path: string, body: unknown) =>
-        fetch(`${base}/${path}`, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
-        });
+      // Sends the reader to their account host for one more permission,
+      // coming back to `hash` on this page (to finish what they asked).
+      const askPermission = (permission: Permission, hash = "#atmosphere-comments") =>
+        signIn(me.did!, { permissions: [permission], returnTo: `${location.pathname}${location.search}${hash}`, lang });
       // Elements this script creates get the component's marker attribute, so
       // Astro's scoped styles still reach them.
       const scoped = <T extends HTMLElement>(element: T): T => {
@@ -385,6 +395,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const openLogin = () => loginForm.querySelector("input")?.focus({ preventScroll: true });
 
       enhanceHandleBox(loginForm, base);
+      handleSignInForm(loginForm, lang);
 
       // An avatar picture, or the name's first letter if there isn't one.
       const setAvatar = (slot: HTMLElement, name: string, src?: string) => {
@@ -395,8 +406,10 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         img.onload = () => slot.replaceChildren(img);
       };
 
-      const handleError = (error: string, tell: (message: string) => void = say) => {
-        if (error === "signed-out" || error === "new-permissions") void show(false);
+      const handleError = (error: string, tell: (message: string) => void = say, permission?: string) => {
+        if (error === "signed-out") void show(false);
+        // The page checks before it starts, so this is rare: ask now.
+        if (error === "needs-permission" && (permission === "post" || permission === "react")) return void askPermission(permission);
         tell(message(error));
       };
 
@@ -453,6 +466,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         main.textarea.focus();
       });
       $<HTMLButtonElement>("[data-quote]").addEventListener("click", () => {
+        if (!can("post")) return void askPermission("post");
         setMainMode("quote");
         main.textarea.focus();
       });
@@ -537,7 +551,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           } catch (problem) {
             button.setAttribute("aria-pressed", String(!on));
             setCount(before);
-            handleError((problem as { error?: string })?.error ?? "error");
+            const { error, permission } = (problem ?? {}) as { error?: string; permission?: string };
+            handleError(error ?? "error", say, permission);
           }
         });
         return button;
@@ -559,6 +574,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           reply.setAttribute("aria-label", t("comment.replyTo", { name: author }));
           reply.addEventListener("click", () => {
             if (!isSignedIn) return signInFirst(t("signInFirst.reply"));
+            if (!can("post")) return void askPermission("post");
             openReply(comment, author);
           });
           actions.append(reply, commentButton("like", comment), commentButton("repost", comment));
@@ -595,25 +611,67 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // Deleting posts isn't part of signing in, so the first delete asks the
       // reader's account host for it, then carries on when they come back.
       const askDeletePermission = (comment: HTMLElement, panel: HTMLElement) => {
-        const form = Object.assign(document.createElement("form"), { method: "post", action: `${base}/login` });
-        const field = (name: string, value: string) =>
-          form.append(Object.assign(document.createElement("input"), { type: "hidden", name, value }));
-        field("handle", me.did!);
-        field("permission", "delete");
-        field("returnTo", `${location.pathname}#atmo-delete=${encodeURIComponent(comment.dataset.atmosphereUri!)}`);
-        const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.continue")), { type: "submit" });
+        const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.continue")), { type: "button" });
         const cancel = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
+        go.addEventListener("click", () => void askPermission("delete", `#atmo-delete=${encodeURIComponent(comment.dataset.atmosphereUri!)}`));
         cancel.addEventListener("click", () => panel.remove());
-        form.append(go, cancel);
-        panel.replaceChildren(
-          make(
-            "span",
-            "atmo-comment-delete__text",
-            t("comment.deletePermission"),
-          ),
-          form,
-        );
+        panel.replaceChildren(make("span", "atmo-comment-delete__text", t("comment.deletePermission")), go, cancel);
         go.focus();
+      };
+
+      // Hide, for the announcement's own author: hides a comment here and on
+      // Bluesky. Showing it again is done in the Bluesky app.
+      const isOwner = () => !!me.did && !!post && authorOf(post) === me.did;
+
+      const hideComment = async (comment: HTMLElement, panel: HTMLElement) => {
+        const uri = comment.dataset.atmosphereUri!;
+        panel.replaceChildren(make("span", "atmo-comment-delete__text", t("comment.hiding")));
+        try {
+          const response = await send("hide", { post: uri, root: post });
+          const data = (await response.json()) as { error?: string };
+          if (response.ok) {
+            comment.remove();
+            say(t("comment.hidden"));
+            this.dispatchEvent(new CustomEvent("atmosphere:hidden", { detail: { uri }, bubbles: true }));
+            return;
+          }
+          if (data.error === "needs-permission") {
+            const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.continue")), { type: "button" });
+            const cancel = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
+            go.addEventListener("click", () => void askPermission("moderate", `#atmo-hide=${encodeURIComponent(uri)}`));
+            cancel.addEventListener("click", () => panel.remove());
+            panel.replaceChildren(make("span", "atmo-comment-delete__text", t("comment.hidePermission")), go, cancel);
+            return go.focus();
+          }
+          panel.remove();
+          handleError(data.error ?? "error");
+        } catch {
+          panel.remove();
+          say(message("error"));
+        }
+      };
+
+      const hideButton = (comment: HTMLElement) => {
+        const button = Object.assign(make("button", "atmo-comment-action atmo-comment-action--hide", t("comment.hide")), { type: "button" });
+        button.setAttribute("aria-label", t("comment.hideLabel"));
+        button.addEventListener("click", () => {
+          const actions = button.parentElement!;
+          if (actions.nextElementSibling?.matches(".atmo-comment-delete")) return;
+          const panel = make("div", "atmo-comment-delete");
+          const yes = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.hide")), { type: "button" });
+          const no = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
+          yes.addEventListener("click", () => hideComment(comment, panel));
+          no.addEventListener("click", () => {
+            panel.remove();
+            button.focus();
+          });
+          panel.append(make("span", "atmo-comment-delete__text", t("comment.hideConfirm")), yes, no);
+          panel.setAttribute("role", "group");
+          panel.setAttribute("aria-label", t("comment.hideLabel"));
+          actions.after(panel);
+          no.focus();
+        });
+        return button;
       };
 
       const deleteButton = (comment: HTMLElement) => {
@@ -642,8 +700,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const addDeleteButtons = () => {
         document.querySelectorAll<HTMLElement>("[data-atmosphere-uri]").forEach((comment) => {
           const actions = comment.querySelector<HTMLElement>(":scope .atmo-comment-actions");
-          if (!actions || actions.querySelector(".atmo-comment-action--delete")) return;
+          if (!actions || actions.querySelector(".atmo-comment-action--delete, .atmo-comment-action--hide")) return;
           if (isSignedIn && isMine(comment)) actions.append(deleteButton(comment));
+          else if (isSignedIn && isOwner()) actions.append(hideButton(comment));
         });
       };
 
@@ -653,14 +712,13 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         const comments = [...document.querySelectorAll<HTMLElement>("[data-atmosphere-uri]")];
         const uris = [post, ...comments.map((comment) => comment.dataset.atmosphereUri!)];
         try {
-          const query = uris.map((uri) => `post=${encodeURIComponent(uri)}`).join("&");
-          const response = await fetch(`${base}/state?${query}`, { credentials: "same-origin" });
-          const state = (await response.json()) as {
+          const response = await state(uris);
+          const found = (await response.json()) as {
             error?: string;
             posts?: Record<string, { liked: boolean; reposted: boolean }>;
           };
-          if (!response.ok) return handleError(state.error ?? "error");
-          const posts = state.posts ?? {};
+          if (!response.ok) return handleError(found.error ?? "error");
+          const posts = found.posts ?? {};
           known = { ...known, ...posts };
           setPressed("like", !!posts[post]?.liked);
           setPressed("repost", !!posts[post]?.reposted);
@@ -689,11 +747,30 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         signedOut.hidden = signed;
         signedIn.hidden = !signed;
         if (!signed) {
-          document.querySelectorAll(".atmo-comment-action--delete, .atmo-comment-delete").forEach((part) => part.remove());
+          document.querySelectorAll(".atmo-comment-action--delete, .atmo-comment-action--hide, .atmo-comment-delete").forEach((part) => part.remove());
           return closeReplies();
         }
+        // Signed in only to like and repost (from another page's overlay):
+        // posting needs one more permission, asked for before they type.
+        composer.hidden = !can("post");
+        permissionPanel.hidden = can("post");
         addCommentActions();
+        addDeleteButtons();
         await loadState();
+        // Back from approving the hide permission: hide the comment they chose.
+        const pendingHide = location.hash.match(/^#atmo-hide=(.+)$/);
+        if (pendingHide) {
+          history.replaceState(history.state, "", `${location.pathname}${location.search}#atmosphere-comments`);
+          const uri = decodeURIComponent(pendingHide[1]);
+          const comment = document.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(uri)}"]`);
+          const actions = comment?.querySelector<HTMLElement>(":scope .atmo-comment-actions");
+          if (comment && actions && isOwner()) {
+            const panel = make("div", "atmo-comment-delete");
+            actions.after(panel);
+            comment.scrollIntoView({ block: "center" });
+            await hideComment(comment, panel);
+          }
+        }
         // Back from approving the delete permission: finish the delete they asked for.
         const pending = location.hash.match(/^#atmo-delete=(.+)$/);
         if (pending) {
@@ -720,11 +797,10 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       }
 
       this.classList.add("is-loading");
-      fetch(`${base}/me`, { credentials: "same-origin" })
-        .then((response) => response.json())
-        .then((found: { signedIn: boolean; did?: string; handle?: string; displayName?: string; avatar?: string }) => {
+      whoIsSignedIn()
+        .then((found) => {
           me = found;
-          return show(found.signedIn, found.handle, found.displayName, found.avatar);
+          return found.signedIn ? show(true, found.handle, found.displayName, found.avatar) : show(false);
         })
         .catch(() => show(false))
         .finally(() => {
@@ -751,7 +827,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             const response = await send("react", { post, kind, on });
             if (!response.ok) {
               setPressed(kind, !on);
-              return handleError((await response.json()).error);
+              const { error, permission } = (await response.json()) as { error?: string; permission?: string };
+              return handleError(error ?? "error", say, permission);
             }
             say(t(on ? (kind === "like" ? "status.liked" : "status.reposted") : kind === "like" ? "status.likeRemoved" : "status.repostRemoved"));
             showReaction(kind, on);
@@ -768,12 +845,16 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         });
       }
 
-      $<HTMLButtonElement>("[data-sign-out]").addEventListener("click", async () => {
-        await fetch(`${base}/logout`, { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+      const signOutHere = async () => {
+        await signOut();
+        me = {};
         void show(false);
         setMainMode("comment");
         say(t("status.signedOut"));
-      });
+      };
+      $<HTMLButtonElement>("[data-sign-out]").addEventListener("click", signOutHere);
+      $<HTMLButtonElement>("[data-permission-sign-out]").addEventListener("click", signOutHere);
+      $<HTMLButtonElement>("[data-permission-continue]").addEventListener("click", () => void askPermission("post"));
     }
   }
 

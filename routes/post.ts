@@ -5,7 +5,7 @@ import type { APIRoute } from "astro";
 import { json } from "../lib/http";
 import { publicProfile } from "../lib/profile";
 import { quotedPost } from "../lib/quoted";
-import { isSitePost } from "../lib/reader";
+import { isSitePost } from "../lib/uris";
 import settings from "../lib/settings";
 
 export const GET: APIRoute = async ({ url }) => {

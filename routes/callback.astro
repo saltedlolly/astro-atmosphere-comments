@@ -1,0 +1,42 @@
+---
+// Where a reader's account host sends them back after they approve (or
+// decline) signing in. The browser finishes signing in here, keeping the
+// sign-in in its own storage, then goes back to the page the reader was on
+// (lib/client/account.ts). The approval arrives in the address's #fragment,
+// which browsers never send to the server.
+import settings from "../lib/settings";
+import { messagesFor, pickLocale, translate } from "../lib/i18n";
+
+const lang = pickLocale(undefined, settings.locale, Astro.currentLocale);
+const t = (key: string) => translate(messagesFor(lang, settings.messages), lang, key);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="referrer" content="no-referrer" />
+    <title>{t("callback.signingIn")}</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+        font: 1rem/1.5 system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <p role="status">{t("callback.signingIn")}</p>
+    <script>
+      import { finishSignIn } from "../lib/client/account";
+      void finishSignIn();
+    </script>
+  </body>
+</html>

@@ -65,9 +65,8 @@
   "messages.accountNotFound": "We konden dat account niet vinden. Controleer de handle en probeer het opnieuw.",
   "messages.invalidHandle": "Dat lijkt geen handle. Meestal is het zoiets als alice.bsky.social.",
   "messages.signedOut": "Je bent uitgelogd. Log opnieuw in.",
-  "messages.needsPermission": "Om hier reacties te verwijderen, heeft deze site nog één toestemming van je account nodig.",
+  "messages.needsPermission": "Daarvoor is nog één toestemming van je account nodig.",
   "messages.notAllowed": "Dat kan hier niet.",
-  "messages.newPermissions": "Deze site kan nu ook voor je liken en reposten en heeft daarom opnieuw je toestemming nodig. Log opnieuw in.",
   "messages.tooLong": "Berichten mogen maximaal {{max}} tekens lang zijn.",
   "messages.tooMany": "Je gaat wel snel. Wacht een minuut en probeer het opnieuw.",
   "messages.error": "Dat is niet gelukt. Probeer het opnieuw.",
@@ -91,5 +90,15 @@
   "follow.following": "Volgend",
   "follow.followAs": "{{handle}} volgen als {{me}}",
   "follow.followingLabel": "Je volgt {{handle}}",
-  "credit": "Mogelijk gemaakt door {{link}}"
+  "credit": "Mogelijk gemaakt door {{link}}",
+  "callback.signingIn": "Bezig met inloggen…",
+  "signIn.access": "Je login blijft in deze browser: de server van deze site ziet hem nooit en kan niet namens jou posten, en uitloggen trekt hem in.",
+  "signIn.policy": "Hoe deze site met je gegevens omgaat",
+  "composer.needsPermission": "Om hier te reageren, heeft deze site nog één toestemming van je account nodig.",
+  "comment.hide": "Verbergen",
+  "comment.hideLabel": "Deze reactie verbergen",
+  "comment.hideConfirm": "Deze reactie hier en op Bluesky verbergen? Je kunt hem in de Bluesky-app weer tonen.",
+  "comment.hiding": "Verbergen…",
+  "comment.hidden": "Reactie verborgen.",
+  "comment.hidePermission": "Om hier reacties te verbergen, heeft deze site nog één toestemming van je account nodig. Je kunt ze ook in de Bluesky-app verbergen."
 }

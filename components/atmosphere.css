@@ -610,3 +610,16 @@ dialog.atmo:not([open]) {
 .atmo-comment-action[data-kind="like"][aria-pressed="true"] svg {
   fill: currentColor;
 }
+
+/* "One more permission" under posts, for readers who signed in only to like
+   and repost. */
+.atmo__permission {
+  display: grid;
+  gap: 8px;
+  max-width: 560px;
+  margin-top: 14px;
+}
+
+.atmo__permission p {
+  margin: 0;
+}

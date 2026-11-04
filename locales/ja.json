@@ -62,9 +62,8 @@
   "messages.accountNotFound": "そのアカウントが見つかりませんでした。ハンドルを確認して、もう一度お試しください。",
   "messages.invalidHandle": "ハンドルではないようです。通常は alice.bsky.social のような形式です。",
   "messages.signedOut": "ログアウトされました。もう一度ログインしてください。",
-  "messages.needsPermission": "ここでコメントを削除するには、このサイトにアカウントからの許可がもうひとつ必要です。",
+  "messages.needsPermission": "それにはアカウントからの許可がもうひとつ必要です。",
   "messages.notAllowed": "ここではその操作はできません。",
-  "messages.newPermissions": "このサイトはいいねとリポストもできるようになったため、改めて許可が必要です。もう一度ログインしてください。",
   "messages.tooLong": "投稿は{{max}}文字までです。",
   "messages.tooMany": "操作が早すぎます。1分待ってから、もう一度お試しください。",
   "messages.error": "うまくいきませんでした。もう一度お試しください。",
@@ -88,5 +87,15 @@
   "follow.following": "フォロー中",
   "follow.followAs": "{{me}}として{{handle}}をフォロー",
   "follow.followingLabel": "{{handle}}をフォローしています",
-  "credit": "{{link}}で動作しています"
+  "credit": "{{link}}で動作しています",
+  "callback.signingIn": "ログインしています…",
+  "signIn.access": "ログイン情報はこのブラウザの中だけに保存されます。このサイトのサーバーがそれを見ることはなく、あなたの代わりに投稿することもできません。ログアウトすると取り消されます。",
+  "signIn.policy": "このサイトでのデータの取り扱い",
+  "composer.needsPermission": "ここでコメントするには、このサイトにアカウントからの許可がもうひとつ必要です。",
+  "comment.hide": "非表示",
+  "comment.hideLabel": "このコメントを非表示にする",
+  "comment.hideConfirm": "このコメントをこことBlueskyで非表示にしますか？Blueskyのアプリで再表示できます。",
+  "comment.hiding": "非表示にしています…",
+  "comment.hidden": "コメントを非表示にしました。",
+  "comment.hidePermission": "ここでコメントを非表示にするには、このサイトにアカウントからの許可がもうひとつ必要です。Blueskyのアプリでも非表示にできます。"
 }

@@ -4,44 +4,39 @@
 // replies to the post's announcement, written to the reader's own account, so
 // they can delete them there at any time.
 //
-// Sign-in uses AT Protocol OAuth straight to the reader's own account host:
-// no third-party login service is involved. This site only ever holds a
-// grant to create posts and to create and delete likes and reposts, plus, if
-// a reader allows it when they first delete a comment, to delete posts (see
-// SCOPE and DELETE_SCOPE in lib/oauth.ts).
+// Sign-in uses AT Protocol OAuth straight to the reader's own account host,
+// as a browser client: the sign-in is kept only in the reader's browser, and
+// the site's server never sees it, so the server can't act for anyone.
+// Signing out cancels it at the reader's host. See lib/client/account.ts.
 //
 // It adds /oauth-client-metadata.json at the site's root (what account hosts
-// read to know the site), and these routes under `base` (default /atmosphere):
-//   jwks.json                        the public half of the site's signing key
-//   login (POST)                     starts sign-in with the reader's handle
-//   callback                         where the reader's host sends them back
-//   logout (POST)                    signs out and revokes the site's grant
-//   me                               who's signed in (for the comment box)
-//   comment (POST)                   posts a comment (or quote post) as the reader
-//   state                            whether the reader has liked or reposted
-//   react (POST)                     likes or reposts, or undoes that
-//   post                             the announcement, for the Quote preview
-//   media                            avatars and link-card pictures, via this site
-//   typeahead                        @mention suggestions as the reader types
-//   thread                           the comments, likes and reposts to show
-// and a component, AtmosphereComments.astro, to put under each post.
+// read to know the site), and these routes under `base` (default /atmosphere),
+// none of which act for a reader:
+//   callback       the page readers come back to after approving
+//   identity       looks up an account for signing in
+//   profile        a reader's public profile, for the comment box
+//   richtext       links, @mentions and #hashtags in a comment, before it's posted
+//   following      whether an account follows one of the site's accounts
+//   post           the announcement, for the Quote preview
+//   media          avatars and link-card pictures, via this site
+//   typeahead      account suggestions as the reader types
+//   thread         the comments, likes and reposts to show
+// and two components: AtmosphereComments.astro under each post, and
+// AtmosphereReactions.astro once in the layout.
 //
 // It needs an on-demand (server) adapter such as @astrojs/node.
 import { fileURLToPath } from "node:url";
 
 const VIRTUAL_ID = "virtual:atmosphere-comments/settings";
+// The settings that are safe for readers' browsers (lib/public-settings.ts).
+const PUBLIC_ID = "virtual:atmosphere-comments/public-settings";
 
 const ROUTES = {
-  "jwks.json": "jwks.json.ts",
-  login: "login.ts",
-  callback: "callback.ts",
-  logout: "logout.ts",
-  me: "me.ts",
-  comment: "comment.ts",
-  state: "state.ts",
-  react: "react.ts",
-  delete: "delete.ts",
-  follow: "follow.ts",
+  callback: "callback.astro",
+  identity: "identity.ts",
+  profile: "profile.ts",
+  richtext: "richtext.ts",
+  following: "following.ts",
   post: "post.ts",
   media: "media.ts",
   typeahead: "typeahead.ts",
@@ -102,14 +97,29 @@ export default function atmosphereComments(options) {
           });
         }
 
-        // The routes and component read the settings from a virtual module.
+        const publicSettings = {
+          clientName: settings.clientName,
+          allowedAuthors,
+          base,
+          site: settings.site,
+          logoUri: settings.logoUri,
+          policyUri: settings.policyUri,
+          tosUri: settings.tosUri,
+        };
+
+        // The routes and components read the settings from virtual modules.
         updateConfig({
           vite: {
             plugins: [
               {
                 name: "atmosphere-comments-settings",
-                resolveId: (id) => (id === VIRTUAL_ID ? `\0${VIRTUAL_ID}` : undefined),
-                load: (id) => (id === `\0${VIRTUAL_ID}` ? `export default ${JSON.stringify(settings)};` : undefined),
+                resolveId: (id) => (id === VIRTUAL_ID || id === PUBLIC_ID ? `\0${id}` : undefined),
+                load: (id) =>
+                  id === `\0${VIRTUAL_ID}`
+                    ? `export default ${JSON.stringify(settings)};`
+                    : id === `\0${PUBLIC_ID}`
+                      ? `export default ${JSON.stringify(publicSettings)};`
+                      : undefined,
               },
             ],
           },

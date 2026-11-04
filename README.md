@@ -10,6 +10,8 @@ Under each post, readers type their Bluesky handle (or that of any other [Atmosp
 - **@mention** people, with suggestions as they type;
 - **delete** their own comments.
 
+And signed in as one of your own accounts, you can **hide** comments under your posts, here and on Bluesky.
+
 Everything they post is written to **their own account**, as ordinary Bluesky posts, likes and reposts: comments are replies to your post's announcement on Bluesky. They can delete them in any Bluesky app, and people who prefer the app can reply there instead; it all shows up on your page the same way.
 
 The component also **shows the thread**: who liked and reposted your post, and the comments, nested, with their own Reply, Like and Repost.
@@ -20,17 +22,17 @@ See it on [saltedlolly.com](https://saltedlolly.com/2005/07/13/summer-jam-party-
 
 1. You announce each post on Bluesky (a post linking to it). That post's thread is the comment section.
 2. A reader signs in with **AT Protocol OAuth, straight to their own account host** (Bluesky's, for most people), which asks them to approve your site, named by its address (example.com). There is no third-party login service in between, and your site never sees a password.
-3. Your site asks only for what commenting needs: to create posts, to create and delete likes and reposts, and to see which posts the reader has already liked or reposted. Permission to delete posts is asked for separately, only the first time a reader deletes one of their comments on your site, and the site only ever uses it on their own comments under your posts. Permission to follow is asked for the same way, the first time a reader presses Follow, and only your own accounts can be followed through it. Readers can revoke it all at any time in their Bluesky settings.
-4. Your server keeps each reader's sign-in (a random cookie in their browser; their tokens on your server), and posts on their behalf when they press a button.
+3. **The sign-in stays in the reader's browser.** Your server never sees it: comments, likes and reposts go from the reader's browser straight to their own account host. So your server has no way to post for anyone, a copy of your server's files holds nothing about your readers, and when a reader signs out, the sign-in is cancelled at their host and deleted from their browser. That's it: nothing is left anywhere.
+4. Your site asks only for what the reader uses, when they first use it: signing in under a post asks to create posts and to like and repost; signing in to like a post elsewhere on your site asks only to like and repost. Deleting their comments, following your accounts and (for your own accounts) hiding comments are each asked for the first time they're used. Each is used only on your posts and the comments under them. Readers can see and cancel it all at their account host.
 
 Readers who'd rather not sign in can use the **Reply on Bluesky instead** link under the form.
 
-Images (avatars, link-card pictures) and account searches (the suggestions under the sign-in box and for @mentions) go through your server, so readers' browsers never contact Bluesky directly.
+Images (avatars, link-card pictures), account searches (the suggestions under the sign-in box and for @mentions) and account lookups when signing in go through your server, so readers' browsers contact only their own account host, never Bluesky's other servers.
 
 ## Requirements
 
 - **Astro 7** with an on-demand (server) adapter, such as [`@astrojs/node`](https://docs.astro.build/en/guides/integrations-guide/node/). The pages themselves can stay static; the integration adds a few server routes.
-- **Node 20.19 or later**, with a **disk that persists** between deploys and restarts: sign-ins are stored as files. (Serverless hosts without a lasting disk aren't supported yet.)
+- **Node 20.19 or later.** Nothing is stored on your server (no sign-ins, no cookies, no files), so no disk or database is needed.
 - A **Bluesky account that announces your posts**. Each post needs its announcement's address, or a [Standard.site](https://standard.site) record that points to it (see below).
 - Your site's **`site`** set in `astro.config`.
 
@@ -64,17 +66,9 @@ export default defineConfig({
 
 To find an account's DID: `https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=you.bsky.social`.
 
-### 2. Create your site's signing key
+The integration also publishes your site's details for account hosts (its name, logo and permissions) at `/oauth-client-metadata.json`. That file has to be at your site's root: it's the conventional address, and only then does Bluesky's approval page name your site by its address alone. There's no key or secret to set up.
 
-```sh
-npx astro-atmosphere-comments keygen
-```
-
-This adds `ATMOSPHERE_PRIVATE_JWK` to your `.env` without printing it. Your site signs its requests to readers' account hosts with it; the public half is published at `/atmosphere/jwks.json`, and the site's details for account hosts (its name, logo and permissions) at `/oauth-client-metadata.json`. That second file has to be at your site's root: it's the conventional address, and only then does Bluesky's approval page name your site by its address alone. Set the same variable on your server, keep `.env` out of Git, and keep a backup: **a new key signs every reader out.**
-
-On the server, also set `ATMOSPHERE_DATA_DIR` to a folder **outside your deploy folder** (for example `/var/lib/example-com/atmosphere`), so deploys don't sign readers out. It defaults to `.data/atmosphere` in the project.
-
-### 3. Put the component under your posts
+### 2. Put the component under your posts
 
 ```astro
 ---
@@ -86,7 +80,7 @@ import AtmosphereComments from "astro-atmosphere-comments/AtmosphereComments.ast
 
 `post` can be the announcement's **bsky.app address** or its **AT URI**. Leave it out and the component uses the page's **Standard.site** record instead: if your page has `<link rel="site.standard.document" href="at://…">` and that record's `bskyPostRef` points to the announcement (as Standard.site publishers do), it just works. With no announcement to respond to, the component shows nothing (apart from your slot content).
 
-### 4. Optional: likes and reposts on your other Bluesky posts
+### 3. Optional: likes and reposts on your other Bluesky posts
 
 If your pages show your Bluesky posts elsewhere (a "latest posts" feed on your homepage, say), readers can like and repost them there too. Put `AtmosphereReactions` once in your layout, and mark each post's element:
 
@@ -130,7 +124,7 @@ Run the dev server on `127.0.0.1` and open the site there, not at `localhost`:
 npx astro dev --host 127.0.0.1
 ```
 
-Locally the integration uses the protocol's development mode, so no key is needed and it works without a public address. Bluesky's approval screen will say a development app is asking; that's expected.
+Locally the integration uses the protocol's development mode, so it works without a public address. Bluesky's approval screen will say a development app is asking, and sign-ins last only about a day; that's expected.
 
 ## Options
 
@@ -139,7 +133,7 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | `clientName` | yes | Your site's name, given to readers' account hosts. (Bluesky's approval page shows your site's address instead, unless Bluesky has marked your site as trusted.) |
 | `allowedAuthors` | yes | DIDs of the accounts whose posts can be commented on through your site. Comments from these accounts get the Author badge. |
 | `logoUri` | | A square logo for the sign-in screen (absolute `https://` address). |
-| `policyUri`, `tosUri` | | Your privacy policy and terms, shown on the sign-in screen. |
+| `policyUri`, `tosUri` | | Your privacy policy and terms, shown on the sign-in screen. The privacy policy is also linked under the sign-in form. |
 | `hidden` | | Comments never to show: bsky.app post or profile addresses, AT URIs, handles or DIDs. Replies you hide in the Bluesky app, and posts with Bluesky's moderation labels (spam and so on), are left out anyway. |
 | `base` | | Where the integration's routes live. Default `/atmosphere`. |
 | `locale` | | The language of the wording, such as `"fr"` or `"pt-BR"` (see Languages). |
@@ -207,17 +201,20 @@ The component fires (bubbling):
 - `atmosphere:commented` after a comment, reply or quote is posted (`detail`: `uri`, `url`, `text`, `author`, `createdAt`, `quote`, `parent`);
 - `atmosphere:reacted` after a like or repost of the post, or undoing one (`detail`: `kind`, `on`, `author`).
 - `atmosphere:deleted` after a reader deletes one of their comments (`detail`: `uri`).
+- `atmosphere:hidden` after the announcement's author hides a comment (`detail`: `uri`).
 
 ## Security and privacy
 
-- **What your server stores:** for each signed-in reader, their DID and their OAuth tokens (which can only post, like and repost as described above, and delete posts if the reader allowed it), plus a random cookie value. Files are readable only by your site's user. Mention this in your privacy policy.
-- **What it refuses:** requests that change something must come from your own pages (checked by `Origin`); only your announcements and comments in their threads can be acted on; only a reader's own replies under your announcements can be deleted; comments, likes and searches are rate-limited per account, and searches by readers who aren't signed in per address and overall; the image route only passes on avatars and link pictures it has just shown.
-- **Moderation:** comments appear automatically. Hide one in the Bluesky app (it disappears here too), block the account, or add it to `hidden`.
-- Comments are plain text, as on Bluesky: links, @mentions and #hashtags become links.
+- **Readers' sign-ins stay in their browsers.** The OAuth library (`@atproto/oauth-client-browser`) keeps the tokens in the browser's storage, together with a key the browser makes and won't let even the page's own code read out; the tokens only work with that key. Your server never receives them, sets no cookies and stores nothing about readers. Signing out cancels the sign-in at the reader's account host and deletes it from the browser.
+- **What that does and doesn't promise.** Your server can't act for anyone, ever. While a reader has your page open, though, your page's code can use their sign-in, as with any web app they sign in to, so the code that runs matters: it's this package's open source code, and comments are only ever shown as plain text (links, @mentions and #hashtags become links; nothing is rendered as HTML). A [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) on your site adds a second line of defence.
+- **What's checked before anything is sent** (by the browser code, `lib/client/account.ts`): only your announcements and the comments under them can be replied to, liked, reposted or quoted; only a reader's own replies under your announcements can be deleted; only your `allowedAuthors` can be followed; only an announcement's author can hide comments under it.
+- **What your server does:** it shows the threads, looks up accounts and suggestions, finds the links and mentions in a comment before it's posted, and passes on avatars and link pictures it has just shown. None of it needs to know who a reader is. Each route that calls Bluesky is rate-limited per address, with an overall cap; requests that aren't simple reads must come from your own pages (checked by `Origin`). Readers' addresses are used only for those limits, never stored.
+- **Trade-off:** account hosts trust browser sign-ins less than ones kept on a server, so they last less long (Bluesky's currently last about two weeks), and there's no way for a site to sign everyone out at once. For a reader who'd rather not trust your server, that's the point.
+- **Moderation:** comments appear automatically. Hide one with Hide under it (signed in as the account that posted the announcement) or in the Bluesky app; it disappears here too. Show it again in the Bluesky app. You can also block the account, or add it to `hidden`.
 
 ## Limitations (for now)
 
-- Needs a Node server with a lasting disk (no serverless or edge hosts yet).
+- Needs an on-demand (server) adapter, for the few routes above. Serverless hosts should work, as nothing is stored, but haven't been tried.
 - Rate limits are kept in memory, so they apply per server process.
 - Quoting individual comments isn't supported.
 

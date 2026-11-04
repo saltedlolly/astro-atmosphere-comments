@@ -65,9 +65,8 @@
   "messages.accountNotFound": "Dieses Konto wurde nicht gefunden. Prüfe den Handle und versuche es noch einmal.",
   "messages.invalidHandle": "Das sieht nicht wie ein Handle aus. Meist ist es etwas wie alice.bsky.social.",
   "messages.signedOut": "Du wurdest abgemeldet. Bitte melde dich erneut an.",
-  "messages.needsPermission": "Um hier Kommentare zu löschen, braucht diese Seite eine weitere Erlaubnis von deinem Konto.",
+  "messages.needsPermission": "Dafür braucht es eine weitere Erlaubnis von deinem Konto.",
   "messages.notAllowed": "Das ist hier nicht möglich.",
-  "messages.newPermissions": "Diese Seite kann jetzt auch für dich liken und reposten und braucht deshalb erneut deine Erlaubnis. Bitte melde dich erneut an.",
   "messages.tooLong": "Beiträge können bis zu {{max}} Zeichen lang sein.",
   "messages.tooMany": "Du bist ziemlich schnell. Bitte warte eine Minute und versuche es noch einmal.",
   "messages.error": "Das hat nicht geklappt. Bitte versuche es noch einmal.",
@@ -91,5 +90,15 @@
   "follow.following": "Folge ich",
   "follow.followAs": "{{handle}} als {{me}} folgen",
   "follow.followingLabel": "Du folgst {{handle}}",
-  "credit": "Bereitgestellt von {{link}}"
+  "credit": "Bereitgestellt von {{link}}",
+  "callback.signingIn": "Anmeldung läuft …",
+  "signIn.access": "Deine Anmeldung bleibt in diesem Browser: Der Server dieser Seite sieht sie nie und kann nicht für dich posten, und beim Abmelden wird sie aufgehoben.",
+  "signIn.policy": "Wie diese Seite mit deinen Daten umgeht",
+  "composer.needsPermission": "Um hier zu kommentieren, braucht diese Seite eine weitere Erlaubnis von deinem Konto.",
+  "comment.hide": "Ausblenden",
+  "comment.hideLabel": "Diesen Kommentar ausblenden",
+  "comment.hideConfirm": "Diesen Kommentar hier und auf Bluesky ausblenden? In der Bluesky-App kannst du ihn wieder einblenden.",
+  "comment.hiding": "Wird ausgeblendet …",
+  "comment.hidden": "Kommentar ausgeblendet.",
+  "comment.hidePermission": "Um hier Kommentare auszublenden, braucht diese Seite eine weitere Erlaubnis von deinem Konto. Du kannst sie auch in der Bluesky-App ausblenden."
 }

@@ -68,9 +68,8 @@
   "messages.accountNotFound": "Não encontramos essa conta. Confira o identificador e tente de novo.",
   "messages.invalidHandle": "Isso não parece um identificador. Normalmente é algo como alice.bsky.social.",
   "messages.signedOut": "Você foi desconectado. Entre de novo.",
-  "messages.needsPermission": "Para excluir comentários aqui, este site precisa de mais uma permissão da sua conta.",
+  "messages.needsPermission": "Isso precisa de mais uma permissão da sua conta.",
   "messages.notAllowed": "Isso não pode ser feito aqui.",
-  "messages.newPermissions": "Este site agora também pode curtir e repostar por você, então precisa da sua permissão de novo. Entre de novo.",
   "messages.tooLong": "As publicações podem ter até {{max}} caracteres.",
   "messages.tooMany": "Você está indo rápido demais. Espere um minuto e tente de novo.",
   "messages.error": "Não deu certo. Tente de novo.",
@@ -94,5 +93,15 @@
   "follow.following": "Seguindo",
   "follow.followAs": "Seguir {{handle}} como {{me}}",
   "follow.followingLabel": "Você segue {{handle}}",
-  "credit": "Feito com {{link}}"
+  "credit": "Feito com {{link}}",
+  "callback.signingIn": "Entrando…",
+  "signIn.access": "Seu login fica neste navegador: o servidor deste site nunca o vê nem pode publicar por você, e sair o cancela.",
+  "signIn.policy": "Como este site trata seus dados",
+  "composer.needsPermission": "Para comentar aqui, este site precisa de mais uma permissão da sua conta.",
+  "comment.hide": "Ocultar",
+  "comment.hideLabel": "Ocultar este comentário",
+  "comment.hideConfirm": "Ocultar este comentário aqui e no Bluesky? Você pode mostrá-lo de novo no app do Bluesky.",
+  "comment.hiding": "Ocultando…",
+  "comment.hidden": "Comentário ocultado.",
+  "comment.hidePermission": "Para ocultar comentários aqui, este site precisa de mais uma permissão da sua conta. Você também pode ocultá-los no app do Bluesky."
 }

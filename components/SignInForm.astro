@@ -1,6 +1,8 @@
 ---
 // The sign-in form: a handle box (which suggests matching accounts, see
 // lib/client/handle-suggestions.ts) and a "Sign in with Atmosphere" button.
+// Signing in happens in the browser (handleSignInForm in
+// lib/client/account.ts), so the form needs JavaScript.
 // Used under posts by AtmosphereComments and in the sign-in overlay of
 // AtmosphereReactions; not meant to be used on its own.
 //
@@ -9,7 +11,10 @@
 //   returnTo  where the reader comes back to after signing in
 //   messages, lang  the wording (see lib/i18n.ts)
 //   heading   the form's heading, instead of "signIn.heading"
+//   permissions  what to ask for (groups in lib/permissions.ts), instead of
+//             posting, liking and reposting
 import logo from "../assets/union.svg?url";
+import type { Permission } from "../lib/permissions";
 import settings from "../lib/settings";
 import { translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
@@ -20,10 +25,11 @@ interface Props {
   messages: Record<string, string>;
   lang: string;
   heading?: string;
+  permissions?: Permission[];
 }
 
-const { id, returnTo, messages, lang, heading } = Astro.props;
-const { base } = settings;
+const { id, returnTo, messages, lang, heading, permissions = [] } = Astro.props;
+const { policyUri } = settings;
 const t = (key: string) => translate(messages, lang, key);
 const th = (key: string, html: Record<string, string>) => translateHtml(messages, lang, key, html);
 // Links lead off the page, so they open in a new tab.
@@ -31,7 +37,7 @@ const link = (href: string, text: string) =>
   `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text)}</a>`;
 ---
 
-<form class="atmo__login" id={`${id}-login`} method="post" action={`${base}/login`} data-login-form>
+<form class="atmo__login" id={`${id}-login`} data-login-form>
   <label for={`${id}-handle`}>{heading ?? t("signIn.heading")}</label>
   <p
     class="atmo__hint"
@@ -67,6 +73,7 @@ const link = (href: string, text: string) =>
       ></ul>
     </span>
     <input type="hidden" name="returnTo" value={returnTo} data-return-to />
+    {permissions.map((permission) => <input type="hidden" name="permission" value={permission} />)}
     <button type="submit" class="atmo__button atmo__button--sign-in">
       <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
       {t("signIn.button")}
@@ -76,6 +83,10 @@ const link = (href: string, text: string) =>
     class="atmo__hint"
     set:html={th("signIn.privacy", { createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")) })}
   />
+  <p class="atmo__hint">
+    {t("signIn.access")}
+    {policyUri && <Fragment> <a href={policyUri} target="_blank" rel="noopener">{t("signIn.policy")}</a></Fragment>}
+  </p>
 </form>
 
 <style>

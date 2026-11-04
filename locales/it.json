@@ -68,9 +68,8 @@
   "messages.accountNotFound": "Non abbiamo trovato quell'account. Controlla l'handle e riprova.",
   "messages.invalidHandle": "Non sembra un handle. Di solito è qualcosa come alice.bsky.social.",
   "messages.signedOut": "Sei stato disconnesso. Accedi di nuovo.",
-  "messages.needsPermission": "Per eliminare i commenti qui, questo sito ha bisogno di un'altra autorizzazione dal tuo account.",
+  "messages.needsPermission": "Serve un'altra autorizzazione dal tuo account.",
   "messages.notAllowed": "Qui non si può fare.",
-  "messages.newPermissions": "Ora questo sito può anche mettere mi piace e ripubblicare per te, quindi ha di nuovo bisogno della tua autorizzazione. Accedi di nuovo.",
   "messages.tooLong": "I post possono avere fino a {{max}} caratteri.",
   "messages.tooMany": "Stai andando un po' veloce. Aspetta un minuto e riprova.",
   "messages.error": "Non ha funzionato. Riprova.",
@@ -94,5 +93,15 @@
   "follow.following": "Segui già",
   "follow.followAs": "Segui {{handle}} come {{me}}",
   "follow.followingLabel": "Segui {{handle}}",
-  "credit": "Realizzato con {{link}}"
+  "credit": "Realizzato con {{link}}",
+  "callback.signingIn": "Accesso in corso…",
+  "signIn.access": "Il tuo accesso resta in questo browser: il server di questo sito non lo vede mai e non può pubblicare al posto tuo, e uscendo lo annulli.",
+  "signIn.policy": "Come questo sito tratta i tuoi dati",
+  "composer.needsPermission": "Per commentare qui, questo sito ha bisogno di un'altra autorizzazione dal tuo account.",
+  "comment.hide": "Nascondi",
+  "comment.hideLabel": "Nascondi questo commento",
+  "comment.hideConfirm": "Nascondere questo commento qui e su Bluesky? Puoi mostrarlo di nuovo nell'app di Bluesky.",
+  "comment.hiding": "Nascondo…",
+  "comment.hidden": "Commento nascosto.",
+  "comment.hidePermission": "Per nascondere i commenti qui, questo sito ha bisogno di un'altra autorizzazione dal tuo account. Puoi anche nasconderli nell'app di Bluesky."
 }

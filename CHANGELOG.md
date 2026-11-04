@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0 (unreleased)
+
+**Readers' sign-ins now stay in their own browsers.** This changes how the package works, so read "Upgrading" below.
+
+- **Browser sign-in:** readers sign in as a browser ("public") OAuth client, with `@atproto/oauth-client-browser`. Their sign-in is kept in their browser's storage, with a key the browser won't let even the page's code read out, and comments, likes, reposts, deletes and follows go from their browser straight to their own account host. Your server never sees a sign-in, sets no cookies and stores nothing, so it has no way to post for anyone. Signing out cancels the sign-in at the reader's host and deletes it from their browser. Account hosts give browser sign-ins a shorter life (Bluesky's last about two weeks).
+- **Asking only for what's used:** permissions come in groups (`lib/permissions.ts`): posting; liking and reposting; deleting comments; following; and, for your own accounts, hiding comments. The sign-in form under posts asks for posting, liking and reposting; the like and repost overlay of `AtmosphereReactions` asks only for liking and reposting. Anything else is asked for the first time it's used, and a reader who signed in only to like is asked before they start typing a comment, not after. `SignInForm` takes a `permissions` prop.
+- **Hide comments:** signed in as the account that posted the announcement, a Hide button under other people's comments hides them here and on Bluesky (the announcement's threadgate, as the Bluesky app does). The first hide asks for that permission. Show them again in the Bluesky app. Fires `atmosphere:hidden` (`detail`: `uri`).
+- **Fewer third parties:** account lookups while signing in go through your server (`/atmosphere/identity`), so readers' browsers contact only their own account host.
+- Under the sign-in button, a line says the sign-in stays in the browser, with a link to your privacy policy if you set `policyUri`.
+- Routes: `login`, `logout`, `me`, `comment`, `react`, `delete`, `follow`, `state` and `jwks.json` are gone. New: `identity`, `profile`, `richtext` (links and mentions in a comment, before it's posted) and `following`; `callback` is now a page; `POST /atmosphere/thread` refreshes a thread after a reader posts. The `typeahead` limits are per address for everyone.
+- The `keygen` command is gone: there's no key.
+- New wording keys (`signIn.access`, `signIn.policy`, `composer.needsPermission`, `comment.hide…`, `callback.signingIn`) in all eight languages; `messages.newPermissions` is gone and `messages.needsPermission` is now general.
+
+### Upgrading from 0.4
+
+- Remove `ATMOSPHERE_PRIVATE_JWK` and `ATMOSPHERE_DATA_DIR` from your server's environment (and your deploy's secrets), and delete the data folder (default `.data/atmosphere`). The sign-ins in it can't be used without it: their tokens only work with keys kept in those files.
+- **Readers will need to sign in again.** Their old sign-ins (made with the server key) may still be listed at their account host until they expire; they can remove them there.
+- If you set a Content Security Policy, allow `connect-src` to readers' account hosts (any `https:` address), since the browser now talks to them directly.
+- The site no longer needs a disk that persists.
+
 ## 0.4.2 (4 November 2026)
 
 - Links open in a new tab: those in the sign-in form, "Reply on Bluesky instead", the credit, and the thread's names, dates, faces and links in comments, so readers don't lose their place (and a half-written comment).

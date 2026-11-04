@@ -65,9 +65,8 @@
   "messages.accountNotFound": "We couldn't find that account. Check the handle and try again.",
   "messages.invalidHandle": "That doesn't look like a handle. It's usually something like alice.bsky.social.",
   "messages.signedOut": "You've been signed out. Please sign in again.",
-  "messages.needsPermission": "To delete comments here, this site needs one more permission from your account.",
+  "messages.needsPermission": "That needs one more permission from your account.",
   "messages.notAllowed": "That can't be done here.",
-  "messages.newPermissions": "This site can now also like and repost for you, so it needs your permission again. Please sign in again.",
   "messages.tooLong": "Posts can be up to {{max}} characters.",
   "messages.tooMany": "You're going quickly. Please wait a minute and try again.",
   "messages.error": "That didn't work. Please try again.",
@@ -91,5 +90,15 @@
   "follow.following": "Following",
   "follow.followAs": "Follow {{handle}} as {{me}}",
   "follow.followingLabel": "You follow {{handle}}",
-  "credit": "Powered by {{link}}"
+  "credit": "Powered by {{link}}",
+  "callback.signingIn": "Signing you in…",
+  "signIn.access": "Your sign-in stays in this browser: this site's server never sees it and can't post for you, and signing out cancels it.",
+  "signIn.policy": "How this site handles your data",
+  "composer.needsPermission": "To comment here, this site needs one more permission from your account.",
+  "comment.hide": "Hide",
+  "comment.hideLabel": "Hide this comment",
+  "comment.hideConfirm": "Hide this comment here and on Bluesky? You can show it again in the Bluesky app.",
+  "comment.hiding": "Hiding…",
+  "comment.hidden": "Comment hidden.",
+  "comment.hidePermission": "To hide comments here, this site needs one more permission from your account. You can also hide them in the Bluesky app."
 }

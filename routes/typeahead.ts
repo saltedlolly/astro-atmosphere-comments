@@ -6,15 +6,12 @@
 // proxy every visitor may share one address), so the site can't be used to
 // flood Bluesky's search. Answers are remembered for a minute.
 import type { APIRoute } from "astro";
-import { json } from "../lib/http";
-import { rateLimit } from "../lib/reader";
+import { addressOf, json, rateLimit } from "../lib/http";
 import settings from "../lib/settings";
 import { rememberAvatar } from "../lib/avatars";
-import { signedInDid } from "../lib/visitor";
 
-const perReader = rateLimit(60, 1200);
-const perAddress = rateLimit(30, 300);
-const signedOutOverall = rateLimit(300, 6000);
+const perAddress = rateLimit(60, 600);
+const overall = rateLimit(600, 12000);
 
 type Actor = { did: string; handle: string; displayName?: string; avatar?: string };
 const recent = new Map<string, { actors: Actor[]; at: number }>();
@@ -36,23 +33,10 @@ async function search(q: string): Promise<Actor[]> {
   return actors;
 }
 
-export const GET: APIRoute = async ({ url, cookies, clientAddress }) => {
-  const q = (url.searchParams.get("q") ?? "").trim().replace(/^@/, "");
-  const did = await signedInDid(cookies);
-  // One letter is enough for an @mention; signing in needs two.
-  if (!q || (!did && q.length < 2) || q.length > 64 || /[\s<>"]/.test(q)) return json({ actors: [] });
-
-  if (did) {
-    if (perReader(did)) return json({ error: "too-many" }, 429);
-  } else {
-    let address = "unknown";
-    try {
-      address = clientAddress;
-    } catch {
-      // Some adapters can't tell; the overall cap still applies.
-    }
-    if (perAddress(address) || signedOutOverall("all")) return json({ error: "too-many" }, 429);
-  }
+export const GET: APIRoute = async (context) => {
+  const q = (context.url.searchParams.get("q") ?? "").trim().replace(/^@/, "");
+  if (!q || q.length > 64 || /[\s<>"]/.test(q)) return json({ actors: [] });
+  if (perAddress(addressOf(context)) || overall("all")) return json({ error: "too-many" }, 429);
 
   try {
     const actors = (await search(q)).map((actor) => {

@@ -46,7 +46,8 @@ const { base } = settings;
 <atmosphere-reactions data-base={base} data-locale={lang} data-messages={JSON.stringify(messages)}>
   <dialog class="atmo atmo-signin" aria-label={t("dialog.heading")} data-signin-dialog>
     <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
-    <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} />
+    {/* Asks only for liking and reposting; commenting is asked for when first used. */}
+    <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} permissions={["react"]} />
     <p class="atmo-signin__status" role="status" data-dialog-status></p>
   </dialog>
   {/* Reply or Quote, for signed-in readers: the comment box in an overlay. */}
@@ -65,6 +66,8 @@ const { base } = settings;
   import { translate } from "../lib/translate";
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
   import { MAX, quotePreview, setUpComposer, type Posted } from "../lib/client/composer";
+  import { following, handleSignInForm, me as whoIsSignedIn, send as act, signIn, signOut as endSignIn, state } from "../lib/client/account";
+  import type { Permission } from "../lib/permissions";
 
   const HEART = '<path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" />';
   const ARROWS = '<path d="M7 8h10l-3-3M17 16H7l3 3M5 13V9.5A1.5 1.5 0 0 1 6.5 8M19 11v3.5a1.5 1.5 0 0 1-1.5 1.5" />';
@@ -83,7 +86,6 @@ const { base } = settings;
   // Error codes from the routes, and their wording (as in the comments).
   const MESSAGE_KEYS: Record<string, string> = {
     "signed-out": "messages.signedOut",
-    "new-permissions": "messages.newPermissions",
     "not-allowed": "messages.notAllowed",
     "too-long": "messages.tooLong",
     "too-many": "messages.tooMany",
@@ -101,11 +103,17 @@ const { base } = settings;
       const status = dialog.querySelector<HTMLElement>("[data-dialog-status]")!;
       let signedIn = false;
       let handle = "";
-      let me: { did?: string; handle?: string; displayName?: string; avatar?: string } = {};
+      let me: { did?: string; handle?: string; displayName?: string; avatar?: string; can?: string[] } = {};
+      const can = (permission: Permission) => !!me.can?.includes(permission);
+      // One more permission from the reader's account host, then back to
+      // `hash` on this page to finish what they pressed.
+      const askPermission = (permission: Permission, hash: string) =>
+        signIn(me.did!, { permissions: [permission], returnTo: `${location.pathname}${location.search}${hash}`, lang });
       // What the reader has liked or reposted, by post.
       const known: Record<string, { liked: boolean; reposted: boolean }> = {};
 
       enhanceHandleBox(form, base);
+      handleSignInForm(form, lang);
       for (const overlay of this.querySelectorAll<HTMLDialogElement>("dialog")) {
         overlay.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => overlay.close()));
         // A click on the dimmed page around the overlay closes it.
@@ -150,7 +158,8 @@ const { base } = settings;
           this.dispatchEvent(new CustomEvent("atmosphere:commented", { detail: data, bubbles: true }));
         },
         onError: (code, tell) => {
-          if (code === "signed-out" || code === "new-permissions") signedIn = false;
+          if (code === "signed-out") signedIn = false;
+          if (code === "needs-permission") return void askPermission("post", `#atmo-compose=${composeMode}:${encodeURIComponent(composeRoot)}`);
           tell(message(code));
         },
         onInput: () => quote.update(),
@@ -206,13 +215,6 @@ const { base } = settings;
         form.querySelector<HTMLInputElement>('input[name="handle"]')!.focus();
       };
 
-      const send = (body: unknown) =>
-        fetch(`${base}/react`, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
-        });
 
       const icon = (paths: string) => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
 
@@ -228,7 +230,7 @@ const { base } = settings;
         button.setAttribute("aria-pressed", String(on));
         setCount(button, Math.max(0, before + (on ? 1 : -1)));
         try {
-          const response = await send({ post: uri, kind, on });
+          const response = await act("react", { post: uri, kind, on });
           if (response.ok) {
             known[uri] = { ...(known[uri] ?? { liked: false, reposted: false }), [kind === "like" ? "liked" : "reposted"]: on };
             return;
@@ -236,10 +238,12 @@ const { base } = settings;
           const data = (await response.json().catch(() => ({}))) as { error?: string };
           button.setAttribute("aria-pressed", String(!on));
           setCount(button, before);
-          if (data.error === "signed-out" || data.error === "new-permissions") {
+          // Signed in to comment before likes and reposts were asked for.
+          if (data.error === "needs-permission") return void askPermission("react", `#atmo-react=${kind}:${encodeURIComponent(uri)}`);
+          if (data.error === "signed-out") {
             signedIn = false;
             labelButton(button, kind);
-            askToSignIn(kind, uri, t(data.error === "signed-out" ? "messages.signedOut" : "messages.newPermissions"));
+            askToSignIn(kind, uri, t("messages.signedOut"));
           }
         } catch {
           button.setAttribute("aria-pressed", String(!on));
@@ -293,6 +297,8 @@ const { base } = settings;
         link.addEventListener("click", (event) => {
           if (!signedIn || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault();
+          // Signed in only to like and repost: posting is asked for first.
+          if (!can("post")) return void askPermission("post", `#atmo-compose=${mode}:${encodeURIComponent(post.dataset.atmospherePost!)}`);
           openCompose(post, mode);
         });
         return link;
@@ -323,8 +329,7 @@ const { base } = settings;
         const uris = posts().map((post) => post.dataset.atmospherePost!);
         if (!signedIn || !uris.length) return;
         try {
-          const query = uris.map((uri) => `post=${encodeURIComponent(uri)}`).join("&");
-          const response = await fetch(`${base}/state?${query}`, { credentials: "same-origin" });
+          const response = await state(uris);
           if (!response.ok) return;
           const state = ((await response.json()) as { posts?: typeof known }).posts ?? {};
           Object.assign(known, state);
@@ -345,17 +350,7 @@ const { base } = settings;
       const followButtons = new Map<string, { following: boolean; set: (on: boolean) => void; press: () => Promise<void> }>();
       // Following isn't part of signing in: the first follow asks the
       // reader's account host for it, then carries on when they're back.
-      const askFollowPermission = (subject: string) => {
-        const permit = Object.assign(document.createElement("form"), { method: "post", action: `${base}/login` });
-        permit.hidden = true;
-        const field = (name: string, value: string) =>
-          permit.append(Object.assign(document.createElement("input"), { type: "hidden", name, value }));
-        field("handle", me.did || me.handle || "");
-        field("permission", "follow");
-        field("returnTo", `${location.pathname}${location.search}#atmo-follow=${encodeURIComponent(subject)}`);
-        document.body.append(permit);
-        permit.submit();
-      };
+      const askFollowPermission = (subject: string) => askPermission("follow", `#atmo-follow=${encodeURIComponent(subject)}`);
       const setUpFollow = async () => {
         for (const link of document.querySelectorAll<HTMLElement>("[data-atmosphere-follow]")) {
           const subject = link.dataset.atmosphereFollow!;
@@ -365,19 +360,19 @@ const { base } = settings;
           const who = link.dataset.atmosphereFollowHandle ? `@${link.dataset.atmosphereFollowHandle}` : t("comment.someone");
           const button = make("button", "atmo-follow");
           button.type = "button";
-          let following = false;
+          let isFollowing = false;
           // The account's avatar, through the site (its own accounts' are always served).
           const avatar = make("img", "atmo-follow__avatar");
           avatar.src = `${base}/media?avatar=${encodeURIComponent(subject)}`;
           avatar.alt = "";
           avatar.onerror = () => avatar.remove();
           const render = () => {
-            button.setAttribute("aria-pressed", String(following));
+            button.setAttribute("aria-pressed", String(isFollowing));
             // The butterfly, then "Follow" with the account's avatar beside its
             // handle (wherever the language puts the handle), or the avatar
             // with "Following".
             button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${BUTTERFLY}</svg>`;
-            if (following) {
+            if (isFollowing) {
               button.append(avatar, make("span", "", `✓ ${t("follow.following")}`));
             } else {
               const [before, after = ""] = t("follow.follow").split("{{handle}}");
@@ -385,44 +380,35 @@ const { base } = settings;
               button.append(avatar, make("span", "", who));
               if (after.trim()) button.append(make("span", "", after.trim()));
             }
-            button.title = following ? t("follow.followingLabel", { handle: who }) : t("follow.followAs", { handle: who, me: handle });
+            button.title = isFollowing ? t("follow.followingLabel", { handle: who }) : t("follow.followAs", { handle: who, me: handle });
             button.setAttribute("aria-label", button.title);
           };
           const set = (on: boolean) => {
-            following = on;
+            isFollowing = on;
             render();
           };
           const press = async () => {
             button.disabled = true;
             try {
-              const response = await fetch(`${base}/follow`, {
-                method: "POST",
-                credentials: "same-origin",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ subject, on: !following }),
-              });
+              const response = await act("follow", { subject, on: !isFollowing });
               const data = (await response.json().catch(() => ({}))) as { following?: boolean; error?: string };
               if (response.ok) return set(!!data.following);
-              if (data.error === "needs-permission") return askFollowPermission(subject);
-              if (data.error === "signed-out" || data.error === "new-permissions") location.reload();
+              if (data.error === "needs-permission") return void askFollowPermission(subject);
+              if (data.error === "signed-out") location.reload();
             } finally {
               button.disabled = false;
             }
           };
           button.addEventListener("click", () => void press());
-          followButtons.set(subject, { get following() { return following; }, set, press });
+          followButtons.set(subject, { get following() { return isFollowing; }, set, press });
           render();
           // The button takes the link's place. (Inline, as a site's own style
           // for the link could otherwise keep it showing.)
           link.hidden = true;
           link.style.display = "none";
           link.after(button);
-          try {
-            const response = await fetch(`${base}/follow?subject=${encodeURIComponent(subject)}`, { credentials: "same-origin" });
-            if (response.ok) set(!!((await response.json()) as { following?: boolean }).following);
-          } catch {
-            // Shown as Follow; pressing it still works.
-          }
+          const known = await following(subject);
+          if (known !== null) set(known);
         }
       };
 
@@ -464,6 +450,18 @@ const { base } = settings;
         if (button && button.getAttribute("aria-pressed") !== "true") await react(post, button, kind as Kind, true);
       };
 
+      // Back from allowing posting: open the Reply or Quote box they pressed.
+      const finishPendingCompose = () => {
+        const pending = location.hash.match(/^#atmo-compose=(reply|quote):(.+)$/);
+        if (!pending) return;
+        const url = new URL(location.href);
+        if (!document.querySelector("atmosphere-comments")) url.searchParams.delete("atmosphere");
+        history.replaceState(history.state, "", `${url.pathname}${url.search}`);
+        const uri = decodeURIComponent(pending[2]);
+        const post = posts().find((candidate) => candidate.dataset.atmospherePost === uri);
+        if (post && signedIn && can("post")) openCompose(post, pending[1] as "reply" | "quote");
+      };
+
       // The reader's avatar wherever the page marks data-atmosphere-account,
       // opening a menu with who they're signed in as and Sign out.
       const showAccount = (me: { handle?: string; displayName?: string; avatar?: string }) => {
@@ -492,7 +490,7 @@ const { base } = settings;
           signOut.type = "button";
           signOut.addEventListener("click", async () => {
             signOut.disabled = true;
-            await fetch(`${base}/logout`, { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+            await endSignIn();
             location.reload();
           });
           menu.append(who, signOut);
@@ -521,9 +519,8 @@ const { base } = settings;
         }
       };
 
-      fetch(`${base}/me`, { credentials: "same-origin" })
-        .then((response) => response.json())
-        .then((found: { signedIn?: boolean; handle?: string; displayName?: string; avatar?: string }) => {
+      whoIsSignedIn()
+        .then((found) => {
           me = found;
           signedIn = !!found.signedIn;
           handle = found.handle ? `@${found.handle}` : "";
@@ -542,6 +539,7 @@ const { base } = settings;
           addActions();
           await loadState();
           await finishPending();
+          finishPendingCompose();
           if (signedIn) {
             await setUpFollow();
             await finishPendingFollow();

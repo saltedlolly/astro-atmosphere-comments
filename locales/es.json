@@ -68,9 +68,8 @@
   "messages.accountNotFound": "No encontramos esa cuenta. Revisa el identificador e inténtalo de nuevo.",
   "messages.invalidHandle": "Eso no parece un identificador. Suele ser algo como alice.bsky.social.",
   "messages.signedOut": "Se ha cerrado tu sesión. Vuelve a iniciar sesión.",
-  "messages.needsPermission": "Para eliminar comentarios aquí, este sitio necesita un permiso más de tu cuenta.",
+  "messages.needsPermission": "Eso necesita un permiso más de tu cuenta.",
   "messages.notAllowed": "Eso no se puede hacer aquí.",
-  "messages.newPermissions": "Este sitio ahora también puede dar me gusta y compartir por ti, así que necesita tu permiso de nuevo. Vuelve a iniciar sesión.",
   "messages.tooLong": "Las publicaciones pueden tener hasta {{max}} caracteres.",
   "messages.tooMany": "Vas muy rápido. Espera un minuto e inténtalo de nuevo.",
   "messages.error": "No ha funcionado. Inténtalo de nuevo.",
@@ -94,5 +93,15 @@
   "follow.following": "Siguiendo",
   "follow.followAs": "Seguir a {{handle}} como {{me}}",
   "follow.followingLabel": "Sigues a {{handle}}",
-  "credit": "Funciona con {{link}}"
+  "credit": "Funciona con {{link}}",
+  "callback.signingIn": "Iniciando sesión…",
+  "signIn.access": "Tu sesión se queda en este navegador: el servidor de este sitio nunca la ve ni puede publicar por ti, y al cerrar sesión se cancela.",
+  "signIn.policy": "Cómo trata este sitio tus datos",
+  "composer.needsPermission": "Para comentar aquí, este sitio necesita un permiso más de tu cuenta.",
+  "comment.hide": "Ocultar",
+  "comment.hideLabel": "Ocultar este comentario",
+  "comment.hideConfirm": "¿Ocultar este comentario aquí y en Bluesky? Puedes volver a mostrarlo en la aplicación de Bluesky.",
+  "comment.hiding": "Ocultando…",
+  "comment.hidden": "Comentario oculto.",
+  "comment.hidePermission": "Para ocultar comentarios aquí, este sitio necesita un permiso más de tu cuenta. También puedes ocultarlos en la aplicación de Bluesky."
 }

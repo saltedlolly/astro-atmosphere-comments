@@ -68,9 +68,8 @@
   "messages.accountNotFound": "Ce compte est introuvable. Vérifie l'identifiant et réessaie.",
   "messages.invalidHandle": "Ça ne ressemble pas à un identifiant. C'est généralement quelque chose comme alice.bsky.social.",
   "messages.signedOut": "Tu as été déconnecté. Connecte-toi à nouveau.",
-  "messages.needsPermission": "Pour supprimer des commentaires ici, ce site a besoin d'une autorisation de plus de ton compte.",
+  "messages.needsPermission": "Cela nécessite une autorisation de plus de ton compte.",
   "messages.notAllowed": "Ce n'est pas possible ici.",
-  "messages.newPermissions": "Ce site peut désormais aussi aimer et republier pour toi ; il a donc de nouveau besoin de ton autorisation. Connecte-toi à nouveau.",
   "messages.tooLong": "Les publications peuvent contenir jusqu'à {{max}} caractères.",
   "messages.tooMany": "Tu vas un peu vite. Attends une minute et réessaie.",
   "messages.error": "Ça n'a pas marché. Réessaie.",
@@ -94,5 +93,15 @@
   "follow.following": "Abonné",
   "follow.followAs": "Suivre {{handle}} en tant que {{me}}",
   "follow.followingLabel": "Tu suis {{handle}}",
-  "credit": "Propulsé par {{link}}"
+  "credit": "Propulsé par {{link}}",
+  "callback.signingIn": "Connexion en cours…",
+  "signIn.access": "Ta connexion reste dans ce navigateur : le serveur de ce site ne la voit jamais et ne peut pas publier à ta place, et te déconnecter l'annule.",
+  "signIn.policy": "Comment ce site traite tes données",
+  "composer.needsPermission": "Pour commenter ici, ce site a besoin d'une autorisation de plus de ton compte.",
+  "comment.hide": "Masquer",
+  "comment.hideLabel": "Masquer ce commentaire",
+  "comment.hideConfirm": "Masquer ce commentaire ici et sur Bluesky ? Tu pourras le réafficher dans l'application Bluesky.",
+  "comment.hiding": "Masquage…",
+  "comment.hidden": "Commentaire masqué.",
+  "comment.hidePermission": "Pour masquer des commentaires ici, ce site a besoin d'une autorisation de plus de ton compte. Tu peux aussi les masquer dans l'application Bluesky."
 }

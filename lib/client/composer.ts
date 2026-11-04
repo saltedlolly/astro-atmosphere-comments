@@ -2,6 +2,7 @@
 // posting (as a reply, or a quote post), and the quote preview. Used by
 // AtmosphereComments (its main box and every reply box) and by the reply and
 // quote overlay of AtmosphereReactions. The markup is Composer.astro.
+import { send } from "./account";
 
 export const MAX = 300; // Bluesky's limit for a post, in characters as people count them
 const graphemes = new Intl.Segmenter();
@@ -9,7 +10,7 @@ export const count = (text: string) => [...graphemes.segment(text.trim())].lengt
 
 export type Suggestion = { handle: string; displayName?: string; avatar?: string };
 export type Person = { did: string; handle: string; displayName?: string; avatar?: string };
-/** What the comment route answers with once something is posted. */
+/** What posting a comment (lib/client/account.ts) answers with. */
 export type Posted = {
   uri: string;
   url: string;
@@ -31,11 +32,12 @@ export type ComposerContext = {
 export type ComposerBehaviour = {
   /** The post being replied to or quoted (the announcement, or another post by the site's accounts). */
   root: () => string;
-  /** More for the comment route: { parent } for a reply to a comment, { quote: true } for a quote post. */
+  /** More for posting: { parent } for a reply to a comment, { quote: true } for a quote post. */
   extra: () => Record<string, unknown>;
   tell: (message: string) => void;
   onPosted: (data: Posted) => void;
-  onError: (code: string, tell: (message: string) => void) => void;
+  /** `permission`, with "needs-permission": the one the reader hasn't given yet. */
+  onError: (code: string, tell: (message: string) => void, permission?: string) => void;
   onInput?: () => void;
 };
 
@@ -158,14 +160,9 @@ export function setUpComposer(form: HTMLFormElement, ctx: ComposerContext, behav
     submit.disabled = true;
     behaviour.tell(ctx.t("composer.posting"));
     try {
-      const response = await fetch(`${ctx.base}/comment`, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text, root: behaviour.root(), ...behaviour.extra() }),
-      });
+      const response = await send("comment", { text, root: behaviour.root(), ...behaviour.extra() });
       const data = await response.json();
-      if (!response.ok) return behaviour.onError(data.error, behaviour.tell);
+      if (!response.ok) return behaviour.onError(data.error, behaviour.tell, data.permission);
       textarea.value = "";
       updateCount();
       behaviour.onPosted(data);

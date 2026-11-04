@@ -24,3 +24,31 @@ export const json = (body: unknown, status = 200) =>
 export function fromThisSite(request: Request, url: URL): boolean {
   return request.headers.get("origin") === url.origin;
 }
+
+/** A simple limit per key: at most `perMinute` a minute and `perHour` an hour. True when over it. */
+export function rateLimit(perMinute: number, perHour: number) {
+  const recent = new Map<string, number[]>();
+  return (key: string): boolean => {
+    const now = Date.now();
+    const times = (recent.get(key) ?? []).filter((time) => now - time < 60 * 60 * 1000);
+    if (times.length) recent.set(key, times);
+    else recent.delete(key);
+    if (times.length >= perHour || times.filter((time) => now - time < 60 * 1000).length >= perMinute) return true;
+    times.push(now);
+    recent.set(key, times);
+    return false;
+  };
+}
+
+/**
+ * The visitor's address, for rate limits only (never stored or logged).
+ * Behind a proxy every visitor may share one, so routes add an overall cap.
+ */
+export function addressOf(context: { clientAddress: string }): string {
+  try {
+    return context.clientAddress;
+  } catch {
+    // Some adapters can't tell; the overall cap still applies.
+    return "unknown";
+  }
+}
