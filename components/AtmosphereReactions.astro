@@ -360,6 +360,8 @@ const { base } = settings;
         for (const link of document.querySelectorAll<HTMLElement>("[data-atmosphere-follow]")) {
           const subject = link.dataset.atmosphereFollow!;
           if (followButtons.has(subject) || link.nextElementSibling?.matches(".atmo-follow")) continue;
+          // Nobody can follow themselves: the account's owner keeps the link.
+          if (subject === me.did) continue;
           const who = link.dataset.atmosphereFollowHandle ? `@${link.dataset.atmosphereFollowHandle}` : t("comment.someone");
           const button = make("button", "atmo-follow");
           button.type = "button";

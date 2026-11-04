@@ -45,7 +45,8 @@ export const POST: APIRoute = async ({ request, url, cookies }) => {
     return json({ error: "bad-request" }, 400);
   }
   const { subject, on } = body;
-  if (typeof subject !== "string" || !settings.allowedAuthors.includes(subject) || typeof on !== "boolean") {
+  // Only the site's own accounts, and never yourself.
+  if (typeof subject !== "string" || !settings.allowedAuthors.includes(subject) || subject === signedIn.did || typeof on !== "boolean") {
     return json({ error: "not-allowed" }, 400);
   }
   if (!allows(signedIn, "app.bsky.graph.follow", on ? "create" : "delete")) return json({ error: "needs-permission" }, 403);
