@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 (4 November 2026)
+
+- **Languages:** the wording now comes from language files (`locales/*.json`, i18next JSON) in English, French, German, Spanish, Portuguese, Italian, Dutch and Japanese, picked from the component's `locale` prop, the integration's `locale` option or Astro's locale for the page, then English. Dates and plurals ("1 like", "2 likes") follow the language. The translations are drafts for native speakers to check; they're managed on Weblate.
+- **Your own wording:** a `messages` option (and prop) changes any line, by its key in `locales/en.json`.
+- The `label` and `authorLabel` props still work, and win over `messages`.
+
 ## 0.2.0 (4 November 2026)
 
 - The sign-in form is shown straight away under each post: a handle box and a **Sign in with Atmosphere** button, both with the Atmosphere logo. The "Respond with your Atmosphere Account" button that opened it is gone.

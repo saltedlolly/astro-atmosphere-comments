@@ -21,6 +21,17 @@ export type AtmosphereCommentsOptions = {
    * handles or DIDs (on top of replies hidden on Bluesky and moderation labels).
    */
   hidden?: string[];
+  /**
+   * The language of the wording, e.g. "fr" or "pt-BR". Default: Astro's own
+   * i18n locale for the page, if you use Astro's i18n routing, else English.
+   * The component's `locale` prop overrides it.
+   */
+  locale?: string;
+  /**
+   * Your own wording for any line, by its key in locales/en.json, e.g.
+   * { "signIn.heading": "Sign in to join the conversation" }.
+   */
+  messages?: Record<string, string>;
 };
 
 export default function atmosphereComments(options: AtmosphereCommentsOptions): AstroIntegration;

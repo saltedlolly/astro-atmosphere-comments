@@ -80,6 +80,8 @@ export default function atmosphereComments(options) {
           policyUri: options.policyUri,
           tosUri: options.tosUri,
           hidden: options.hidden ?? [],
+          locale: options.locale,
+          messages: options.messages ?? {},
         };
 
         // The client metadata lives at the address account hosts treat as the

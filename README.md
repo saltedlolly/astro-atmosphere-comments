@@ -106,6 +106,8 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | `policyUri`, `tosUri` | | Your privacy policy and terms, shown on the sign-in screen. |
 | `hidden` | | Comments never to show: bsky.app post or profile addresses, AT URIs, handles or DIDs. Replies you hide in the Bluesky app, and posts with Bluesky's moderation labels (spam and so on), are left out anyway. |
 | `base` | | Where the integration's routes live. Default `/atmosphere`. |
+| `locale` | | The language of the wording, such as `"fr"` or `"pt-BR"` (see Languages). |
+| `messages` | | Your own wording for any line, by its key in [`locales/en.json`](locales/en.json). |
 
 ## The component
 
@@ -115,11 +117,28 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | `label` | The sign-in form's heading. Default "Sign in to leave a comment, like or repost". |
 | `authorLabel` | The badge on your own comments. Default "Author". |
 | `blueskyLink` | "Rather not sign in here? Reply on Bluesky instead →" under the sign-in form, linking to the announcement (with `u-syndication`, so microformats readers learn it's the post's copy on Bluesky). Default `true`; `blueskyLink={false}` hides it. |
+| `locale`, `messages` | The same as the integration's options, for this one component. |
 | `credit` | A small "Powered by Atmosphere Comments for Astro" link at the end. Default `true`; set `credit={false}` to hide it. |
 
 **Slots:** `after-box` goes between the comment box and the comments (a note about other ways to respond, say); the default slot goes after the comments (other responses, older comments).
 
 **Layout, top to bottom:** likes and reposts, the sign-in form and the "Reply on Bluesky instead" line (or, signed in, Like, Repost, Quote and the comment box), your `after-box` content, the comments, your default slot content.
+
+## Languages
+
+The wording comes in English, French, German, Spanish, Portuguese, Italian, Dutch and Japanese. The component uses, in order: its `locale` prop, the integration's `locale` option, Astro's own locale for the page (if you use [Astro's i18n routing](https://docs.astro.build/en/guides/internationalization/)), then English. A regional code falls back to its language (`pt-BR` uses `pt`), and any line a language lacks is shown in English. Dates follow the same language.
+
+To change any line, give its key from [`locales/en.json`](locales/en.json):
+
+```js
+atmosphereComments({
+  // …
+  locale: "fr",
+  messages: { "signIn.heading": "Connecte-toi pour rejoindre la conversation" },
+}),
+```
+
+The translations other than English started as drafts and need checking by native speakers. If you speak one of them, or another language, please help on [Weblate](https://hosted.weblate.org/projects/astro-atmosphere-comments/): corrections there come back to this package. (Bluesky's own approval page is in the reader's language already.)
 
 ## Styling
 
@@ -162,7 +181,6 @@ The component fires (bubbling):
 
 - Needs a Node server with a lasting disk (no serverless or edge hosts yet).
 - Rate limits are kept in memory, so they apply per server process.
-- The wording is English only.
 - Quoting individual comments isn't supported.
 
 If you only want readers to sign in with their Atmosphere account, without comments, see [AuthProto](https://www.npmjs.com/package/@fujocoded/authproto).

@@ -13,6 +13,8 @@ export type AtmosphereSettings = {
   policyUri?: string;
   tosUri?: string;
   hidden?: string[];
+  locale?: string;
+  messages?: Record<string, string>;
 };
 
 export default settings as AtmosphereSettings;

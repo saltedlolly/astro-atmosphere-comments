@@ -13,6 +13,7 @@ It is maintained by [Olly Stedall](https://saltedlolly.com) and used live on [sa
 | `routes/` | The server routes, under `/atmosphere` by default (`login`, `callback`, `logout`, `me`, `comment`, `react`, `delete`, `state`, `thread`, `typeahead`, `media`, `post`, plus `jwks.json`). Each one is listed in `ROUTES` in `index.mjs`. The client metadata is the exception: it's served at the site's root, `/oauth-client-metadata.json`, because Bluesky's approval page names an app by its address alone only when its metadata is there (otherwise it shows the full file address). |
 | `lib/` | Shared server code: OAuth (`oauth.ts`), the signed-in reader and their permissions (`reader.ts`), the thread (`thread.ts`), stores, profiles, rich text. |
 | `bin/cli.mjs` | `npx astro-atmosphere-comments keygen`: creates the site's signing key. |
+| `locales/` | The wording, one i18next JSON file per language (see "Wording and translations"). |
 | `assets/` | The Atmosphere Account logo (MIT, © 2026 Joseph Basser; its licence is beside it). |
 
 ## Ground rules
@@ -45,6 +46,14 @@ The discussion so far:
 - [Ways that the browser can change to help atproto succeed?](https://discourse.atmosphere.community/t/ways-that-the-browser-can-change-to-help-atproto-succeed/463) (Atmosphere Community: WHATWG autofill, password managers, FedCM)
 
 If you change the field, say so in `CHANGELOG.md`, because sites may style or script it.
+
+## Wording and translations
+
+- **All wording lives in `locales/`**, one file per language (`en.json`, `fr.json`…), in i18next JSON v4: flat keys such as `signIn.heading`, `{{placeholders}}`, and plural forms as `key_one`, `key_other` (plus `_few`, `_many`… where a language needs them, per `Intl.PluralRules`). Never write user-visible English directly in the component or routes.
+- **English (`en.json`) is the source.** To add or change wording, edit `en.json` only, and use it with `t("key")` (script) or `t()` / `th()` (the component's server part). Links inside a sentence are placeholders (`{{link}}`) filled with markup by `th()`, so translators can move them.
+- **Other languages are translated on [Weblate](https://hosted.weblate.org/projects/astro-atmosphere-comments/)**, which commits them back here (as pull requests). Don't edit the other language files by hand once Weblate manages them: changes would clash with Weblate's. A new English key shows up in Weblate for translators; until it's translated, English is shown.
+- `lib/i18n.ts` loads the files and picks the language (server only); `lib/translate.ts` fills in placeholders and plurals, and is the only part the browser script imports, so a page ships one language, as JSON in `data-messages`.
+- The starting translations of French, German, Spanish, Portuguese, Italian, Dutch and Japanese were drafted by an AI model and are marked for review in Weblate.
 
 ## Styling
 

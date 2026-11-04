@@ -33,6 +33,8 @@
 // can show it straight away.
 import logo from "../assets/union.svg?url";
 import settings from "../lib/settings";
+import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
+import { escapeHtml } from "../lib/translate";
 
 interface Props {
   /**
@@ -49,15 +51,26 @@ interface Props {
   credit?: boolean;
   /** "Rather not sign in here? Reply on Bluesky instead →" under the sign-in form. Default true. */
   blueskyLink?: boolean;
+  /** The language of the wording, e.g. "fr". Overrides the integration's `locale`. */
+  locale?: string;
+  /** Your own wording for any line, by its key in locales/en.json. */
+  messages?: Record<string, string>;
 }
 
-const {
-  post = "",
-  label = "Sign in to leave a comment, like or repost",
-  authorLabel = "Author",
-  credit = true,
-  blueskyLink = true,
-} = Astro.props;
+const { post = "", label, authorLabel, credit = true, blueskyLink = true } = Astro.props;
+// The wording: the language asked for (or Astro's i18n locale for the page),
+// with the site's own lines on top. The script gets the same, as JSON.
+const lang = pickLocale(Astro.props.locale, settings.locale, Astro.currentLocale);
+const messages = messagesFor(lang, {
+  ...settings.messages,
+  ...Astro.props.messages,
+  ...(label && { "signIn.heading": label }),
+  ...(authorLabel && { "comment.author": authorLabel }),
+});
+const t = (key: string, vars?: Record<string, string | number>) => translate(messages, lang, key, vars);
+const th = (key: string, html: Record<string, string>) => translateHtml(messages, lang, key, html);
+const link = (href: string | undefined, text: string, attributes = "") =>
+  `<a${href ? ` href="${escapeHtml(href)}"` : ""}${attributes}>${escapeHtml(text)}</a>`;
 // The announcement on bsky.app, when the page is given it (otherwise the
 // script fills it in once the thread has loaded).
 const atUri = post.match(/^at:\/\/([^/]+)\/app\.bsky\.feed\.post\/([^/]+)$/);
@@ -71,13 +84,19 @@ const { base } = settings;
 const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 ---
 
-<atmosphere-comments class="atmo" id="atmosphere-comments" data-post={post} data-base={base} data-author-label={authorLabel}>
+<atmosphere-comments class="atmo" id="atmosphere-comments" data-post={post} data-base={base} data-locale={lang} data-messages={JSON.stringify(messages)}>
   <div class="atmo-reactions" data-reactions data-pagefind-ignore hidden></div>
 
   <div class="atmo__signed-out" data-view="signed-out" data-pagefind-ignore>
     <form class="atmo__login" id="atmo-login" method="post" action={`${base}/login`} data-login-form>
-      <label for="atmo-handle">{label}</label>
-      <p class="atmo__hint">Any <a href="https://atmosphereaccount.com">Atmosphere account</a> works, including <a href="https://bsky.app">Bluesky</a>: one account for a whole network of open apps.</p>
+      <label for="atmo-handle">{t("signIn.heading")}</label>
+      <p
+        class="atmo__hint"
+        set:html={th("signIn.anyAccount", {
+          atmosphereAccount: link("https://atmosphereaccount.com", t("signIn.atmosphereAccount")),
+          bluesky: link("https://bsky.app", "Bluesky"),
+        })}
+      />
       <div class="atmo__row">
         <span class="atmo__handle">
           <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
@@ -95,54 +114,56 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           placeholder="alice.bsky.social"
           required
           />
-          <ul class="atmo__suggestions" id="atmo-handle-suggestions" role="listbox" aria-label="Matching accounts" data-handle-suggestions hidden></ul>
+          <ul class="atmo__suggestions" id="atmo-handle-suggestions" role="listbox" aria-label={t("signIn.matchingAccounts")} data-handle-suggestions hidden></ul>
         </span>
         <input type="hidden" name="returnTo" value={returnTo} />
         <button type="submit" class="atmo__button atmo__button--sign-in">
           <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
-          Sign in with Atmosphere
+          {t("signIn.button")}
         </button>
       </div>
-      <p class="atmo__hint">
-        You'll approve this on your account's own site (Bluesky's, for most people); your password
-        is never shared here.
-        No account yet? <a href="https://atmosphereaccount.com">Create a free Atmosphere account</a>.
-      </p>
+      <p
+        class="atmo__hint"
+        set:html={th("signIn.privacy", { createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")) })}
+      />
     </form>
     {blueskyLink && (
-      <p class="atmo__elsewhere" data-elsewhere hidden={!blueskyUrl}>
-        Rather not sign in here?{" "}
-        {/* u-syndication: microformats readers learn this is the post's copy on Bluesky. */}
-        <a class="atmo__elsewhere-link u-syndication" href={blueskyUrl || undefined} data-elsewhere-link>Reply on Bluesky instead →</a>{" "}
-        It shows up here just the same, as do likes and reposts.
-      </p>
+      <p
+        class="atmo__elsewhere"
+        data-elsewhere
+        hidden={!blueskyUrl}
+        set:html={th("elsewhere.text", {
+          // u-syndication: microformats readers learn this is the post's copy on Bluesky.
+          link: link(blueskyUrl || undefined, t("elsewhere.link"), ' class="atmo__elsewhere-link u-syndication" data-elsewhere-link'),
+        })}
+      />
     )}
   </div>
 
   <div class="atmo__signed-in" data-view="signed-in" data-pagefind-ignore hidden>
-    <div class="atmo__actions" role="group" aria-label="Respond to this post">
+    <div class="atmo__actions" role="group" aria-label={t("actions.label")}>
       <button type="button" class="atmo__action" data-react="like" aria-pressed="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" /></svg>
-        <span data-label-off>Like</span><span data-label-on>Liked</span>
+        <span data-label-off>{t("actions.like")}</span><span data-label-on>{t("actions.liked")}</span>
       </button>
       <button type="button" class="atmo__action" data-react="repost" aria-pressed="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10l-3-3M17 16H7l3 3M5 13V9.5A1.5 1.5 0 0 1 6.5 8M19 11v3.5a1.5 1.5 0 0 1-1.5 1.5" /></svg>
-        <span data-label-off>Repost</span><span data-label-on>Reposted</span>
+        <span data-label-off>{t("actions.repost")}</span><span data-label-on>{t("actions.reposted")}</span>
       </button>
       <button type="button" class="atmo__action" data-quote>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h5v-5H6.5A4.5 4.5 0 0 1 11 8.5V7a6 6 0 0 0-6 6Zm9 0h5v-5h-3.5A4.5 4.5 0 0 1 20 8.5V7a6 6 0 0 0-6 6Z" /></svg>
-        <span>Quote</span>
+        <span>{t("actions.quote")}</span>
       </button>
     </div>
 
     <form class="atmo__composer" data-composer>
       <p class="atmo__context" data-context hidden>
         <span data-context-text></span>
-        <button type="button" class="atmo__link-button" data-cancel-context>Cancel</button>
+        <button type="button" class="atmo__link-button" data-cancel-context>{t("composer.cancel")}</button>
       </p>
       <label for="atmo-text" class="atmo__as">
         <span class="atmo__avatar atmo__avatar--me" data-me-avatar aria-hidden="true"></span>
-        <span><span data-verb>Comment</span> as <strong data-handle></strong></span>
+        <span set:html={th("composer.commentAs", { verb: `<span data-verb>${escapeHtml(t("composer.comment"))}</span>`, handle: "<strong data-handle></strong>" })} />
       </label>
       <div class="atmo__field">
         <textarea
@@ -153,14 +174,14 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           aria-autocomplete="list"
           aria-controls="atmo-suggestions"
           aria-expanded="false"></textarea>
-        <ul class="atmo__suggestions" id="atmo-suggestions" role="listbox" aria-label="Accounts to mention" data-suggestions hidden></ul>
+        <ul class="atmo__suggestions" id="atmo-suggestions" role="listbox" aria-label={t("composer.mentions")} data-suggestions hidden></ul>
       </div>
       <figure class="atmo__preview" data-preview hidden>
-        <figcaption>How your post will look</figcaption>
+        <figcaption>{t("composer.previewCaption")}</figcaption>
         <div class="atmo__preview-post">
           <span class="atmo__avatar" data-preview-avatar aria-hidden="true"></span>
           <div class="atmo__preview-body">
-            <p class="atmo__preview-author"><strong data-preview-name></strong> <span data-preview-handle></span> <span>· now</span></p>
+            <p class="atmo__preview-author"><strong data-preview-name></strong> <span data-preview-handle></span> <span>· {t("composer.now")}</span></p>
             <p class="atmo__preview-text" data-preview-text></p>
             <div class="atmo__quoted">
               <p class="atmo__preview-author">
@@ -182,8 +203,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       </figure>
       <div class="atmo__row atmo__row--end">
         <span class="atmo__count" data-count aria-live="polite"></span>
-        <button type="button" class="atmo__link-button" data-sign-out>Sign out</button>
-        <button type="submit" class="atmo__button" data-submit>Post comment</button>
+        <button type="button" class="atmo__link-button" data-sign-out>{t("composer.signOut")}</button>
+        <button type="submit" class="atmo__button" data-submit>{t("composer.postComment")}</button>
       </div>
     </form>
   </div>
@@ -199,29 +220,31 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   <slot />
 
   {credit && (
-    <p class="atmo__credit" data-credit data-pagefind-ignore>
-      Powered by <a href={CREDIT_URL}>Atmosphere Comments for Astro</a>
-    </p>
+    <p class="atmo__credit" data-credit data-pagefind-ignore set:html={th("credit", { link: link(CREDIT_URL, "Atmosphere Comments for Astro") })} />
   )}
 </atmosphere-comments>
 
 <script>
+  import { translate } from "../lib/translate";
+
   const MAX = 300;
   const graphemes = new Intl.Segmenter();
   const count = (text: string) => [...graphemes.segment(text.trim())].length;
 
-  const MESSAGES: Record<string, string> = {
-    "signed-in": "You're signed in. You can comment, like or repost above.",
-    "sign-in-failed": "Signing in didn't finish. Please try again.",
-    "account-not-found": "We couldn't find that account. Check the handle and try again.",
-    "invalid-handle": "That doesn't look like a handle. It's usually something like alice.bsky.social.",
-    "signed-out": "You've been signed out. Please sign in again.",
-    "needs-permission": "To delete comments here, this site needs one more permission from your account.",
-    "not-allowed": "That can't be done here.",
-    "new-permissions": "This site can now also like and repost for you, so it needs your permission again. Please sign in again.",
-    "too-long": `Posts can be up to ${MAX} characters.`,
-    "too-many": "You're going quickly. Please wait a minute and try again.",
-    error: "That didn't work. Please try again.",
+  // The error and status codes the routes and the sign-in round trip send,
+  // and the wording for each (in locales/*.json).
+  const MESSAGE_KEYS: Record<string, string> = {
+    "signed-in": "messages.signedIn",
+    "sign-in-failed": "messages.signInFailed",
+    "account-not-found": "messages.accountNotFound",
+    "invalid-handle": "messages.invalidHandle",
+    "signed-out": "messages.signedOut",
+    "needs-permission": "messages.needsPermission",
+    "not-allowed": "messages.notAllowed",
+    "new-permissions": "messages.newPermissions",
+    "too-long": "messages.tooLong",
+    "too-many": "messages.tooMany",
+    error: "messages.error",
   };
 
   type Posted = { uri: string; url: string; quote: boolean };
@@ -230,6 +253,11 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   class AtmosphereComments extends HTMLElement {
     connectedCallback() {
       const base = this.dataset.base ?? "/atmosphere";
+      // The wording, in the page's language, from the server.
+      const lang = this.dataset.locale || "en";
+      const wording = JSON.parse(this.dataset.messages || "{}") as Record<string, string>;
+      const t = (key: string, vars?: Record<string, string | number>) => translate(wording, lang, key, vars);
+      const message = (code: string) => t(MESSAGE_KEYS[code] ?? MESSAGE_KEYS.error, { max: MAX });
       // The announcement's AT URI. A bsky.app address or the page's
       // Standard.site record is turned into one when the thread loads.
       let post = this.dataset.post?.startsWith("at://") ? this.dataset.post : "";
@@ -281,9 +309,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       let thread: Thread | null = null;
       const reactionsBox = $<HTMLElement>("[data-reactions]");
       const repliesList = $<HTMLOListElement>("[data-replies]");
-      const authorLabel = this.dataset.authorLabel || "Author";
+      const authorLabel = t("comment.author");
       const nameOf = (person: Pick<Person, "handle" | "displayName">) => person.displayName || `@${person.handle}`;
-      const dates = new Intl.DateTimeFormat(document.documentElement.lang || undefined, {
+      const dates = new Intl.DateTimeFormat(lang, {
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -312,7 +340,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           ...groups.map(({ kind, count, people }) => {
             const group = make("div", "atmo-reactions__group");
             group.dataset.reaction = kind;
-            group.append(make("p", "atmo-reactions__count", `${count} ${kind}${count === 1 ? "" : "s"}`));
+            group.append(make("p", "atmo-reactions__count", t(kind === "like" ? "reactions.likes" : "reactions.reposts", { count })));
             const faces = make("ul", "atmo-facepile");
             for (const person of people) {
               const link = Object.assign(make("a"), { href: person.url, title: nameOf(person), rel: "ugc nofollow noopener" });
@@ -345,7 +373,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         if (reply.byAuthor) who.append(make("span", "atmo-comment__badge", authorLabel));
         const date = Object.assign(make("a", "atmo-comment__date"), { href: reply.url, rel: "ugc nofollow noopener" });
         const time = Object.assign(make("time"), { dateTime: reply.createdAt, textContent: reply.createdAt ? dates.format(new Date(reply.createdAt)) : "" });
-        date.append(time, make("span", "", " · view on Bluesky"));
+        date.append(time, make("span", "", ` · ${t("comment.viewOnBluesky")}`));
         const names = make("div");
         names.append(who, date);
         const header = make("header", "atmo-comment__header");
@@ -547,13 +575,13 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
       const handleError = (error: string, tell: (message: string) => void = say) => {
         if (error === "signed-out" || error === "new-permissions") void show(false);
-        tell(MESSAGES[error] ?? MESSAGES.error);
+        tell(message(error));
       };
 
       const postedMessage = (where: HTMLElement, data: Posted) =>
         where.replaceChildren(
-          data.quote ? "Your quote post is on Bluesky. " : "Your comment is posted. ",
-          Object.assign(document.createElement("a"), { href: data.url, textContent: "See it on Bluesky →" }),
+          `${t(data.quote ? "posted.quote" : "posted.comment")} `,
+          Object.assign(document.createElement("a"), { href: data.url, textContent: t("posted.see") }),
         );
 
       // Everything a comment box does: counting characters, @mention
@@ -574,7 +602,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
         const updateCount = () => {
           const used = count(textarea.value);
-          counter.textContent = used > MAX - 50 ? `${MAX - used} left` : "";
+          counter.textContent = used > MAX - 50 ? t("composer.charactersLeft", { count: MAX - used }) : "";
           counter.classList.toggle("is-over", used > MAX);
         };
 
@@ -681,9 +709,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           event.preventDefault();
           const text = textarea.value.trim();
           if (!text) return;
-          if (count(text) > MAX) return behaviour.tell(MESSAGES["too-long"]);
+          if (count(text) > MAX) return behaviour.tell(message("too-long"));
           submit.disabled = true;
-          behaviour.tell("Posting…");
+          behaviour.tell(t("composer.posting"));
           try {
             const response = await send("comment", { text, root: post, ...behaviour.extra() });
             const data = await response.json();
@@ -694,7 +722,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             showPosted(data);
             this.dispatchEvent(new CustomEvent("atmosphere:commented", { detail: data, bubbles: true }));
           } catch {
-            behaviour.tell(MESSAGES.error);
+            behaviour.tell(message("error"));
           } finally {
             submit.disabled = false;
           }
@@ -710,7 +738,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       let quotedLoaded = false;
       const updatePreviewText = () => {
         const words = main.textarea.value.trim();
-        previewText.textContent = words || "Your words appear here.";
+        previewText.textContent = words || t("composer.previewEmpty");
         previewText.classList.toggle("is-placeholder", !words);
       };
       const loadQuoted = async () => {
@@ -752,9 +780,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         mainMode = next;
         const quoting = next === "quote";
         $<HTMLElement>("[data-context]").hidden = !quoting;
-        $<HTMLElement>("[data-context-text]").textContent = quoting ? "Quoting this post on your own account" : "";
-        $<HTMLElement>("[data-verb]").textContent = quoting ? "Quote" : "Comment";
-        $<HTMLElement>("[data-submit]").textContent = quoting ? "Post quote" : "Post comment";
+        $<HTMLElement>("[data-context-text]").textContent = quoting ? t("composer.quoting") : "";
+        $<HTMLElement>("[data-verb]").textContent = t(quoting ? "composer.quote" : "composer.comment");
+        $<HTMLElement>("[data-submit]").textContent = t(quoting ? "composer.postQuote" : "composer.postComment");
         preview.hidden = !quoting;
         if (quoting) void loadQuoted();
       };
@@ -795,8 +823,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         suggestions.id = `${id}-suggestions`;
         textarea.setAttribute("aria-controls", suggestions.id);
         form.querySelector<HTMLElement>("[data-context]")!.hidden = false;
-        form.querySelector("[data-context-text]")!.textContent = `Replying to ${author}`;
-        form.querySelector("[data-verb]")!.textContent = "Reply";
+        form.querySelector("[data-context-text]")!.textContent = t("composer.replyingTo", { name: author });
+        form.querySelector("[data-verb]")!.textContent = t("comment.reply");
         form.querySelector("[data-submit]")!.textContent = "Post reply";
         form.querySelector("[data-handle]")!.textContent = me.handle ? `@${me.handle}` : "";
         setAvatar(form.querySelector<HTMLElement>("[data-me-avatar]")!, me.displayName || me.handle || "?", me.avatar);
@@ -835,8 +863,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         button.dataset.kind = kind;
         const seen = known[comment.dataset.atmosphereUri!];
         button.setAttribute("aria-pressed", String(!!(kind === "like" ? seen?.liked : seen?.reposted)));
-        const author = comment.dataset.atmosphereAuthor || "this comment";
-        button.setAttribute("aria-label", `${kind === "like" ? "Like" : "Repost"} ${author}'s comment`);
+        const author = comment.dataset.atmosphereAuthor || t("comment.someone");
+        button.setAttribute("aria-label", t(kind === "like" ? "comment.likeLabel" : "comment.repostLabel", { name: author }));
         const count = Number(comment.dataset[kind === "like" ? "atmosphereLikes" : "atmosphereReposts"] || 0);
         button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${kind === "like" ? HEART : ARROWS}</svg><span></span>`;
         const setCount = (value: number) => {
@@ -845,7 +873,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         };
         setCount(count);
         button.addEventListener("click", async () => {
-          if (!isSignedIn) return signInFirst(`Sign in to ${kind} comments.`);
+          if (!isSignedIn) return signInFirst(t(kind === "like" ? "signInFirst.like" : "signInFirst.repost"));
           const on = button.getAttribute("aria-pressed") !== "true";
           const before = Number(button.dataset.count || 0);
           button.setAttribute("aria-pressed", String(on));
@@ -869,15 +897,15 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           if (comment.querySelector(":scope .atmo-comment-actions")) return;
           added += 1;
           const actions = Object.assign(document.createElement("div"), { className: "atmo-comment-actions" });
-          const author = comment.dataset.atmosphereAuthor || "this comment";
+          const author = comment.dataset.atmosphereAuthor || t("comment.someone");
           const reply = Object.assign(document.createElement("button"), {
             type: "button",
             className: "atmo-comment-action",
-            textContent: "Reply",
+            textContent: t("comment.reply"),
           });
-          reply.setAttribute("aria-label", `Reply to ${author}`);
+          reply.setAttribute("aria-label", t("comment.replyTo", { name: author }));
           reply.addEventListener("click", () => {
-            if (!isSignedIn) return signInFirst("Sign in to reply.");
+            if (!isSignedIn) return signInFirst(t("signInFirst.reply"));
             openReply(comment, author);
           });
           actions.append(reply, commentButton("like", comment), commentButton("repost", comment));
@@ -892,13 +920,13 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
       const deleteComment = async (comment: HTMLElement, panel: HTMLElement) => {
         const uri = comment.dataset.atmosphereUri!;
-        panel.replaceChildren(make("span", "atmo-comment-delete__text", "Deleting…"));
+        panel.replaceChildren(make("span", "atmo-comment-delete__text", t("comment.deleting")));
         try {
           const response = await send("delete", { post: uri });
           const data = (await response.json()) as { error?: string };
           if (response.ok) {
             comment.remove();
-            say("Your comment was deleted.");
+            say(t("comment.deleted"));
             this.dispatchEvent(new CustomEvent("atmosphere:deleted", { detail: { uri }, bubbles: true }));
             return;
           }
@@ -907,7 +935,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           handleError(data.error ?? "error");
         } catch {
           panel.remove();
-          say(MESSAGES.error);
+          say(message("error"));
         }
       };
 
@@ -920,15 +948,15 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         field("handle", me.did!);
         field("permission", "delete");
         field("returnTo", `${location.pathname}#atmo-delete=${encodeURIComponent(comment.dataset.atmosphereUri!)}`);
-        const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", "Continue to approve"), { type: "submit" });
-        const cancel = Object.assign(make("button", "atmo-comment-action", "Cancel"), { type: "button" });
+        const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.continue")), { type: "submit" });
+        const cancel = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
         cancel.addEventListener("click", () => panel.remove());
         form.append(go, cancel);
         panel.replaceChildren(
           make(
             "span",
             "atmo-comment-delete__text",
-            "To delete comments here, this site needs one more permission from your account. You can also delete it in any Bluesky app.",
+            t("comment.deletePermission"),
           ),
           form,
         );
@@ -936,22 +964,22 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       };
 
       const deleteButton = (comment: HTMLElement) => {
-        const button = Object.assign(make("button", "atmo-comment-action atmo-comment-action--delete", "Delete"), { type: "button" });
-        button.setAttribute("aria-label", "Delete your comment");
+        const button = Object.assign(make("button", "atmo-comment-action atmo-comment-action--delete", t("comment.delete")), { type: "button" });
+        button.setAttribute("aria-label", t("comment.deleteLabel"));
         button.addEventListener("click", () => {
           const actions = button.parentElement!;
           if (actions.nextElementSibling?.matches(".atmo-comment-delete")) return;
           const panel = make("div", "atmo-comment-delete");
-          const yes = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", "Delete"), { type: "button" });
-          const no = Object.assign(make("button", "atmo-comment-action", "Cancel"), { type: "button" });
+          const yes = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.delete")), { type: "button" });
+          const no = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
           yes.addEventListener("click", () => deleteComment(comment, panel));
           no.addEventListener("click", () => {
             panel.remove();
             button.focus();
           });
-          panel.append(make("span", "atmo-comment-delete__text", "Delete this comment from Bluesky?"), yes, no);
+          panel.append(make("span", "atmo-comment-delete__text", t("comment.deleteConfirm")), yes, no);
           panel.setAttribute("role", "group");
-          panel.setAttribute("aria-label", "Delete your comment");
+          panel.setAttribute("aria-label", t("comment.deleteLabel"));
           actions.after(panel);
           no.focus();
         });
@@ -1033,7 +1061,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const url = new URL(location.href);
       const result = url.searchParams.get("atmosphere");
       if (result) {
-        say(MESSAGES[result] ?? "");
+        say(MESSAGE_KEYS[result] ? message(result) : "");
         url.searchParams.delete("atmosphere");
         history.replaceState(history.state, "", url);
       }
@@ -1072,7 +1100,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
               setPressed(kind, !on);
               return handleError((await response.json()).error);
             }
-            say(on ? (kind === "like" ? "Liked." : "Reposted.") : kind === "like" ? "Like removed." : "Repost removed.");
+            say(t(on ? (kind === "like" ? "status.liked" : "status.reposted") : kind === "like" ? "status.likeRemoved" : "status.repostRemoved"));
             showReaction(kind, on);
             this.dispatchEvent(
               new CustomEvent("atmosphere:reacted", {
@@ -1082,7 +1110,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             );
           } catch {
             setPressed(kind, !on);
-            say(MESSAGES.error);
+            say(message("error"));
           }
         });
       }
@@ -1091,7 +1119,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         await fetch(`${base}/logout`, { method: "POST", credentials: "same-origin" }).catch(() => undefined);
         void show(false);
         setMainMode("comment");
-        say("You're signed out.");
+        say(t("status.signedOut"));
       });
     }
   }
@@ -1175,7 +1203,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     font-size: 0.9em;
   }
 
-  .atmo__elsewhere-link {
+  .atmo__elsewhere :global(.atmo__elsewhere-link) {
     font-weight: 700;
   }
 
@@ -1335,7 +1363,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     opacity: 0.8;
   }
 
-  .atmo__credit a {
+  .atmo__credit :global(a) {
     color: inherit;
   }
 
