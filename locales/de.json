@@ -106,5 +106,6 @@
   "permission.follow": "Um {{handle}} von dieser Seite aus zu folgen, braucht sie eine weitere Erlaubnis von deinem Atmosphere-Konto: Konten folgen und entfolgen.",
   "permission.post": "Um von dieser Seite aus zu antworten und zu zitieren, braucht sie eine weitere Erlaubnis von deinem Atmosphere-Konto: Beiträge erstellen.",
   "permission.react": "Um von dieser Seite aus zu liken und zu reposten, braucht sie eine weitere Erlaubnis von deinem Atmosphere-Konto: liken und reposten und das zurücknehmen.",
-  "permission.approve": "Die Seite deines Kontos (für die meisten die von Bluesky) bittet dich, das zu bestätigen, und vielleicht vorher, dich dort anzumelden. Danach kommst du direkt hierher zurück."
+  "permission.approve": "Die Seite deines Kontos (für die meisten die von Bluesky) bittet dich, das zu bestätigen, und vielleicht vorher, dich dort anzumelden. Danach kommst du direkt hierher zurück.",
+  "comment.withheld": "Hier nicht angezeigt: Die Person bittet Apps, ihre Beiträge nicht Leuten zu zeigen, die nicht angemeldet sind."
 }

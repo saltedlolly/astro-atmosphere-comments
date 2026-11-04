@@ -109,5 +109,6 @@
   "permission.follow": "Para seguir {{handle}} por este site, ele precisa de mais uma permissão da sua conta Atmosphere: seguir e deixar de seguir contas.",
   "permission.post": "Para responder e citar por este site, ele precisa de mais uma permissão da sua conta Atmosphere: criar publicações.",
   "permission.react": "Para curtir e repostar por este site, ele precisa de mais uma permissão da sua conta Atmosphere: curtir e repostar, e desfazer isso.",
-  "permission.approve": "O site da sua conta (o do Bluesky, para a maioria das pessoas) vai pedir que você aprove, e talvez que entre lá primeiro. Depois você volta direto para cá."
+  "permission.approve": "O site da sua conta (o do Bluesky, para a maioria das pessoas) vai pedir que você aprove, e talvez que entre lá primeiro. Depois você volta direto para cá.",
+  "comment.withheld": "Não exibido aqui: o autor pede aos apps que não mostrem suas publicações a quem não está conectado."
 }

@@ -106,5 +106,6 @@
   "permission.follow": "Om {{handle}} vanaf deze site te volgen, is nog één toestemming van je Atmosphere-account nodig: accounts volgen en ontvolgen.",
   "permission.post": "Om vanaf deze site te reageren en te citeren, is nog één toestemming van je Atmosphere-account nodig: berichten plaatsen.",
   "permission.react": "Om vanaf deze site te liken en te reposten, is nog één toestemming van je Atmosphere-account nodig: liken en reposten, en dat ongedaan maken.",
-  "permission.approve": "De site van je account (voor de meeste mensen die van Bluesky) vraagt je dit goed te keuren, en misschien eerst daar in te loggen. Daarna kom je meteen hierheen terug."
+  "permission.approve": "De site van je account (voor de meeste mensen die van Bluesky) vraagt je dit goed te keuren, en misschien eerst daar in te loggen. Daarna kom je meteen hierheen terug.",
+  "comment.withheld": "Hier niet getoond: de schrijver vraagt apps om zijn of haar berichten niet te tonen aan mensen die niet zijn ingelogd."
 }

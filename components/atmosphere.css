@@ -623,3 +623,11 @@ dialog.atmo:not([open]) {
 .atmo__permission p {
   margin: 0;
 }
+
+/* In place of a comment whose author asks not to be shown to logged-out people. */
+:where(.atmo-comment__withheld) {
+  margin: 0;
+  color: var(--atmo-muted, inherit);
+  font-size: 0.9em;
+  font-style: italic;
+}

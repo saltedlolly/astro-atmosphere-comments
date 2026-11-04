@@ -237,6 +237,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         depth: number;
         likeCount: number;
         repostCount: number;
+        withheld?: true;
       };
       type Thread = { uri: string; url: string; likeCount: number; repostCount: number; likes: Person[]; reposts: Person[]; replies: Reply[] };
       let thread: Thread | null = null;
@@ -293,6 +294,15 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const replyElement = (reply: Reply) => {
         const item = make("li", `atmo-comment${reply.byAuthor ? " atmo-comment--author" : ""}${reply.depth ? " atmo-comment--nested" : ""}`);
         if (reply.depth) item.style.setProperty("--depth", String(Math.min(reply.depth, 3)));
+        // Its author asks not to be shown to logged-out people: a placeholder,
+        // keeping the replies under it in place. (No AT URI, so no actions.)
+        if (reply.withheld) {
+          item.classList.add("atmo-comment--withheld");
+          const article = make("article");
+          article.append(make("p", "atmo-comment__withheld", t("comment.withheld")));
+          item.append(article);
+          return item;
+        }
         item.dataset.atmosphereUri = reply.uri;
         item.dataset.atmosphereUrl = reply.url;
         item.dataset.atmosphereAuthor = nameOf(reply.author);
