@@ -50,6 +50,17 @@ const { base } = settings;
     <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} permissions={["react"]} />
     <p class="atmo-signin__status" role="status" data-dialog-status></p>
   </dialog>
+  {/* Before asking the reader's account host for one more permission: what it's for. */}
+  <dialog class="atmo atmo-signin atmo-permission" aria-labelledby="atmo-permission-heading" data-permission-dialog>
+    <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
+    <p class="atmo-permission__heading" id="atmo-permission-heading">{t("permission.heading")}</p>
+    <p data-permission-text></p>
+    <p class="atmo__hint">{t("permission.approve")}</p>
+    <div class="atmo__row">
+      <button type="button" class="atmo__button" data-permission-continue>{t("comment.continue")}</button>
+      <button type="button" class="atmo__link-button" data-close>{t("comment.cancel")}</button>
+    </div>
+  </dialog>
   {/* Reply or Quote, for signed-in readers: the comment box in an overlay. */}
   <dialog class="atmo atmo-signin atmo-compose" aria-label={t("postActions.replyLabel")} data-compose-dialog>
     <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
@@ -106,9 +117,22 @@ const { base } = settings;
       let me: { did?: string; handle?: string; displayName?: string; avatar?: string; can?: string[] } = {};
       const can = (permission: Permission) => !!me.can?.includes(permission);
       // One more permission from the reader's account host, then back to
-      // `hash` on this page to finish what they pressed.
-      const askPermission = (permission: Permission, hash: string) =>
-        signIn(me.did!, { permissions: [permission], returnTo: `${location.pathname}${location.search}${hash}`, lang });
+      // `hash` on this page to finish what they pressed. An overlay says
+      // what it's for first: the host may ask them to sign in again before
+      // it shows what's asked for, which is puzzling without warning.
+      const permissionDialog = this.querySelector<HTMLDialogElement>("[data-permission-dialog]")!;
+      let pendingPermission: { permission: Permission; hash: string } | null = null;
+      const askPermission = (permission: Permission, hash: string, vars: Record<string, string> = {}) => {
+        pendingPermission = { permission, hash };
+        permissionDialog.querySelector("[data-permission-text]")!.textContent = t(`permission.${permission}`, vars);
+        if (!permissionDialog.open) permissionDialog.showModal();
+        permissionDialog.querySelector<HTMLButtonElement>("[data-permission-continue]")!.focus();
+      };
+      permissionDialog.querySelector("[data-permission-continue]")!.addEventListener("click", () => {
+        if (!pendingPermission) return;
+        const { permission, hash } = pendingPermission;
+        void signIn(me.did!, { permissions: [permission], returnTo: `${location.pathname}${location.search}${hash}`, lang });
+      });
       // What the reader has liked or reposted, by post.
       const known: Record<string, { liked: boolean; reposted: boolean }> = {};
 
@@ -159,7 +183,10 @@ const { base } = settings;
         },
         onError: (code, tell) => {
           if (code === "signed-out") signedIn = false;
-          if (code === "needs-permission") return void askPermission("post", `#atmo-compose=${composeMode}:${encodeURIComponent(composeRoot)}`);
+          if (code === "needs-permission") {
+            compose.close();
+            return void askPermission("post", `#atmo-compose=${composeMode}:${encodeURIComponent(composeRoot)}`);
+          }
           tell(message(code));
         },
         onInput: () => quote.update(),
@@ -350,7 +377,8 @@ const { base } = settings;
       const followButtons = new Map<string, { following: boolean; set: (on: boolean) => void; press: () => Promise<void> }>();
       // Following isn't part of signing in: the first follow asks the
       // reader's account host for it, then carries on when they're back.
-      const askFollowPermission = (subject: string) => askPermission("follow", `#atmo-follow=${encodeURIComponent(subject)}`);
+      const askFollowPermission = (subject: string, who: string) =>
+        askPermission("follow", `#atmo-follow=${encodeURIComponent(subject)}`, { handle: who });
       const setUpFollow = async () => {
         for (const link of document.querySelectorAll<HTMLElement>("[data-atmosphere-follow]")) {
           const subject = link.dataset.atmosphereFollow!;
@@ -393,7 +421,7 @@ const { base } = settings;
               const response = await act("follow", { subject, on: !isFollowing });
               const data = (await response.json().catch(() => ({}))) as { following?: boolean; error?: string };
               if (response.ok) return set(!!data.following);
-              if (data.error === "needs-permission") return void askFollowPermission(subject);
+              if (data.error === "needs-permission") return void askFollowPermission(subject, who);
               if (data.error === "signed-out") location.reload();
             } finally {
               button.disabled = false;
@@ -570,6 +598,16 @@ const { base } = settings;
     background: var(--atmo-dialog-bg, var(--atmo-menu-bg, Canvas));
     color: var(--atmo-text, CanvasText);
     box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+  }
+
+  .atmo-permission p {
+    margin: 0 0 10px;
+  }
+
+  .atmo-permission__heading {
+    /* Clear of the close button. */
+    padding-right: 32px;
+    font-weight: 700;
   }
 
   .atmo-signin::backdrop {

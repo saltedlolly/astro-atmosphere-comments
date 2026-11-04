@@ -101,5 +101,10 @@
   "comment.hiding": "Verbergen…",
   "comment.hidden": "Reactie verborgen.",
   "comment.hidePermission": "Om hier reacties te verbergen, heeft deze site nog één toestemming van je account nodig. Je kunt ze ook in de Bluesky-app verbergen.",
-  "comment.deleteElsewhere": "via de Bluesky-website"
+  "comment.deleteElsewhere": "via de Bluesky-website",
+  "permission.heading": "Nog één toestemming",
+  "permission.follow": "Om {{handle}} vanaf deze site te volgen, is nog één toestemming van je Atmosphere-account nodig: accounts volgen en ontvolgen.",
+  "permission.post": "Om vanaf deze site te reageren en te citeren, is nog één toestemming van je Atmosphere-account nodig: berichten plaatsen.",
+  "permission.react": "Om vanaf deze site te liken en te reposten, is nog één toestemming van je Atmosphere-account nodig: liken en reposten, en dat ongedaan maken.",
+  "permission.approve": "De site van je account (voor de meeste mensen die van Bluesky) vraagt je dit goed te keuren, en misschien eerst daar in te loggen. Daarna kom je meteen hierheen terug."
 }

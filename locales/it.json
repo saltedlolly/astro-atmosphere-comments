@@ -104,5 +104,10 @@
   "comment.hiding": "Nascondo…",
   "comment.hidden": "Commento nascosto.",
   "comment.hidePermission": "Per nascondere i commenti qui, questo sito ha bisogno di un'altra autorizzazione dal tuo account. Puoi anche nasconderli nell'app di Bluesky.",
-  "comment.deleteElsewhere": "dal sito di Bluesky"
+  "comment.deleteElsewhere": "dal sito di Bluesky",
+  "permission.heading": "Un'altra autorizzazione",
+  "permission.follow": "Per seguire {{handle}} da questo sito, serve un'altra autorizzazione dal tuo account Atmosphere: seguire account e smettere di seguirli.",
+  "permission.post": "Per rispondere e citare da questo sito, serve un'altra autorizzazione dal tuo account Atmosphere: creare post.",
+  "permission.react": "Per mettere mi piace e ripubblicare da questo sito, serve un'altra autorizzazione dal tuo account Atmosphere: mettere mi piace e ripubblicare, e annullarlo.",
+  "permission.approve": "Il sito del tuo account (quello di Bluesky, per la maggior parte delle persone) ti chiederà di approvare, e forse prima di accedere. Poi tornerai subito qui."
 }

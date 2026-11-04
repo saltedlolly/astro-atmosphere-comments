@@ -101,5 +101,10 @@
   "comment.hiding": "Hiding…",
   "comment.hidden": "Comment hidden.",
   "comment.hidePermission": "To hide comments here, this site needs one more permission from your account. You can also hide them in the Bluesky app.",
-  "comment.deleteElsewhere": "via the Bluesky website"
+  "comment.deleteElsewhere": "via the Bluesky website",
+  "permission.heading": "One more permission",
+  "permission.follow": "To follow {{handle}} from this site, it needs one more permission from your Atmosphere account: to follow and unfollow accounts.",
+  "permission.post": "To reply and quote from this site, it needs one more permission from your Atmosphere account: to create posts.",
+  "permission.react": "To like and repost from this site, it needs one more permission from your Atmosphere account: to like and repost, and to undo that.",
+  "permission.approve": "Your account's own site (Bluesky's, for most people) will ask you to approve it, and may ask you to sign in there first. Then you'll come straight back here."
 }

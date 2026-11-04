@@ -124,6 +124,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     {/* Signed in only to like and repost: posting needs one more permission. */}
     <div class="atmo__permission" data-permission hidden>
       <p>{t("composer.needsPermission")}</p>
+      <p class="atmo__hint">{t("permission.approve")}</p>
       <div class="atmo__row">
         <button type="button" class="atmo__button" data-permission-continue>{t("comment.continue")}</button>
         <button type="button" class="atmo__link-button" data-permission-sign-out>{t("composer.signOut")}</button>
@@ -204,6 +205,16 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // coming back to `hash` on this page (to finish what they asked).
       const askPermission = (permission: Permission, hash = "#atmosphere-comments") =>
         signIn(me.did!, { permissions: [permission], returnTo: `${location.pathname}${location.search}${hash}`, lang });
+      // Says what the permission is for before going (the account host may
+      // ask the reader to sign in again first, which is puzzling unexplained),
+      // with Continue to approve. Delete and Hide do the same in their panels.
+      const explainPermission = (permission: "post" | "react") => {
+        const go = Object.assign(make("button", "atmo__link-button", t("comment.continue")), { type: "button" });
+        go.addEventListener("click", () => void askPermission(permission));
+        status.replaceChildren(`${t(`permission.${permission}`)} ${t("permission.approve")} `, go);
+        status.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        go.focus({ preventScroll: true });
+      };
       // Elements this script creates get the component's marker attribute, so
       // Astro's scoped styles still reach them.
       const scoped = <T extends HTMLElement>(element: T): T => {
@@ -410,7 +421,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const handleError = (error: string, tell: (message: string) => void = say, permission?: string) => {
         if (error === "signed-out") void show(false);
         // The page checks before it starts, so this is rare: ask now.
-        if (error === "needs-permission" && (permission === "post" || permission === "react")) return void askPermission(permission);
+        if (error === "needs-permission" && (permission === "post" || permission === "react")) return explainPermission(permission);
         tell(message(error));
       };
 
@@ -467,7 +478,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         main.textarea.focus();
       });
       $<HTMLButtonElement>("[data-quote]").addEventListener("click", () => {
-        if (!can("post")) return void askPermission("post");
+        if (!can("post")) return explainPermission("post");
         setMainMode("quote");
         main.textarea.focus();
       });
@@ -575,7 +586,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           reply.setAttribute("aria-label", t("comment.replyTo", { name: author }));
           reply.addEventListener("click", () => {
             if (!isSignedIn) return signInFirst(t("signInFirst.reply"));
-            if (!can("post")) return void askPermission("post");
+            if (!can("post")) return explainPermission("post");
             openReply(comment, author);
           });
           actions.append(reply, commentButton("like", comment), commentButton("repost", comment));

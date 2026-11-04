@@ -98,5 +98,10 @@
   "comment.hiding": "非表示にしています…",
   "comment.hidden": "コメントを非表示にしました。",
   "comment.hidePermission": "ここでコメントを非表示にするには、このサイトにアカウントからの許可がもうひとつ必要です。Blueskyのアプリでも非表示にできます。",
-  "comment.deleteElsewhere": "Blueskyのウェブサイトから"
+  "comment.deleteElsewhere": "Blueskyのウェブサイトから",
+  "permission.heading": "もうひとつの許可",
+  "permission.follow": "このサイトから{{handle}}をフォローするには、Atmosphereアカウントからの許可がもうひとつ必要です（アカウントのフォローとフォロー解除）。",
+  "permission.post": "このサイトから返信や引用をするには、Atmosphereアカウントからの許可がもうひとつ必要です（投稿の作成）。",
+  "permission.react": "このサイトからいいねやリポストをするには、Atmosphereアカウントからの許可がもうひとつ必要です（いいねとリポスト、その取り消し）。",
+  "permission.approve": "アカウントのサイト（ほとんどの方はBluesky）で承認を求められます。先にそこでログインを求められることもあります。その後、すぐにここへ戻ります。"
 }
