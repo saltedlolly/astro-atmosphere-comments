@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 (4 November 2026)
+
+- Fixed: the sign-in and reply overlays of `AtmosphereReactions` showed at the bottom of the page instead of staying hidden until opened (the shared stylesheet made every `.atmo` element a block, dialogs included).
+
 ## 0.4.0 (4 November 2026)
 
 - **`AtmosphereReactions`:** likes and reposts on your other Bluesky posts (a feed of your latest posts, say). Mark each post with `data-atmosphere-post` (and its bsky.app address and counts) and put the component once in your layout: each post gets Reply and Quote (opening it on Bluesky), and Repost and Like with counts. Readers who aren't signed in get the sign-in form in an overlay, and their like or repost is done once they're back. Only posts by `allowedAuthors` can be liked or reposted.

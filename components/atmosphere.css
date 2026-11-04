@@ -6,8 +6,17 @@
    form has its own styles, in SignInForm.astro. */
 
 .atmo {
-  display: block;
   color: var(--atmo-text, currentColor);
+}
+
+/* The components are blocks; their overlays (dialogs, also .atmo) stay hidden
+   until opened. */
+.atmo:not(dialog) {
+  display: block;
+}
+
+dialog.atmo:not([open]) {
+  display: none;
 }
 
 /* Only the component's own parts wait for sign-in to be checked; the
