@@ -599,24 +599,14 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             this.dispatchEvent(new CustomEvent("atmosphere:deleted", { detail: { uri }, bubbles: true }));
             return;
           }
-          if (data.error === "needs-permission") return askDeletePermission(comment, panel);
+          // The page checks first, so this is rare: ask now.
+          if (data.error === "needs-permission") return void askPermission("delete", `#atmo-delete=${encodeURIComponent(uri)}`);
           panel.remove();
           handleError(data.error ?? "error");
         } catch {
           panel.remove();
           say(message("error"));
         }
-      };
-
-      // Deleting posts isn't part of signing in, so the first delete asks the
-      // reader's account host for it, then carries on when they come back.
-      const askDeletePermission = (comment: HTMLElement, panel: HTMLElement) => {
-        const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.continue")), { type: "button" });
-        const cancel = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
-        go.addEventListener("click", () => void askPermission("delete", `#atmo-delete=${encodeURIComponent(comment.dataset.atmosphereUri!)}`));
-        cancel.addEventListener("click", () => panel.remove());
-        panel.replaceChildren(make("span", "atmo-comment-delete__text", t("comment.deletePermission")), go, cancel);
-        go.focus();
       };
 
       // Hide, for the announcement's own author: hides a comment here and on
@@ -635,14 +625,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             this.dispatchEvent(new CustomEvent("atmosphere:hidden", { detail: { uri }, bubbles: true }));
             return;
           }
-          if (data.error === "needs-permission") {
-            const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.continue")), { type: "button" });
-            const cancel = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
-            go.addEventListener("click", () => void askPermission("moderate", `#atmo-hide=${encodeURIComponent(uri)}`));
-            cancel.addEventListener("click", () => panel.remove());
-            panel.replaceChildren(make("span", "atmo-comment-delete__text", t("comment.hidePermission")), go, cancel);
-            return go.focus();
-          }
+          if (data.error === "needs-permission") return void askPermission("moderate", `#atmo-hide=${encodeURIComponent(uri)}`);
           panel.remove();
           handleError(data.error ?? "error");
         } catch {
@@ -651,49 +634,63 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         }
       };
 
-      const hideButton = (comment: HTMLElement) => {
-        const button = Object.assign(make("button", "atmo-comment-action atmo-comment-action--hide", t("comment.hide")), { type: "button" });
-        button.setAttribute("aria-label", t("comment.hideLabel"));
-        button.addEventListener("click", () => {
-          const actions = button.parentElement!;
-          if (actions.nextElementSibling?.matches(".atmo-comment-delete")) return;
-          const panel = make("div", "atmo-comment-delete");
-          const yes = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.hide")), { type: "button" });
-          const no = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
-          yes.addEventListener("click", () => hideComment(comment, panel));
-          no.addEventListener("click", () => {
-            panel.remove();
-            button.focus();
-          });
-          panel.append(make("span", "atmo-comment-delete__text", t("comment.hideConfirm")), yes, no);
-          panel.setAttribute("role", "group");
-          panel.setAttribute("aria-label", t("comment.hideLabel"));
+      // Delete and Hide each need one more permission than signing in gives.
+      // Readers who haven't given it yet are asked for it first; once they
+      // have (straight away, or back from approving), they confirm.
+      const STEPS = {
+        delete: {
+          permission: "delete",
+          action: "comment.delete",
+          label: "comment.deleteLabel",
+          confirm: "comment.deleteConfirm",
+          needs: "comment.deletePermission",
+          run: deleteComment,
+        },
+        hide: {
+          permission: "moderate",
+          action: "comment.hide",
+          label: "comment.hideLabel",
+          confirm: "comment.hideConfirm",
+          needs: "comment.hidePermission",
+          run: hideComment,
+        },
+      } as const;
+
+      const openPanel = (comment: HTMLElement, kind: keyof typeof STEPS) => {
+        const actions = comment.querySelector<HTMLElement>(":scope .atmo-comment-actions");
+        if (!actions || actions.nextElementSibling?.matches(".atmo-comment-delete")) return;
+        const step = STEPS[kind];
+        const panel = make("div", "atmo-comment-delete");
+        panel.setAttribute("role", "group");
+        panel.setAttribute("aria-label", t(step.label));
+        const button = (text: string, danger = false) =>
+          Object.assign(make("button", `atmo-comment-action${danger ? " atmo-comment-action--danger" : ""}`, text), { type: "button" });
+        const no = button(t("comment.cancel"));
+        no.addEventListener("click", () => {
+          panel.remove();
+          actions.querySelector<HTMLElement>(`.atmo-comment-action--${kind}`)?.focus();
+        });
+        if (can(step.permission)) {
+          const yes = button(t(step.action), true);
+          yes.addEventListener("click", () => step.run(comment, panel));
+          panel.append(make("span", "atmo-comment-delete__text", t(step.confirm)), yes, no);
           actions.after(panel);
           no.focus();
-        });
-        return button;
+        } else {
+          const go = button(t("comment.continue"), true);
+          go.addEventListener("click", () =>
+            void askPermission(step.permission, `#atmo-${kind}=${encodeURIComponent(comment.dataset.atmosphereUri!)}`),
+          );
+          panel.append(make("span", "atmo-comment-delete__text", t(step.needs)), go, no);
+          actions.after(panel);
+          go.focus();
+        }
       };
 
-      const deleteButton = (comment: HTMLElement) => {
-        const button = Object.assign(make("button", "atmo-comment-action atmo-comment-action--delete", t("comment.delete")), { type: "button" });
-        button.setAttribute("aria-label", t("comment.deleteLabel"));
-        button.addEventListener("click", () => {
-          const actions = button.parentElement!;
-          if (actions.nextElementSibling?.matches(".atmo-comment-delete")) return;
-          const panel = make("div", "atmo-comment-delete");
-          const yes = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", t("comment.delete")), { type: "button" });
-          const no = Object.assign(make("button", "atmo-comment-action", t("comment.cancel")), { type: "button" });
-          yes.addEventListener("click", () => deleteComment(comment, panel));
-          no.addEventListener("click", () => {
-            panel.remove();
-            button.focus();
-          });
-          panel.append(make("span", "atmo-comment-delete__text", t("comment.deleteConfirm")), yes, no);
-          panel.setAttribute("role", "group");
-          panel.setAttribute("aria-label", t("comment.deleteLabel"));
-          actions.after(panel);
-          no.focus();
-        });
+      const panelButton = (comment: HTMLElement, kind: keyof typeof STEPS) => {
+        const button = Object.assign(make("button", `atmo-comment-action atmo-comment-action--${kind}`, t(STEPS[kind].action)), { type: "button" });
+        button.setAttribute("aria-label", t(STEPS[kind].label));
+        button.addEventListener("click", () => openPanel(comment, kind));
         return button;
       };
 
@@ -701,8 +698,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         document.querySelectorAll<HTMLElement>("[data-atmosphere-uri]").forEach((comment) => {
           const actions = comment.querySelector<HTMLElement>(":scope .atmo-comment-actions");
           if (!actions || actions.querySelector(".atmo-comment-action--delete, .atmo-comment-action--hide")) return;
-          if (isSignedIn && isMine(comment)) actions.append(deleteButton(comment));
-          else if (isSignedIn && isOwner()) actions.append(hideButton(comment));
+          if (isSignedIn && isMine(comment)) actions.append(panelButton(comment, "delete"));
+          else if (isSignedIn && isOwner()) actions.append(panelButton(comment, "hide"));
         });
       };
 
@@ -757,32 +754,16 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         addCommentActions();
         addDeleteButtons();
         await loadState();
-        // Back from approving the hide permission: hide the comment they chose.
-        const pendingHide = location.hash.match(/^#atmo-hide=(.+)$/);
-        if (pendingHide) {
-          history.replaceState(history.state, "", `${location.pathname}${location.search}#atmosphere-comments`);
-          const uri = decodeURIComponent(pendingHide[1]);
-          const comment = document.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(uri)}"]`);
-          const actions = comment?.querySelector<HTMLElement>(":scope .atmo-comment-actions");
-          if (comment && actions && isOwner()) {
-            const panel = make("div", "atmo-comment-delete");
-            actions.after(panel);
-            comment.scrollIntoView({ block: "center" });
-            await hideComment(comment, panel);
-          }
-        }
-        // Back from approving the delete permission: finish the delete they asked for.
-        const pending = location.hash.match(/^#atmo-delete=(.+)$/);
+        // Back from approving the delete or hide permission: ask them to
+        // confirm the delete or hide they started.
+        const pending = location.hash.match(/^#atmo-(delete|hide)=(.+)$/);
         if (pending) {
           history.replaceState(history.state, "", `${location.pathname}${location.search}#atmosphere-comments`);
-          const uri = decodeURIComponent(pending[1]);
-          const comment = document.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(uri)}"]`);
-          const actions = comment?.querySelector<HTMLElement>(":scope .atmo-comment-actions");
-          if (comment && actions && isMine(comment)) {
-            const panel = make("div", "atmo-comment-delete");
-            actions.after(panel);
+          const kind = pending[1] as keyof typeof STEPS;
+          const comment = document.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(decodeURIComponent(pending[2]))}"]`);
+          if (comment && (kind === "delete" ? isMine(comment) : isOwner())) {
             comment.scrollIntoView({ block: "center" });
-            await deleteComment(comment, panel);
+            openPanel(comment, kind);
           }
         }
       };
