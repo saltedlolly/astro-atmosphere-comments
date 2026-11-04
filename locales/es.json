@@ -92,8 +92,7 @@
   "postActions.quoteAs": "Citar como {{handle}}",
   "follow.follow": "Seguir a {{handle}}",
   "follow.following": "Siguiendo",
-  "follow.unfollow": "Dejar de seguir",
   "follow.followAs": "Seguir a {{handle}} como {{me}}",
-  "follow.followingLabel": "Sigues a {{handle}}. Pulsa para dejar de seguir.",
+  "follow.followingLabel": "Sigues a {{handle}}",
   "credit": "Funciona con {{link}}"
 }

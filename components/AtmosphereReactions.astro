@@ -340,8 +340,8 @@ const { base } = settings;
       };
 
       // Follow buttons in place of links marked data-atmosphere-follow, for
-      // signed-in readers: "Follow @handle", then "Following" (which says
-      // "Unfollow" when pointed at, and unfollows on a second press).
+      // signed-in readers: "Follow @handle", then "Following" (a second press
+      // unfollows, as on Bluesky, without inviting it).
       const followButtons = new Map<string, { following: boolean; set: (on: boolean) => void; press: () => Promise<void> }>();
       // Following isn't part of signing in: the first follow asks the
       // reader's account host for it, then carries on when they're back.
@@ -364,7 +364,6 @@ const { base } = settings;
           const button = make("button", "atmo-follow");
           button.type = "button";
           let following = false;
-          let pointing = false;
           // The account's avatar, through the site (its own accounts' are always served).
           const avatar = make("img", "atmo-follow__avatar");
           avatar.src = `${base}/media?avatar=${encodeURIComponent(subject)}`;
@@ -374,10 +373,10 @@ const { base } = settings;
             button.setAttribute("aria-pressed", String(following));
             // The butterfly, then "Follow" with the account's avatar beside its
             // handle (wherever the language puts the handle), or the avatar
-            // with "Following" / "Unfollow".
+            // with "Following".
             button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${BUTTERFLY}</svg>`;
             if (following) {
-              button.append(avatar, make("span", "", pointing ? t("follow.unfollow") : `✓ ${t("follow.following")}`));
+              button.append(avatar, make("span", "", `✓ ${t("follow.following")}`));
             } else {
               const [before, after = ""] = t("follow.follow").split("{{handle}}");
               if (before.trim()) button.append(make("span", "", before.trim()));
@@ -391,12 +390,6 @@ const { base } = settings;
             following = on;
             render();
           };
-          for (const [event, on] of [["mouseenter", true], ["mouseleave", false], ["focus", true], ["blur", false]] as const) {
-            button.addEventListener(event, () => {
-              pointing = on;
-              render();
-            });
-          }
           const press = async () => {
             button.disabled = true;
             try {
@@ -709,11 +702,6 @@ const { base } = settings;
   :global(:where(.atmo-follow[aria-pressed="true"])) {
     border-color: var(--atmo-border, #8886);
     color: var(--atmo-muted, inherit);
-  }
-
-  :global(:where(.atmo-follow[aria-pressed="true"]:hover, .atmo-follow[aria-pressed="true"]:focus-visible)) {
-    border-color: var(--atmo-danger, #c0392b);
-    color: var(--atmo-danger, #c0392b);
   }
 
   :global(:where(.atmo-follow:disabled)) {

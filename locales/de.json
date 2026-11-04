@@ -89,8 +89,7 @@
   "postActions.quoteAs": "Als {{handle}} zitieren",
   "follow.follow": "{{handle}} folgen",
   "follow.following": "Folge ich",
-  "follow.unfollow": "Entfolgen",
   "follow.followAs": "{{handle}} als {{me}} folgen",
-  "follow.followingLabel": "Du folgst {{handle}}. Drücke, um zu entfolgen.",
+  "follow.followingLabel": "Du folgst {{handle}}",
   "credit": "Bereitgestellt von {{link}}"
 }

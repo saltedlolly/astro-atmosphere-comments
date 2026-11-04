@@ -92,8 +92,7 @@
   "postActions.quoteAs": "Citer en tant que {{handle}}",
   "follow.follow": "Suivre {{handle}}",
   "follow.following": "Abonné",
-  "follow.unfollow": "Se désabonner",
   "follow.followAs": "Suivre {{handle}} en tant que {{me}}",
-  "follow.followingLabel": "Tu suis {{handle}}. Appuie pour te désabonner.",
+  "follow.followingLabel": "Tu suis {{handle}}",
   "credit": "Propulsé par {{link}}"
 }

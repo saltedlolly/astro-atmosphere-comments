@@ -89,8 +89,7 @@
   "postActions.quoteAs": "Quote as {{handle}}",
   "follow.follow": "Follow {{handle}}",
   "follow.following": "Following",
-  "follow.unfollow": "Unfollow",
   "follow.followAs": "Follow {{handle}} as {{me}}",
-  "follow.followingLabel": "You follow {{handle}}. Press to unfollow.",
+  "follow.followingLabel": "You follow {{handle}}",
   "credit": "Powered by {{link}}"
 }
