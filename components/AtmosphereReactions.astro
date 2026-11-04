@@ -365,12 +365,25 @@ const { base } = settings;
           button.type = "button";
           let following = false;
           let pointing = false;
+          // The account's avatar, through the site (its own accounts' are always served).
+          const avatar = make("img", "atmo-follow__avatar");
+          avatar.src = `${base}/media?avatar=${encodeURIComponent(subject)}`;
+          avatar.alt = "";
+          avatar.onerror = () => avatar.remove();
           const render = () => {
             button.setAttribute("aria-pressed", String(following));
-            button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${BUTTERFLY}</svg><span></span>`;
-            button.querySelector("span")!.textContent = following
-              ? pointing ? t("follow.unfollow") : `✓ ${t("follow.following")}`
-              : t("follow.follow", { handle: who });
+            // The butterfly, then "Follow" with the account's avatar beside its
+            // handle (wherever the language puts the handle), or the avatar
+            // with "Following" / "Unfollow".
+            button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${BUTTERFLY}</svg>`;
+            if (following) {
+              button.append(avatar, make("span", "", pointing ? t("follow.unfollow") : `✓ ${t("follow.following")}`));
+            } else {
+              const [before, after = ""] = t("follow.follow").split("{{handle}}");
+              if (before.trim()) button.append(make("span", "", before.trim()));
+              button.append(avatar, make("span", "", who));
+              if (after.trim()) button.append(make("span", "", after.trim()));
+            }
             button.title = following ? t("follow.followingLabel", { handle: who }) : t("follow.followAs", { handle: who, me: handle });
             button.setAttribute("aria-label", button.title);
           };
@@ -683,6 +696,14 @@ const { base } = settings;
     width: 13px;
     height: 13px;
     fill: currentColor;
+  }
+
+  :global(:where(.atmo-follow__avatar)) {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    object-fit: cover;
   }
 
   :global(:where(.atmo-follow[aria-pressed="true"])) {
