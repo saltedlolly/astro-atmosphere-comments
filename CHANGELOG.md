@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 (4 November 2026)
+
+- The sign-in form is shown straight away under each post: a handle box with the Atmosphere logo and a **Sign in with Atmosphere** button. The "Respond with your Atmosphere Account" button that opened it is gone.
+- `label` is now the form's heading (default "Sign in to leave a comment, like or repost"). If you set it for the old button's small text, change or remove it.
+- Pressing Reply, Like or Repost on a comment while signed out moves to the form and puts the cursor in the handle box.
+
 ## 0.1.1 (3 November 2026)
 
 - The credit link now goes to a permanent address, saltedlolly.com/atmosphere-comments-for-astro/.

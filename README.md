@@ -2,7 +2,7 @@
 
 Bluesky comments for your Astro site, without the reader leaving the page. (On npm: [`astro-atmosphere-comments`](https://www.npmjs.com/package/astro-atmosphere-comments).)
 
-Readers press **Respond with your Atmosphere Account**, sign in with their Bluesky handle (or any other [Atmosphere account](https://atmosphereaccount.com)), and can then:
+Under each post, readers type their Bluesky handle into the **Sign in with Atmosphere** form (or any other [Atmosphere account](https://atmosphereaccount.com)), and can then:
 
 - **comment** on your post, and **reply** to other comments;
 - **like** and **repost** your post, or any comment under it;
@@ -109,13 +109,13 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | Prop | What it does |
 | --- | --- |
 | `post` | The announcement: bsky.app address or AT URI. Optional with Standard.site (above). |
-| `label` | The small words on the button above "Atmosphere Account". Default "Respond with your". |
+| `label` | The sign-in form's heading. Default "Sign in to leave a comment, like or repost". |
 | `authorLabel` | The badge on your own comments. Default "Author". |
 | `credit` | A small "Powered by Atmosphere Comments for Astro" link at the end. Default `true`; set `credit={false}` to hide it. |
 
 **Slots:** `after-box` goes between the comment box and the comments (a note about other ways to respond, say); the default slot goes after the comments (other responses, older comments).
 
-**Layout, top to bottom:** likes and reposts, the button (or, signed in, Like, Repost, Quote and the comment box), your `after-box` content, the comments, your default slot content.
+**Layout, top to bottom:** likes and reposts, the sign-in form (or, signed in, Like, Repost, Quote and the comment box), your `after-box` content, the comments, your default slot content.
 
 ## Styling
 

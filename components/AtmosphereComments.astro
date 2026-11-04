@@ -1,12 +1,12 @@
 ---
-// The comment box under a post: "Respond with your Atmosphere Account", then,
-// once signed in, Like, Repost and Quote buttons and a box to write a
+// The comment box under a post: a form to sign in with an Atmosphere account
+// (Bluesky or any other), then, once signed in, Like, Repost and Quote buttons and a box to write a
 // comment (a reply to the post's announcement, or to one of its comments).
 //
 // Props:
 //   post   the announcement's AT URI (at://did/app.bsky.feed.post/rkey).
-//   label   the small words on the button above "Atmosphere Account"
-//           (default "Respond with your").
+//   label   the sign-in form's heading
+//           (default "Sign in to leave a comment, like or repost").
 //   credit  a small "Powered by Atmosphere Comments for Astro" link under the
 //           comments (default true; false hides it).
 //
@@ -38,6 +38,7 @@ interface Props {
    * is used to find it.
    */
   post?: string;
+  /** The sign-in form's heading. */
   label?: string;
   /** The badge on comments by the site's own accounts. */
   authorLabel?: string;
@@ -45,7 +46,7 @@ interface Props {
   credit?: boolean;
 }
 
-const { post = "", label = "Respond with your", authorLabel = "Author", credit = true } = Astro.props;
+const { post = "", label = "Sign in to leave a comment, like or repost", authorLabel = "Author", credit = true } = Astro.props;
 const CREDIT_URL = "https://saltedlolly.com/atmosphere-comments-for-astro/";
 const { base } = settings;
 const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
@@ -55,18 +56,13 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   <div class="atmo-reactions" data-reactions data-pagefind-ignore hidden></div>
 
   <div class="atmo__signed-out" data-view="signed-out" data-pagefind-ignore>
-    <button type="button" class="atmo__badge-button" data-open-login aria-expanded="false" aria-controls="atmo-login" hidden>
-      <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
-      <span class="atmo__badge-text">
-        <span class="atmo__badge-small">{label}</span>
-        <span class="atmo__badge-big">Atmosphere Account</span>
-      </span>
-    </button>
     <form class="atmo__login" id="atmo-login" method="post" action={`${base}/login`} data-login-form>
-      <label for="atmo-handle">Sign in to leave a comment, like or repost</label>
+      <label for="atmo-handle">{label}</label>
       <p class="atmo__hint">Any <a href="https://atmosphereaccount.com">Atmosphere account</a> works, including <a href="https://bsky.app">Bluesky</a>: one account for a whole network of open apps.</p>
       <div class="atmo__row">
-        <input
+        <span class="atmo__handle">
+          <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
+          <input
           id="atmo-handle"
           name="handle"
           type="text"
@@ -76,9 +72,10 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           spellcheck="false"
           placeholder="alice.bsky.social"
           required
-        />
+          />
+        </span>
         <input type="hidden" name="returnTo" value={returnTo} />
-        <button type="submit" class="atmo__button">Continue</button>
+        <button type="submit" class="atmo__button">Sign in with Atmosphere</button>
       </div>
       <p class="atmo__hint">
         You'll approve this on your account's own site (Bluesky's, for most people); your password
@@ -206,7 +203,6 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const composer = $<HTMLFormElement>("[data-composer]");
       // A clean copy of the comment box, for reply boxes under comments.
       const template = composer.cloneNode(true) as HTMLFormElement;
-      const loginButton = $<HTMLButtonElement>("[data-open-login]");
       const loginForm = $<HTMLFormElement>("[data-login-form]");
       const status = $<HTMLElement>("[data-status]");
       let isSignedIn = false;
@@ -404,19 +400,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         renderReactions();
       };
 
-      // With JavaScript, the handle form opens from the Atmosphere button.
-      loginButton.hidden = false;
-      loginForm.hidden = true;
-      const openLogin = () => {
-        loginForm.hidden = false;
-        loginButton.setAttribute("aria-expanded", "true");
-        loginForm.querySelector("input")?.focus();
-      };
-      loginButton.addEventListener("click", () => {
-        if (loginForm.hidden) return openLogin();
-        loginForm.hidden = true;
-        loginButton.setAttribute("aria-expanded", "false");
-      });
+      const openLogin = () => loginForm.querySelector("input")?.focus({ preventScroll: true });
 
       // An avatar picture, or the name's first letter if there isn't one.
       const setAvatar = (slot: HTMLElement, name: string, src?: string) => {
@@ -900,50 +884,29 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     display: none !important;
   }
 
-  /* The button follows the Atmosphere Account sign-in badge: the logo, then
-     two lines of monospaced text, in a rounded outline. */
-  .atmo__badge-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px 16px 9px 12px;
-    border: 2px solid currentColor;
-    border-radius: 12px;
-    background: none;
-    color: var(--atmo-text, currentColor);
-    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    text-align: left;
-    cursor: pointer;
+  /* The handle box, with the Atmosphere Account logo inside on the left. The
+     logo is single-colour, so it is drawn in the muted text colour. */
+  .atmo__handle {
+    position: relative;
+    display: flex;
+    flex: 1 1 220px;
+    min-width: 0;
   }
 
-  .atmo__badge-button:hover,
-  .atmo__badge-button:focus-visible,
-  .atmo__badge-button[aria-expanded="true"] {
-    color: var(--atmo-accent, #1185fe);
-  }
-
-  /* The logo is single-colour, so it is drawn in the text colour. */
-  .atmo__logo {
-    flex: none;
-    width: 40px;
-    height: 40px;
-    background-color: currentColor;
+  .atmo__handle .atmo__logo {
+    position: absolute;
+    top: 50%;
+    left: 11px;
+    width: 20px;
+    height: 20px;
+    transform: translateY(-50%);
+    background-color: var(--atmo-muted, currentColor);
     mask: var(--atmo-logo) center / contain no-repeat;
+    pointer-events: none;
   }
 
-  .atmo__badge-text {
-    display: grid;
-    line-height: 1.15;
-  }
-
-  .atmo__badge-small {
-    font-size: 13px;
-  }
-
-  .atmo__badge-big {
-    font-size: 19px;
-    font-weight: 700;
-    white-space: nowrap;
+  .atmo .atmo__handle input[type="text"] {
+    padding-left: 40px;
   }
 
   /* The comment box when it sits under a comment being replied to. */
