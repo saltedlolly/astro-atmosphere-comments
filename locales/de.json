@@ -49,7 +49,7 @@
   "comment.deleteConfirm": "Diesen Kommentar von Bluesky löschen?",
   "comment.deleting": "Wird gelöscht…",
   "comment.deleted": "Dein Kommentar wurde gelöscht.",
-  "comment.deletePermission": "Um hier Kommentare zu löschen, braucht diese Seite eine weitere Erlaubnis von deinem Konto. Du kannst ihn auch in jeder Bluesky-App löschen.",
+  "comment.deletePermission": "Um hier Kommentare zu löschen, braucht diese Seite eine weitere Erlaubnis von deinem Atmosphere-Konto. Du kannst ihn aber auch {{link}} löschen.",
   "comment.continue": "Weiter zur Bestätigung",
   "comment.cancel": "Abbrechen",
   "signInFirst.reply": "Melde dich an, um zu antworten.",
@@ -100,5 +100,6 @@
   "comment.hideConfirm": "Diesen Kommentar hier und auf Bluesky ausblenden? In der Bluesky-App kannst du ihn wieder einblenden.",
   "comment.hiding": "Wird ausgeblendet …",
   "comment.hidden": "Kommentar ausgeblendet.",
-  "comment.hidePermission": "Um hier Kommentare auszublenden, braucht diese Seite eine weitere Erlaubnis von deinem Konto. Du kannst sie auch in der Bluesky-App ausblenden."
+  "comment.hidePermission": "Um hier Kommentare auszublenden, braucht diese Seite eine weitere Erlaubnis von deinem Konto. Du kannst sie auch in der Bluesky-App ausblenden.",
+  "comment.deleteElsewhere": "auf der Bluesky-Website"
 }

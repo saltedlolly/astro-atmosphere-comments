@@ -283,6 +283,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         const item = make("li", `atmo-comment${reply.byAuthor ? " atmo-comment--author" : ""}${reply.depth ? " atmo-comment--nested" : ""}`);
         if (reply.depth) item.style.setProperty("--depth", String(Math.min(reply.depth, 3)));
         item.dataset.atmosphereUri = reply.uri;
+        item.dataset.atmosphereUrl = reply.url;
         item.dataset.atmosphereAuthor = nameOf(reply.author);
         item.dataset.atmosphereLikes = String(reply.likeCount);
         item.dataset.atmosphereReposts = String(reply.repostCount);
@@ -644,6 +645,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           label: "comment.deleteLabel",
           confirm: "comment.deleteConfirm",
           needs: "comment.deletePermission",
+          // "{{link}}" in the wording: the comment on Bluesky, to delete it there instead.
+          elsewhere: "comment.deleteElsewhere",
           run: deleteComment,
         },
         hide: {
@@ -652,6 +655,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           label: "comment.hideLabel",
           confirm: "comment.hideConfirm",
           needs: "comment.hidePermission",
+          elsewhere: "",
           run: hideComment,
         },
       } as const;
@@ -681,7 +685,19 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           go.addEventListener("click", () =>
             void askPermission(step.permission, `#atmo-${kind}=${encodeURIComponent(comment.dataset.atmosphereUri!)}`),
           );
-          panel.append(make("span", "atmo-comment-delete__text", t(step.needs)), go, no);
+          const text = make("span", "atmo-comment-delete__text");
+          const [before, after = ""] = t(step.needs, { link: "\u0000" }).split("\u0000");
+          text.append(before);
+          if (step.elsewhere) {
+            const url = comment.dataset.atmosphereUrl;
+            text.append(
+              url
+                ? Object.assign(make("a", "", t(step.elsewhere)), { href: url, target: "_blank", rel: "noopener noreferrer" })
+                : t(step.elsewhere),
+              after,
+            );
+          }
+          panel.append(text, go, no);
           actions.after(panel);
           go.focus();
         }

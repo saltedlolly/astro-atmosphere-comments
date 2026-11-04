@@ -11,7 +11,7 @@
 - Under the sign-in button, a line says the sign-in stays in the browser, with a link to your privacy policy if you set `policyUri`.
 - Routes: `login`, `logout`, `me`, `comment`, `react`, `delete`, `follow`, `state` and `jwks.json` are gone. New: `identity`, `profile`, `richtext` (links and mentions in a comment, before it's posted) and `following`; `callback` is now a page; `POST /atmosphere/thread` refreshes a thread after a reader posts. The `typeahead` limits are per address for everyone.
 - The `keygen` command is gone: there's no key.
-- New wording keys (`signIn.access`, `signIn.policy`, `composer.needsPermission`, `comment.hide…`, `callback.signingIn`) in all eight languages; `messages.newPermissions` is gone and `messages.needsPermission` is now general.
+- New wording keys (`signIn.access`, `signIn.policy`, `composer.needsPermission`, `comment.hide…`, `comment.deleteElsewhere`, `callback.signingIn`) in all eight languages; `messages.newPermissions` is gone and `messages.needsPermission` is now general.
 
 ### Upgrading from 0.4
 

@@ -46,7 +46,7 @@
   "comment.deleteConfirm": "このコメントをBlueskyから削除しますか？",
   "comment.deleting": "削除中…",
   "comment.deleted": "コメントを削除しました。",
-  "comment.deletePermission": "ここでコメントを削除するには、このサイトにアカウントからの許可がもうひとつ必要です。Blueskyのアプリから削除することもできます。",
+  "comment.deletePermission": "ここでコメントを削除するには、このサイトにAtmosphereアカウントからの許可がもうひとつ必要です。{{link}}削除することもできます。",
   "comment.continue": "許可に進む",
   "comment.cancel": "キャンセル",
   "signInFirst.reply": "返信するにはログインしてください。",
@@ -97,5 +97,6 @@
   "comment.hideConfirm": "このコメントをこことBlueskyで非表示にしますか？Blueskyのアプリで再表示できます。",
   "comment.hiding": "非表示にしています…",
   "comment.hidden": "コメントを非表示にしました。",
-  "comment.hidePermission": "ここでコメントを非表示にするには、このサイトにアカウントからの許可がもうひとつ必要です。Blueskyのアプリでも非表示にできます。"
+  "comment.hidePermission": "ここでコメントを非表示にするには、このサイトにアカウントからの許可がもうひとつ必要です。Blueskyのアプリでも非表示にできます。",
+  "comment.deleteElsewhere": "Blueskyのウェブサイトから"
 }

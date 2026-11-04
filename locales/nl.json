@@ -49,7 +49,7 @@
   "comment.deleteConfirm": "Deze reactie van Bluesky verwijderen?",
   "comment.deleting": "Verwijderen…",
   "comment.deleted": "Je reactie is verwijderd.",
-  "comment.deletePermission": "Om hier reacties te verwijderen, heeft deze site nog één toestemming van je account nodig. Je kunt hem ook in elke Bluesky-app verwijderen.",
+  "comment.deletePermission": "Om hier reacties te verwijderen, heeft deze site nog één toestemming van je Atmosphere-account nodig. Je kunt hem ook {{link}} verwijderen.",
   "comment.continue": "Doorgaan om toe te staan",
   "comment.cancel": "Annuleren",
   "signInFirst.reply": "Log in om te reageren.",
@@ -100,5 +100,6 @@
   "comment.hideConfirm": "Deze reactie hier en op Bluesky verbergen? Je kunt hem in de Bluesky-app weer tonen.",
   "comment.hiding": "Verbergen…",
   "comment.hidden": "Reactie verborgen.",
-  "comment.hidePermission": "Om hier reacties te verbergen, heeft deze site nog één toestemming van je account nodig. Je kunt ze ook in de Bluesky-app verbergen."
+  "comment.hidePermission": "Om hier reacties te verbergen, heeft deze site nog één toestemming van je account nodig. Je kunt ze ook in de Bluesky-app verbergen.",
+  "comment.deleteElsewhere": "via de Bluesky-website"
 }

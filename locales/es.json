@@ -52,7 +52,7 @@
   "comment.deleteConfirm": "¿Eliminar este comentario de Bluesky?",
   "comment.deleting": "Eliminando…",
   "comment.deleted": "Tu comentario se ha eliminado.",
-  "comment.deletePermission": "Para eliminar comentarios aquí, este sitio necesita un permiso más de tu cuenta. También puedes eliminarlo en cualquier aplicación de Bluesky.",
+  "comment.deletePermission": "Para eliminar comentarios aquí, este sitio necesita un permiso más de tu cuenta de Atmosphere. También puedes eliminarlo {{link}}.",
   "comment.continue": "Continuar para aprobar",
   "comment.cancel": "Cancelar",
   "signInFirst.reply": "Inicia sesión para responder.",
@@ -103,5 +103,6 @@
   "comment.hideConfirm": "¿Ocultar este comentario aquí y en Bluesky? Puedes volver a mostrarlo en la aplicación de Bluesky.",
   "comment.hiding": "Ocultando…",
   "comment.hidden": "Comentario oculto.",
-  "comment.hidePermission": "Para ocultar comentarios aquí, este sitio necesita un permiso más de tu cuenta. También puedes ocultarlos en la aplicación de Bluesky."
+  "comment.hidePermission": "Para ocultar comentarios aquí, este sitio necesita un permiso más de tu cuenta. También puedes ocultarlos en la aplicación de Bluesky.",
+  "comment.deleteElsewhere": "en la web de Bluesky"
 }
