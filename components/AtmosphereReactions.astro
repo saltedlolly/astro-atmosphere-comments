@@ -21,6 +21,8 @@
 import settings from "../lib/settings";
 import { messagesFor, pickLocale, translate } from "../lib/i18n";
 import SignInForm from "./SignInForm.astro";
+import Composer from "./Composer.astro";
+import "./atmosphere.css";
 
 interface Props {
   /** The language of the wording, e.g. "fr". Overrides the integration's `locale`. */
@@ -41,11 +43,22 @@ const { base } = settings;
     <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} />
     <p class="atmo-signin__status" role="status" data-dialog-status></p>
   </dialog>
+  {/* Reply or Quote, for signed-in readers: the comment box in an overlay. */}
+  <dialog class="atmo atmo-signin atmo-compose" aria-label={t("postActions.replyLabel")} data-compose-dialog>
+    <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
+    <Composer id="atmo-compose" messages={messages} lang={lang} cancel />
+    <div class="atmo-compose__done" data-compose-done hidden>
+      <p data-compose-done-text></p>
+      <button type="button" class="atmo__link-button" data-close>{t("dialog.close")}</button>
+    </div>
+    <p class="atmo-signin__status" role="status" data-compose-status></p>
+  </dialog>
 </atmosphere-reactions>
 
 <script>
   import { translate } from "../lib/translate";
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
+  import { MAX, quotePreview, setUpComposer, type Posted } from "../lib/client/composer";
 
   const HEART = '<path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" />';
   const ARROWS = '<path d="M7 8h10l-3-3M17 16H7l3 3M5 13V9.5A1.5 1.5 0 0 1 6.5 8M19 11v3.5a1.5 1.5 0 0 1-1.5 1.5" />';
@@ -59,6 +72,15 @@ const { base } = settings;
   };
 
   type Kind = "like" | "repost";
+  // Error codes from the routes, and their wording (as in the comments).
+  const MESSAGE_KEYS: Record<string, string> = {
+    "signed-out": "messages.signedOut",
+    "new-permissions": "messages.newPermissions",
+    "not-allowed": "messages.notAllowed",
+    "too-long": "messages.tooLong",
+    "too-many": "messages.tooMany",
+    error: "messages.error",
+  };
 
   class AtmosphereReactions extends HTMLElement {
     connectedCallback() {
@@ -71,15 +93,94 @@ const { base } = settings;
       const status = dialog.querySelector<HTMLElement>("[data-dialog-status]")!;
       let signedIn = false;
       let handle = "";
+      let me: { handle?: string; displayName?: string; avatar?: string } = {};
       // What the reader has liked or reposted, by post.
       const known: Record<string, { liked: boolean; reposted: boolean }> = {};
 
       enhanceHandleBox(form, base);
-      dialog.querySelector("[data-close]")!.addEventListener("click", () => dialog.close());
-      // A click on the dimmed page around the overlay closes it.
-      dialog.addEventListener("click", (event) => {
-        if (event.target === dialog) dialog.close();
+      for (const overlay of this.querySelectorAll<HTMLDialogElement>("dialog")) {
+        overlay.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => overlay.close()));
+        // A click on the dimmed page around the overlay closes it.
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) overlay.close();
+        });
+      }
+
+      // An avatar picture, or the name's first letter if there isn't one.
+      const setAvatar = (slot: HTMLElement, name: string, src?: string) => {
+        slot.textContent = name.trim().charAt(0).toUpperCase();
+        if (!src) return;
+        const img = Object.assign(document.createElement("img"), { src, alt: "" });
+        img.onload = () => slot.replaceChildren(img);
+      };
+      const message = (code: string) => t(MESSAGE_KEYS[code] ?? MESSAGE_KEYS.error, { max: MAX });
+
+      // Reply and Quote for signed-in readers: the comment box in an overlay,
+      // posting to their own account. What they post shows on Bluesky, not
+      // on this page, so the overlay ends by saying so, with a link to it.
+      const compose = this.querySelector<HTMLDialogElement>("[data-compose-dialog]")!;
+      const composeForm = compose.querySelector<HTMLFormElement>("[data-composer]")!;
+      const composeStatus = compose.querySelector<HTMLElement>("[data-compose-status]")!;
+      const composeDone = compose.querySelector<HTMLElement>("[data-compose-done]")!;
+      const $c = <T extends Element>(selector: string) => composeForm.querySelector<T>(selector)!;
+      const composerContext = { base, t, message, setAvatar };
+      let composeRoot = "";
+      let composeMode: "reply" | "quote" = "reply";
+      const composer = setUpComposer(composeForm, composerContext, {
+        root: () => composeRoot,
+        extra: () => (composeMode === "quote" ? { quote: true } : {}),
+        tell: (text) => (composeStatus.textContent = text),
+        onPosted: (data: Posted) => {
+          composeStatus.textContent = "";
+          composeForm.hidden = true;
+          const done = compose.querySelector<HTMLElement>("[data-compose-done-text]")!;
+          done.replaceChildren(
+            `${t(data.quote ? "posted.quote" : "posted.reply")} ${t("posted.notHere")} `,
+            Object.assign(make("a", "", t("posted.see")), { href: data.url, target: "_blank", rel: "noopener noreferrer" }),
+          );
+          composeDone.hidden = false;
+          this.dispatchEvent(new CustomEvent("atmosphere:commented", { detail: data, bubbles: true }));
+        },
+        onError: (code, tell) => {
+          if (code === "signed-out" || code === "new-permissions") signedIn = false;
+          tell(message(code));
+        },
+        onInput: () => quote.update(),
       });
+      const quote = quotePreview(composeForm, composer.textarea, composerContext);
+      $c<HTMLElement>("[data-cancel-context]").hidden = true;
+
+      const openCompose = (post: HTMLElement, mode: "reply" | "quote") => {
+        composeRoot = post.dataset.atmospherePost!;
+        composeMode = mode;
+        const author = post.dataset.atmosphereUrl?.match(/\/profile\/([^/]+)\//)?.[1];
+        $c<HTMLElement>("[data-context]").hidden = false;
+        $c<HTMLElement>("[data-context-text]").textContent =
+          mode === "quote" ? t("composer.quoting") : t("composer.replyingTo", { name: author ? `@${author}` : t("comment.someone") });
+        $c<HTMLElement>("[data-verb]").textContent = t(mode === "quote" ? "composer.quote" : "comment.reply");
+        $c<HTMLElement>("[data-submit]").textContent = t(mode === "quote" ? "composer.postQuote" : "composer.postReply");
+        $c<HTMLElement>("[data-preview]").hidden = mode !== "quote";
+        compose.setAttribute("aria-label", t(mode === "quote" ? "postActions.quoteLabel" : "postActions.replyLabel"));
+        composer.textarea.value = "";
+        composer.updateCount();
+        composeStatus.textContent = "";
+        composeDone.hidden = true;
+        composeForm.hidden = false;
+        if (mode === "quote") void quote.load(composeRoot);
+        if (!compose.open) compose.showModal();
+        composer.textarea.focus();
+      };
+
+      // The reader, in the box: "Reply as @handle" with their avatar, and in
+      // the quote preview.
+      const showMe = () => {
+        const name = me.displayName || me.handle || "";
+        $c<HTMLElement>("[data-handle]").textContent = handle;
+        setAvatar($c<HTMLElement>("[data-me-avatar]"), name, me.avatar);
+        $c<HTMLElement>("[data-preview-name]").textContent = name;
+        $c<HTMLElement>("[data-preview-handle]").textContent = handle;
+        setAvatar($c<HTMLElement>("[data-preview-avatar]"), name, me.avatar);
+      };
 
       const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className = "", text?: string) => {
         const element = document.createElement(tag);
@@ -147,6 +248,14 @@ const { base } = settings;
         button.setAttribute("aria-label", button.title);
       };
 
+      const labelLink = (link: HTMLElement) => {
+        const quote = link.dataset.kind === "quote";
+        link.title = signedIn && handle
+          ? t(quote ? "postActions.quoteAs" : "postActions.replyAs", { handle })
+          : t(quote ? "postActions.quoteLabel" : "postActions.replyLabel");
+        link.setAttribute("aria-label", link.title);
+      };
+
       const reactButton = (post: HTMLElement, kind: Kind) => {
         const button = make("button", "atmo-post-action");
         button.type = "button";
@@ -160,17 +269,24 @@ const { base } = settings;
         return button;
       };
 
-      // Reply and Quote open the post on Bluesky. Icons only, as on Bluesky,
-      // with their names for screen readers and as tooltips.
-      const bskyLink = (post: HTMLElement, paths: string, label: string) => {
+      // Reply and Quote: the comment box in an overlay for signed-in readers,
+      // otherwise the post on Bluesky (as also with ⌘-click or a middle click).
+      // Icons only, as on Bluesky, with their names for screen readers and as
+      // tooltips.
+      const bskyLink = (post: HTMLElement, paths: string) => {
         const link = make("a", "atmo-post-action");
+        const mode = paths === BUBBLE ? "reply" : "quote";
         link.href = post.dataset.atmosphereUrl ?? "#";
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.dataset.kind = paths === BUBBLE ? "reply" : "quote";
-        link.title = label;
-        link.setAttribute("aria-label", label);
+        link.dataset.kind = mode;
+        labelLink(link);
         link.innerHTML = icon(paths);
+        link.addEventListener("click", (event) => {
+          if (!signedIn || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          openCompose(post, mode);
+        });
         return link;
       };
 
@@ -184,9 +300,9 @@ const { base } = settings;
           added += 1;
           const actions = make("div", "atmo-post-actions");
           actions.append(
-            bskyLink(post, BUBBLE, t("postActions.replyLabel")),
+            bskyLink(post, BUBBLE),
             reactButton(post, "repost"),
-            bskyLink(post, QUOTE, t("postActions.quoteLabel")),
+            bskyLink(post, QUOTE),
             reactButton(post, "like"),
           );
           post.append(actions);
@@ -300,14 +416,19 @@ const { base } = settings;
 
       fetch(`${base}/me`, { credentials: "same-origin" })
         .then((response) => response.json())
-        .then((me: { signedIn?: boolean; handle?: string; displayName?: string; avatar?: string }) => {
-          signedIn = !!me.signedIn;
-          handle = me.handle ? `@${me.handle}` : "";
-          if (signedIn) showAccount(me);
+        .then((found: { signedIn?: boolean; handle?: string; displayName?: string; avatar?: string }) => {
+          me = found;
+          signedIn = !!found.signedIn;
+          handle = found.handle ? `@${found.handle}` : "";
+          if (signedIn) {
+            showAccount(found);
+            showMe();
+          }
           // Buttons added before we knew get the signed-in wording too.
           for (const button of document.querySelectorAll<HTMLElement>(".atmo-post-action[data-kind='like'], .atmo-post-action[data-kind='repost']")) {
             labelButton(button, button.dataset.kind as Kind);
           }
+          document.querySelectorAll<HTMLElement>(".atmo-post-action[data-kind='reply'], .atmo-post-action[data-kind='quote']").forEach(labelLink);
         })
         .catch(() => undefined)
         .finally(async () => {
@@ -362,6 +483,18 @@ const { base } = settings;
     font-size: 1.4em;
     line-height: 1;
     cursor: pointer;
+  }
+
+  .atmo-compose {
+    width: min(92vw, 600px);
+  }
+
+  .atmo-compose :global(.atmo__composer) {
+    margin-top: 0;
+  }
+
+  .atmo-compose__done p {
+    margin: 0 0 12px;
   }
 
   .atmo-signin__status {

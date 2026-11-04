@@ -1,0 +1,80 @@
+---
+// The comment box: "Comment as @handle", the text box (with @mention
+// suggestions), the quote preview, a character count and Post. Its behaviour
+// is in lib/client/composer.ts and its styles in atmosphere.css. Used under
+// posts by AtmosphereComments (and cloned for reply boxes), and in the reply
+// and quote overlay of AtmosphereReactions; not meant to be used on its own.
+//
+// Props:
+//   id       prefix for the box's ids, unique on the page
+//   messages, lang  the wording (see lib/i18n.ts)
+//   signOut  show a Sign out button (default false)
+//   cancel   show a Cancel button that closes an overlay (default false)
+import { translate, translateHtml } from "../lib/i18n";
+import { escapeHtml } from "../lib/translate";
+
+interface Props {
+  id: string;
+  messages: Record<string, string>;
+  lang: string;
+  signOut?: boolean;
+  cancel?: boolean;
+}
+
+const { id, messages, lang, signOut = false, cancel = false } = Astro.props;
+const t = (key: string) => translate(messages, lang, key);
+const th = (key: string, html: Record<string, string>) => translateHtml(messages, lang, key, html);
+---
+
+<form class="atmo__composer" data-composer>
+  <p class="atmo__context" data-context hidden>
+    <span data-context-text></span>
+    <button type="button" class="atmo__link-button" data-cancel-context>{t("composer.cancel")}</button>
+  </p>
+  <label for={`${id}-text`} class="atmo__as">
+    <span class="atmo__avatar atmo__avatar--me" data-me-avatar aria-hidden="true"></span>
+    <span set:html={th("composer.commentAs", { verb: `<span data-verb>${escapeHtml(t("composer.comment"))}</span>`, handle: "<strong data-handle></strong>" })} />
+  </label>
+  <div class="atmo__field">
+    <textarea
+      id={`${id}-text`}
+      name="text"
+      rows="4"
+      required
+      aria-autocomplete="list"
+      aria-controls={`${id}-suggestions`}
+      aria-expanded="false"></textarea>
+    <ul class="atmo__suggestions" id={`${id}-suggestions`} role="listbox" aria-label={t("composer.mentions")} data-suggestions hidden></ul>
+  </div>
+  <figure class="atmo__preview" data-preview hidden>
+    <figcaption>{t("composer.previewCaption")}</figcaption>
+    <div class="atmo__preview-post">
+      <span class="atmo__avatar" data-preview-avatar aria-hidden="true"></span>
+      <div class="atmo__preview-body">
+        <p class="atmo__preview-author"><strong data-preview-name></strong> <span data-preview-handle></span> <span>· {t("composer.now")}</span></p>
+        <p class="atmo__preview-text" data-preview-text></p>
+        <div class="atmo__quoted">
+          <p class="atmo__preview-author">
+            <span class="atmo__avatar atmo__avatar--small" data-quoted-avatar aria-hidden="true"></span>
+            <strong data-quoted-name></strong> <span data-quoted-handle></span>
+          </p>
+          <p class="atmo__preview-text" data-quoted-text></p>
+          <div class="atmo__card" data-card hidden>
+            <img data-card-image alt="" hidden />
+            <div>
+              <strong data-card-title></strong>
+              <span data-card-description></span>
+              <span class="atmo__card-domain" data-card-domain></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </figure>
+  <div class="atmo__row atmo__row--end">
+    <span class="atmo__count" data-count aria-live="polite"></span>
+    {signOut && <button type="button" class="atmo__link-button" data-sign-out>{t("composer.signOut")}</button>}
+  {cancel && <button type="button" class="atmo__link-button" data-close>{t("composer.cancel")}</button>}
+    <button type="submit" class="atmo__button" data-submit>{t("composer.postComment")}</button>
+  </div>
+</form>

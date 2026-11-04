@@ -85,5 +85,10 @@
   "account.signedInAs": "Connecté en tant que {{handle}}",
   "account.signedInAsLabel": "Connecté en tant que",
   "account.signOut": "Se déconnecter",
+  "composer.postReply": "Publier la réponse",
+  "posted.reply": "Ta réponse est publiée.",
+  "posted.notHere": "Elle ne s'affichera pas sur cette page, mais elle est sur Bluesky.",
+  "postActions.replyAs": "Répondre en tant que {{handle}}",
+  "postActions.quoteAs": "Citer en tant que {{handle}}",
   "credit": "Propulsé par {{link}}"
 }

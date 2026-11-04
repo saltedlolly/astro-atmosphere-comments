@@ -82,5 +82,10 @@
   "account.signedInAs": "Ingelogd als {{handle}}",
   "account.signedInAsLabel": "Ingelogd als",
   "account.signOut": "Uitloggen",
+  "composer.postReply": "Reactie plaatsen",
+  "posted.reply": "Je reactie is geplaatst.",
+  "posted.notHere": "Hij verschijnt niet op deze pagina, maar staat wel op Bluesky.",
+  "postActions.replyAs": "Reageren als {{handle}}",
+  "postActions.quoteAs": "Citeren als {{handle}}",
   "credit": "Mogelijk gemaakt door {{link}}"
 }

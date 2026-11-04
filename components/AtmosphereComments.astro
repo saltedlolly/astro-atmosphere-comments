@@ -33,6 +33,8 @@
 // can show it straight away.
 import settings from "../lib/settings";
 import SignInForm from "./SignInForm.astro";
+import Composer from "./Composer.astro";
+import "./atmosphere.css";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
 
@@ -118,57 +120,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       </button>
     </div>
 
-    <form class="atmo__composer" data-composer>
-      <p class="atmo__context" data-context hidden>
-        <span data-context-text></span>
-        <button type="button" class="atmo__link-button" data-cancel-context>{t("composer.cancel")}</button>
-      </p>
-      <label for="atmo-text" class="atmo__as">
-        <span class="atmo__avatar atmo__avatar--me" data-me-avatar aria-hidden="true"></span>
-        <span set:html={th("composer.commentAs", { verb: `<span data-verb>${escapeHtml(t("composer.comment"))}</span>`, handle: "<strong data-handle></strong>" })} />
-      </label>
-      <div class="atmo__field">
-        <textarea
-          id="atmo-text"
-          name="text"
-          rows="4"
-          required
-          aria-autocomplete="list"
-          aria-controls="atmo-suggestions"
-          aria-expanded="false"></textarea>
-        <ul class="atmo__suggestions" id="atmo-suggestions" role="listbox" aria-label={t("composer.mentions")} data-suggestions hidden></ul>
-      </div>
-      <figure class="atmo__preview" data-preview hidden>
-        <figcaption>{t("composer.previewCaption")}</figcaption>
-        <div class="atmo__preview-post">
-          <span class="atmo__avatar" data-preview-avatar aria-hidden="true"></span>
-          <div class="atmo__preview-body">
-            <p class="atmo__preview-author"><strong data-preview-name></strong> <span data-preview-handle></span> <span>· {t("composer.now")}</span></p>
-            <p class="atmo__preview-text" data-preview-text></p>
-            <div class="atmo__quoted">
-              <p class="atmo__preview-author">
-                <span class="atmo__avatar atmo__avatar--small" data-quoted-avatar aria-hidden="true"></span>
-                <strong data-quoted-name></strong> <span data-quoted-handle></span>
-              </p>
-              <p class="atmo__preview-text" data-quoted-text></p>
-              <div class="atmo__card" data-card hidden>
-                <img data-card-image alt="" hidden />
-                <div>
-                  <strong data-card-title></strong>
-                  <span data-card-description></span>
-                  <span class="atmo__card-domain" data-card-domain></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </figure>
-      <div class="atmo__row atmo__row--end">
-        <span class="atmo__count" data-count aria-live="polite"></span>
-        <button type="button" class="atmo__link-button" data-sign-out>{t("composer.signOut")}</button>
-        <button type="submit" class="atmo__button" data-submit>{t("composer.postComment")}</button>
-      </div>
-    </form>
+    <Composer id="atmo" messages={messages} lang={lang} signOut />
   </div>
 
   <p class="atmo__status" data-status role="status" data-pagefind-ignore></p>
@@ -189,10 +141,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 <script>
   import { translate } from "../lib/translate";
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
+  import { MAX, quotePreview, setUpComposer, type ComposerBehaviour, type Posted } from "../lib/client/composer";
 
-  const MAX = 300;
-  const graphemes = new Intl.Segmenter();
-  const count = (text: string) => [...graphemes.segment(text.trim())].length;
 
   // The error and status codes the routes and the sign-in round trip send,
   // and the wording for each (in locales/*.json).
@@ -210,8 +160,6 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     error: "messages.error",
   };
 
-  type Posted = { uri: string; url: string; quote: boolean };
-  type Suggestion = { handle: string; displayName?: string; avatar?: string };
 
   class AtmosphereComments extends HTMLElement {
     connectedCallback() {
@@ -397,7 +345,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const threadReady = loadThread();
 
       // A comment just posted, shown at once (Bluesky takes a moment to list it).
-      const showPosted = (data: Posted & { text: string; createdAt: string; parent: string | null; author: Person }) => {
+      const showPosted = (data: Posted) => {
         if (data.quote) return;
         const parent = data.parent
           ? repliesList.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(data.parent)}"]`)
@@ -456,196 +404,26 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           Object.assign(document.createElement("a"), { href: data.url, textContent: t("posted.see") }),
         );
 
-      // Everything a comment box does: counting characters, @mention
-      // suggestions and posting. Used by the main box and every reply box.
-      const setUpComposer = (
+      // The comment box (lib/client/composer.ts): posts as a reply to the
+      // announcement, then shows it straight away and tells the page.
+      const composerContext = { base, t, message, setAvatar };
+      const composerFor = (
         form: HTMLFormElement,
-        behaviour: {
-          extra: () => Record<string, unknown>;
-          tell: (message: string) => void;
-          onPosted: (data: Posted) => void;
-          onInput?: () => void;
-        },
-      ) => {
-        const textarea = form.querySelector("textarea")!;
-        const counter = form.querySelector<HTMLElement>("[data-count]")!;
-        const submit = form.querySelector<HTMLButtonElement>("[data-submit]")!;
-        const suggestions = form.querySelector<HTMLUListElement>("[data-suggestions]")!;
-
-        const updateCount = () => {
-          const used = count(textarea.value);
-          counter.textContent = used > MAX - 50 ? t("composer.charactersLeft", { count: MAX - used }) : "";
-          counter.classList.toggle("is-over", used > MAX);
-        };
-
-        // @mention suggestions, as in the Bluesky app: typing @ and the start
-        // of a handle or name lists matching accounts to choose from.
-        let options: Suggestion[] = [];
-        let active = -1;
-        let lookup: number | undefined;
-        let latestQuery = "";
-        const mentionAtCaret = () => {
-          const before = textarea.value.slice(0, textarea.selectionStart);
-          const match = /(?:^|[\s(])@([a-zA-Z0-9.-]{1,64})$/.exec(before);
-          return match ? { query: match[1], start: before.length - match[1].length - 1 } : null;
-        };
-        const closeSuggestions = () => {
-          suggestions.hidden = true;
-          suggestions.replaceChildren();
-          options = [];
-          active = -1;
-          textarea.setAttribute("aria-expanded", "false");
-          textarea.removeAttribute("aria-activedescendant");
-        };
-        const highlight = (index: number) => {
-          active = index;
-          suggestions.querySelectorAll("li").forEach((item, i) => item.setAttribute("aria-selected", String(i === index)));
-          if (index >= 0) textarea.setAttribute("aria-activedescendant", `${suggestions.id}-option-${index}`);
-        };
-        const choose = (index: number) => {
-          const mention = mentionAtCaret();
-          const option = options[index];
-          if (!mention || !option) return closeSuggestions();
-          const after = textarea.value.slice(textarea.selectionStart);
-          textarea.value = `${textarea.value.slice(0, mention.start)}@${option.handle} ${after}`;
-          const caret = mention.start + option.handle.length + 2;
-          textarea.setSelectionRange(caret, caret);
-          closeSuggestions();
-          textarea.focus();
-          updateCount();
-          behaviour.onInput?.();
-        };
-        const showSuggestions = (found: Suggestion[]) => {
-          options = found;
-          if (!found.length) return closeSuggestions();
-          suggestions.replaceChildren(
-            ...found.map((option, index) => {
-              const item = document.createElement("li");
-              item.id = `${suggestions.id}-option-${index}`;
-              item.setAttribute("role", "option");
-              const avatar = document.createElement("span");
-              avatar.className = "atmo__avatar atmo__avatar--small";
-              setAvatar(avatar, option.displayName || option.handle, option.avatar);
-              const name = Object.assign(document.createElement("strong"), { textContent: option.displayName || option.handle });
-              const handle = Object.assign(document.createElement("span"), { textContent: `@${option.handle}` });
-              item.append(avatar, name, handle);
-              // mousedown keeps the focus in the text box.
-              item.addEventListener("mousedown", (event) => event.preventDefault());
-              item.addEventListener("click", () => choose(index));
-              return item;
-            }),
-          );
-          suggestions.hidden = false;
-          textarea.setAttribute("aria-expanded", "true");
-          highlight(0);
-        };
-        const lookUpMention = () => {
-          window.clearTimeout(lookup);
-          const mention = mentionAtCaret();
-          if (!mention) return closeSuggestions();
-          latestQuery = mention.query;
-          lookup = window.setTimeout(async () => {
-            const query = mention.query;
-            try {
-              const response = await fetch(`${base}/typeahead?q=${encodeURIComponent(query)}`, { credentials: "same-origin" });
-              const data = (await response.json()) as { actors?: Suggestion[] };
-              if (query === latestQuery) showSuggestions(data.actors ?? []);
-            } catch {
-              closeSuggestions();
-            }
-          }, 200);
-        };
-
-        textarea.addEventListener("input", () => {
-          updateCount();
-          behaviour.onInput?.();
-          lookUpMention();
-        });
-        textarea.addEventListener("keydown", (event) => {
-          if (suggestions.hidden) return;
-          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-            event.preventDefault();
-            const step = event.key === "ArrowDown" ? 1 : -1;
-            highlight((active + step + options.length) % options.length);
-          } else if (event.key === "Enter" || event.key === "Tab") {
-            event.preventDefault();
-            choose(Math.max(active, 0));
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            closeSuggestions();
-          }
-        });
-        textarea.addEventListener("blur", () => window.setTimeout(closeSuggestions, 150));
-
-        form.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const text = textarea.value.trim();
-          if (!text) return;
-          if (count(text) > MAX) return behaviour.tell(message("too-long"));
-          submit.disabled = true;
-          behaviour.tell(t("composer.posting"));
-          try {
-            const response = await send("comment", { text, root: post, ...behaviour.extra() });
-            const data = await response.json();
-            if (!response.ok) return handleError(data.error, behaviour.tell);
-            textarea.value = "";
-            updateCount();
+        behaviour: Omit<ComposerBehaviour, "root" | "onError" | "onPosted"> & { onPosted: (data: Posted) => void },
+      ) =>
+        setUpComposer(form, composerContext, {
+          ...behaviour,
+          root: () => post,
+          onError: handleError,
+          onPosted: (data) => {
             behaviour.onPosted(data);
             showPosted(data);
             this.dispatchEvent(new CustomEvent("atmosphere:commented", { detail: data, bubbles: true }));
-          } catch {
-            behaviour.tell(message("error"));
-          } finally {
-            submit.disabled = false;
-          }
+          },
         });
 
-        return { textarea, updateCount };
-      };
-
-      // The Quote preview: the reader's words as they type, with the
-      // announcement quoted beneath, as Bluesky will show it.
+      // The Quote preview (lib/client/composer.ts).
       const preview = $<HTMLElement>("[data-preview]");
-      const previewText = $<HTMLElement>("[data-preview-text]");
-      let quotedLoaded = false;
-      const updatePreviewText = () => {
-        const words = main.textarea.value.trim();
-        previewText.textContent = words || t("composer.previewEmpty");
-        previewText.classList.toggle("is-placeholder", !words);
-      };
-      const loadQuoted = async () => {
-        updatePreviewText();
-        if (quotedLoaded) return;
-        try {
-          const response = await fetch(`${base}/post?uri=${encodeURIComponent(post)}`);
-          if (!response.ok) return;
-          const quoted = (await response.json()) as {
-            author: { handle: string; displayName?: string; avatar?: string };
-            text: string;
-            external?: { uri: string; title: string; description: string; thumb?: string };
-          };
-          quotedLoaded = true;
-          const quotedName = quoted.author.displayName || quoted.author.handle;
-          $<HTMLElement>("[data-quoted-name]").textContent = quotedName;
-          setAvatar($<HTMLElement>("[data-quoted-avatar]"), quotedName, quoted.author.avatar);
-          $<HTMLElement>("[data-quoted-handle]").textContent = `@${quoted.author.handle}`;
-          $<HTMLElement>("[data-quoted-text]").textContent = quoted.text;
-          if (quoted.external) {
-            $<HTMLElement>("[data-card]").hidden = false;
-            $<HTMLElement>("[data-card-title]").textContent = quoted.external.title;
-            $<HTMLElement>("[data-card-description]").textContent = quoted.external.description;
-            $<HTMLElement>("[data-card-domain]").textContent = new URL(quoted.external.uri).hostname;
-            if (quoted.external.thumb) {
-              const img = $<HTMLImageElement>("[data-card-image]");
-              img.onload = () => (img.hidden = false);
-              img.onerror = () => (img.hidden = true);
-              img.src = quoted.external.thumb;
-            }
-          }
-        } catch {
-          // The preview is a nicety: quoting still works without it.
-        }
-      };
 
       // The main box: a comment on the post, or (after Quote) a quote post.
       const setMainMode = (next: "comment" | "quote") => {
@@ -656,17 +434,18 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         $<HTMLElement>("[data-verb]").textContent = t(quoting ? "composer.quote" : "composer.comment");
         $<HTMLElement>("[data-submit]").textContent = t(quoting ? "composer.postQuote" : "composer.postComment");
         preview.hidden = !quoting;
-        if (quoting) void loadQuoted();
+        if (quoting) void quote.load(post);
       };
-      const main = setUpComposer(composer, {
+      const main = composerFor(composer, {
         extra: () => (mainMode === "quote" ? { quote: true } : {}),
         tell: say,
         onPosted: (data) => {
           setMainMode("comment");
           postedMessage(status, data);
         },
-        onInput: updatePreviewText,
+        onInput: () => quote.update(),
       });
+      const quote = quotePreview(composer, main.textarea, composerContext);
       $<HTMLButtonElement>("[data-cancel-context]").addEventListener("click", () => {
         setMainMode("comment");
         main.textarea.focus();
@@ -697,7 +476,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         form.querySelector<HTMLElement>("[data-context]")!.hidden = false;
         form.querySelector("[data-context-text]")!.textContent = t("composer.replyingTo", { name: author });
         form.querySelector("[data-verb]")!.textContent = t("comment.reply");
-        form.querySelector("[data-submit]")!.textContent = "Post reply";
+        form.querySelector("[data-submit]")!.textContent = t("composer.postReply");
         form.querySelector("[data-handle]")!.textContent = me.handle ? `@${me.handle}` : "";
         setAvatar(form.querySelector<HTMLElement>("[data-me-avatar]")!, me.displayName || me.handle || "?", me.avatar);
         const replyStatus = scoped(Object.assign(document.createElement("p"), { className: "atmo__status" }));
@@ -706,7 +485,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         (comment.querySelector("article") ?? comment).append(holder);
         const close = () => holder.remove();
         form.querySelector("[data-cancel-context]")!.addEventListener("click", close);
-        setUpComposer(form, {
+        composerFor(form, {
           extra: () => ({ parent: comment.dataset.atmosphereUri }),
           tell: (message) => (replyStatus.textContent = message),
           // The reply appears under the comment (the page adds it), so the box goes.
@@ -998,603 +777,3 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
   customElements.define("atmosphere-comments", AtmosphereComments);
 </script>
-
-<style>
-  .atmo {
-    display: block;
-    color: var(--atmo-text, currentColor);
-  }
-
-  /* Only the component's own parts wait for sign-in to be checked; the
-     site's slot content shows straight away. */
-  .atmo.is-loading > :is([data-view], [data-reactions], [data-replies]) {
-    visibility: hidden;
-  }
-
-  .atmo [hidden] {
-    display: none !important;
-  }
-
-  /* The comment box when it sits under a comment being replied to. */
-  .atmo--inline {
-    margin: 4px 0 6px;
-  }
-
-  .atmo--inline .atmo__composer {
-    margin-top: 10px;
-  }
-
-  .atmo__elsewhere {
-    max-width: 560px;
-    margin: 14px 0 0;
-    font-size: 0.9em;
-  }
-
-  .atmo__elsewhere :global(.atmo__elsewhere-link) {
-    font-weight: 700;
-  }
-
-  .atmo__composer {
-    display: grid;
-    gap: 8px;
-    max-width: 560px;
-    margin-top: 14px;
-  }
-
-  .atmo label {
-    font-weight: 700;
-  }
-
-  .atmo__row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .atmo__row--end {
-    justify-content: flex-end;
-  }
-
-  .atmo input[type="text"],
-  .atmo textarea {
-    flex: 1 1 220px;
-    min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid var(--atmo-border, #8886);
-    border-radius: var(--atmo-radius, 10px);
-    background: var(--atmo-field-bg, transparent);
-    color: inherit;
-    font: inherit;
-  }
-
-  .atmo textarea {
-    resize: vertical;
-  }
-
-  .atmo__button {
-    padding: 10px 16px;
-    border: 0;
-    border-radius: var(--atmo-radius, 10px);
-    background: var(--atmo-accent, #1185fe);
-    color: var(--atmo-on-accent, #fff);
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .atmo__button:disabled {
-    opacity: 0.6;
-    cursor: progress;
-  }
-
-  .atmo__link-button {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--atmo-muted, inherit);
-    font: inherit;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-
-  /* Like, Repost and Quote: outlined pills that fill in once done. */
-  .atmo__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .atmo__action {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px 7px 10px;
-    border: 1px solid var(--atmo-border, #8886);
-    border-radius: 999px;
-    background: none;
-    color: inherit;
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .atmo__action:hover,
-  .atmo__action:focus-visible {
-    border-color: var(--atmo-accent, #1185fe);
-    color: var(--atmo-accent, #1185fe);
-  }
-
-  .atmo__action svg {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .atmo__action[aria-pressed="true"] {
-    border-color: var(--atmo-accent, #1185fe);
-    color: var(--atmo-accent, #1185fe);
-  }
-
-  .atmo__action[data-react="like"][aria-pressed="true"] svg {
-    fill: currentColor;
-  }
-
-  .atmo__action [data-label-on],
-  .atmo__action[aria-pressed="true"] [data-label-off] {
-    display: none;
-  }
-
-  .atmo__action[aria-pressed="true"] [data-label-on] {
-    display: inline;
-  }
-
-  .atmo__context {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 0;
-    color: var(--atmo-muted, inherit);
-    font-size: 0.9em;
-  }
-
-  .atmo__hint,
-  .atmo__count,
-  .atmo__status {
-    margin: 0;
-    color: var(--atmo-muted, inherit);
-    font-size: 0.9em;
-  }
-
-  .atmo__count {
-    margin-right: auto;
-  }
-
-  .atmo__count.is-over {
-    color: var(--atmo-error, #d33);
-  }
-
-  .atmo__status:not(:empty) {
-    margin-top: 10px;
-  }
-
-  .atmo__credit {
-    margin: 14px 0 0;
-    color: var(--atmo-muted, inherit);
-    font-size: 0.75em;
-    opacity: 0.8;
-  }
-
-  .atmo__credit :global(a) {
-    color: inherit;
-  }
-
-  /* @mention suggestions, under the text box. */
-  .atmo__field {
-    position: relative;
-    display: grid;
-  }
-
-  .atmo__suggestions {
-    position: absolute;
-    z-index: 5;
-    top: calc(100% + 4px);
-    left: 0;
-    width: min(100%, 360px);
-    margin: 0;
-    padding: 4px;
-    list-style: none;
-    border: 1px solid var(--atmo-border, #8886);
-    border-radius: var(--atmo-radius, 10px);
-    background: var(--atmo-menu-bg, Canvas);
-    box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
-  }
-
-  .atmo__suggestions :global(li) {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 9px;
-    border-radius: calc(var(--atmo-radius, 10px) - 4px);
-    cursor: pointer;
-  }
-
-  .atmo__suggestions :global(li[aria-selected="true"]),
-  .atmo__suggestions :global(li:hover) {
-    background: color-mix(in srgb, var(--atmo-accent, #1185fe) 14%, transparent);
-  }
-
-  .atmo__suggestions :global(li span:last-child) {
-    overflow: hidden;
-    color: var(--atmo-muted, inherit);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .atmo__suggestions :global(.atmo__avatar) {
-    display: grid;
-    flex: none;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    overflow: hidden;
-    border-radius: 50%;
-    background: var(--atmo-border, #8886);
-    font-size: 11px;
-    font-weight: 700;
-  }
-
-  .atmo__suggestions :global(.atmo__avatar img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* The Quote preview: a post card with the quoted post nested inside. */
-  .atmo__preview {
-    display: grid;
-    gap: 6px;
-    margin: 4px 0 0;
-  }
-
-  .atmo__preview figcaption {
-    color: var(--atmo-muted, inherit);
-    font-size: 0.85em;
-    font-weight: 700;
-  }
-
-  .atmo__preview-post,
-  .atmo__quoted {
-    padding: 12px 14px;
-    border: 1px solid var(--atmo-border, #8886);
-    border-radius: var(--atmo-radius, 10px);
-  }
-
-  /* As on Bluesky: the avatar beside the post, the post's parts stacked. */
-  .atmo__preview-post {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .atmo__preview-body,
-  .atmo__quoted {
-    display: grid;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  .atmo__avatar {
-    display: grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    overflow: hidden;
-    border-radius: 50%;
-    background: var(--atmo-border, #8886);
-    color: var(--atmo-text, inherit);
-    font-weight: 700;
-  }
-
-  /* "Comment as @handle", with the reader's avatar as a reminder of which
-     account they're signed in with. */
-  .atmo__as {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .atmo__avatar--me {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-
-  .atmo__avatar--small {
-    display: inline-grid;
-    width: 18px;
-    height: 18px;
-    margin-right: 4px;
-    font-size: 10px;
-    vertical-align: -4px;
-  }
-
-  /* Added by the script, so outside Astro's scoped styles. */
-  .atmo__avatar :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .atmo__preview-post p,
-  .atmo__card span {
-    margin: 0;
-  }
-
-  .atmo__preview-author span,
-  .atmo__card-domain {
-    color: var(--atmo-muted, inherit);
-  }
-
-  .atmo__preview-text {
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
-
-  .atmo__preview-text.is-placeholder {
-    color: var(--atmo-muted, inherit);
-    font-style: italic;
-  }
-
-  .atmo__quoted {
-    font-size: 0.92em;
-  }
-
-  .atmo__card {
-    overflow: hidden;
-    border: 1px solid var(--atmo-border, #8886);
-    border-radius: var(--atmo-radius, 10px);
-  }
-
-  .atmo__card img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 1.91 / 1;
-    object-fit: cover;
-  }
-
-  .atmo__card > div {
-    display: grid;
-    gap: 2px;
-    padding: 10px 12px;
-  }
-
-  .atmo__card [data-card-description] {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .atmo__card-domain {
-    font-size: 0.85em;
-  }
-
-  /* The likes and reposts, and the comments. These are drawn by the script,
-     and wrapped in :where() so they carry no weight: any rule a site writes
-     for these classes wins. */
-  :global(:where(.atmo-reactions)) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 32px;
-    margin: 0 0 18px;
-  }
-
-  :global(:where(.atmo-reactions__count)) {
-    margin: 0 0 8px;
-    font-weight: 700;
-  }
-
-  :global(:where(.atmo-facepile)) {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0;
-    padding: 0 0 0 8px;
-    list-style: none;
-  }
-
-  :global(:where(.atmo-facepile li)) {
-    margin-left: -8px;
-  }
-
-  :global(:where(.atmo-facepile a)) {
-    display: block;
-    border-radius: 50%;
-  }
-
-  :global(:where(.atmo-facepile__avatar, .atmo-facepile__more)) {
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border: 2px solid var(--atmo-ring, Canvas);
-    border-radius: 50%;
-    object-fit: cover;
-    background: var(--atmo-field-bg, #8882);
-    font-size: 12px;
-  }
-
-  :global(:where(.atmo-facepile__more)) {
-    width: auto;
-    min-width: 36px;
-    padding: 0 8px;
-    border-radius: 18px;
-  }
-
-  :global(:where(.atmo-avatar-initial)) {
-    display: inline-grid;
-    place-items: center;
-    color: #fff;
-    font-weight: 800;
-    background: var(--atmo-accent, #1185fe);
-  }
-
-  :global(:where(.atmo-comments)) {
-    display: grid;
-    gap: 12px;
-    margin: 24px 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  :global(:where(.atmo-comments:empty)) {
-    display: none;
-  }
-
-  :global(:where(.atmo-comment article)) {
-    padding: 16px 18px;
-    border: 1px solid var(--atmo-border, #8886);
-    border-radius: 16px;
-    background: var(--atmo-card-bg, transparent);
-  }
-
-  :global(:where(.atmo-comment--author > article)) {
-    border-color: var(--atmo-accent, #1185fe);
-  }
-
-  /* Replies step in under the comment they answer (up to three levels). */
-  :global(:where(.atmo-comment--nested)) {
-    margin-left: calc((var(--depth, 1) - 1) * 24px);
-    padding-left: 22px;
-    border-left: 2px solid var(--atmo-border, #8886);
-  }
-
-  :global(:where(.atmo-comment__header)) {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  :global(:where(.atmo-comment__avatar)) {
-    flex: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-
-  :global(:where(.atmo-comment__who)) {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-  }
-
-  :global(:where(.atmo-comment__author)) {
-    color: inherit;
-    font-weight: 750;
-    text-decoration: none;
-  }
-
-  :global(:where(.atmo-comment__badge)) {
-    padding: 2px 7px;
-    border: 1px solid var(--atmo-accent, #1185fe);
-    border-radius: 999px;
-    color: var(--atmo-accent, #1185fe);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  :global(:where(.atmo-comment__date)) {
-    color: var(--atmo-muted, inherit);
-    font-size: 13px;
-    text-decoration: none;
-  }
-
-  :global(:where(.atmo-comment__body)) {
-    margin-top: 10px;
-    line-height: 1.65;
-    overflow-wrap: anywhere;
-    white-space: pre-line;
-  }
-
-  :global(:where(.atmo-comment__body p)) {
-    margin: 0;
-  }
-
-  /* Reply, Like and Repost under each comment (outside this element, so
-     unscoped). */
-  :global(.atmo-comment-actions) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    margin-top: 8px;
-  }
-
-  :global(.atmo-comment-delete) {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 12px;
-    margin-top: 8px;
-    font-size: 0.9em;
-  }
-
-  :global(.atmo-comment-delete form) {
-    display: contents;
-  }
-
-  :global(.atmo-comment-delete__text) {
-    color: var(--atmo-muted, inherit);
-  }
-
-
-  :global(.atmo-comment-action) {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--atmo-muted, inherit);
-    font: inherit;
-    font-size: 0.85em;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  :global(.atmo-comment-action--delete) {
-    margin-left: auto;
-  }
-
-  :global(.atmo-comment-action--danger) {
-    color: var(--atmo-danger, #c0392b);
-    font-weight: 700;
-  }
-
-  :global(.atmo-comment-action:hover),
-  :global(.atmo-comment-action:focus-visible),
-  :global(.atmo-comment-action[aria-pressed="true"]) {
-    color: var(--atmo-accent, #1185fe);
-  }
-
-  :global(.atmo-comment-action svg) {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  :global(.atmo-comment-action[data-kind="like"][aria-pressed="true"] svg) {
-    fill: currentColor;
-  }
-</style>

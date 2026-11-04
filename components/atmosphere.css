@@ -1,0 +1,603 @@
+/* Atmosphere Comments for Astro: the styles shared by AtmosphereComments and
+   AtmosphereReactions (the comment box, its quote preview and @mention
+   suggestions, and the thread). Global, so the comment box looks the same
+   wherever it appears; every class starts with atmo, and a site's own rules
+   for the thread win (their defaults are wrapped in :where). The sign-in
+   form has its own styles, in SignInForm.astro. */
+
+.atmo {
+  display: block;
+  color: var(--atmo-text, currentColor);
+}
+
+/* Only the component's own parts wait for sign-in to be checked; the
+   site's slot content shows straight away. */
+.atmo.is-loading > :is([data-view], [data-reactions], [data-replies]) {
+  visibility: hidden;
+}
+
+.atmo [hidden] {
+  display: none !important;
+}
+
+/* The comment box when it sits under a comment being replied to. */
+.atmo--inline {
+  margin: 4px 0 6px;
+}
+
+.atmo--inline .atmo__composer {
+  margin-top: 10px;
+}
+
+.atmo__elsewhere {
+  max-width: 560px;
+  margin: 14px 0 0;
+  font-size: 0.9em;
+}
+
+.atmo__elsewhere .atmo__elsewhere-link {
+  font-weight: 700;
+}
+
+.atmo__composer {
+  display: grid;
+  gap: 8px;
+  max-width: 560px;
+  margin-top: 14px;
+}
+
+.atmo label {
+  font-weight: 700;
+}
+
+.atmo__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.atmo__row--end {
+  justify-content: flex-end;
+}
+
+.atmo textarea {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: var(--atmo-radius, 10px);
+  background: var(--atmo-field-bg, transparent);
+  color: inherit;
+  font: inherit;
+}
+
+.atmo textarea {
+  resize: vertical;
+}
+
+.atmo__button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: var(--atmo-radius, 10px);
+  background: var(--atmo-accent, #1185fe);
+  color: var(--atmo-on-accent, #fff);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.atmo__button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.atmo__link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--atmo-muted, inherit);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Like, Repost and Quote: outlined pills that fill in once done. */
+.atmo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.atmo__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px 7px 10px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.atmo__action:hover,
+.atmo__action:focus-visible {
+  border-color: var(--atmo-accent, #1185fe);
+  color: var(--atmo-accent, #1185fe);
+}
+
+.atmo__action svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.atmo__action[aria-pressed="true"] {
+  border-color: var(--atmo-accent, #1185fe);
+  color: var(--atmo-accent, #1185fe);
+}
+
+.atmo__action[data-react="like"][aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+.atmo__action [data-label-on],
+.atmo__action[aria-pressed="true"] [data-label-off] {
+  display: none;
+}
+
+.atmo__action[aria-pressed="true"] [data-label-on] {
+  display: inline;
+}
+
+.atmo__context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  color: var(--atmo-muted, inherit);
+  font-size: 0.9em;
+}
+
+.atmo__hint,
+.atmo__count,
+.atmo__status {
+  margin: 0;
+  color: var(--atmo-muted, inherit);
+  font-size: 0.9em;
+}
+
+.atmo__count {
+  margin-right: auto;
+}
+
+.atmo__count.is-over {
+  color: var(--atmo-error, #d33);
+}
+
+.atmo__status:not(:empty) {
+  margin-top: 10px;
+}
+
+.atmo__credit {
+  margin: 14px 0 0;
+  color: var(--atmo-muted, inherit);
+  font-size: 0.75em;
+  opacity: 0.8;
+}
+
+.atmo__credit a {
+  color: inherit;
+}
+
+/* @mention suggestions, under the text box. */
+.atmo__field {
+  position: relative;
+  display: grid;
+}
+
+.atmo__suggestions {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  left: 0;
+  width: min(100%, 360px);
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: var(--atmo-radius, 10px);
+  background: var(--atmo-menu-bg, Canvas);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+}
+
+.atmo__suggestions li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: calc(var(--atmo-radius, 10px) - 4px);
+  cursor: pointer;
+}
+
+.atmo__suggestions li[aria-selected="true"],
+.atmo__suggestions li:hover {
+  background: color-mix(in srgb, var(--atmo-accent, #1185fe) 14%, transparent);
+}
+
+.atmo__suggestions li span:last-child {
+  overflow: hidden;
+  color: var(--atmo-muted, inherit);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atmo__suggestions .atmo__avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--atmo-border, #8886);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.atmo__suggestions .atmo__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The Quote preview: a post card with the quoted post nested inside. */
+.atmo__preview {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 0;
+}
+
+.atmo__preview figcaption {
+  color: var(--atmo-muted, inherit);
+  font-size: 0.85em;
+  font-weight: 700;
+}
+
+.atmo__preview-post,
+.atmo__quoted {
+  padding: 12px 14px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: var(--atmo-radius, 10px);
+}
+
+/* As on Bluesky: the avatar beside the post, the post's parts stacked. */
+.atmo__preview-post {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.atmo__preview-body,
+.atmo__quoted {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.atmo__avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--atmo-border, #8886);
+  color: var(--atmo-text, inherit);
+  font-weight: 700;
+}
+
+/* "Comment as @handle", with the reader's avatar as a reminder of which
+   account they're signed in with. */
+.atmo__as {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.atmo__avatar--me {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.atmo__avatar--small {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  font-size: 10px;
+  vertical-align: -4px;
+}
+
+/* Added by the script, so outside Astro's scoped styles. */
+.atmo__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.atmo__preview-post p,
+.atmo__card span {
+  margin: 0;
+}
+
+.atmo__preview-author span,
+.atmo__card-domain {
+  color: var(--atmo-muted, inherit);
+}
+
+.atmo__preview-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.atmo__preview-text.is-placeholder {
+  color: var(--atmo-muted, inherit);
+  font-style: italic;
+}
+
+.atmo__quoted {
+  font-size: 0.92em;
+}
+
+.atmo__card {
+  overflow: hidden;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: var(--atmo-radius, 10px);
+}
+
+.atmo__card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.91 / 1;
+  object-fit: cover;
+}
+
+.atmo__card > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+}
+
+.atmo__card [data-card-description] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.atmo__card-domain {
+  font-size: 0.85em;
+}
+
+/* The likes and reposts, and the comments. These are drawn by the script,
+   and wrapped in :where() so they carry no weight: any rule a site writes
+   for these classes wins. */
+:where(.atmo-reactions) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 0 0 18px;
+}
+
+:where(.atmo-reactions__count) {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+:where(.atmo-facepile) {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0 0 0 8px;
+  list-style: none;
+}
+
+:where(.atmo-facepile li) {
+  margin-left: -8px;
+}
+
+:where(.atmo-facepile a) {
+  display: block;
+  border-radius: 50%;
+}
+
+:where(.atmo-facepile__avatar, .atmo-facepile__more) {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--atmo-ring, Canvas);
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--atmo-field-bg, #8882);
+  font-size: 12px;
+}
+
+:where(.atmo-facepile__more) {
+  width: auto;
+  min-width: 36px;
+  padding: 0 8px;
+  border-radius: 18px;
+}
+
+:where(.atmo-avatar-initial) {
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+  background: var(--atmo-accent, #1185fe);
+}
+
+:where(.atmo-comments) {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where(.atmo-comments:empty) {
+  display: none;
+}
+
+:where(.atmo-comment article) {
+  padding: 16px 18px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: 16px;
+  background: var(--atmo-card-bg, transparent);
+}
+
+:where(.atmo-comment--author > article) {
+  border-color: var(--atmo-accent, #1185fe);
+}
+
+/* Replies step in under the comment they answer (up to three levels). */
+:where(.atmo-comment--nested) {
+  margin-left: calc((var(--depth, 1) - 1) * 24px);
+  padding-left: 22px;
+  border-left: 2px solid var(--atmo-border, #8886);
+}
+
+:where(.atmo-comment__header) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+:where(.atmo-comment__avatar) {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+:where(.atmo-comment__who) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(.atmo-comment__author) {
+  color: inherit;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+:where(.atmo-comment__badge) {
+  padding: 2px 7px;
+  border: 1px solid var(--atmo-accent, #1185fe);
+  border-radius: 999px;
+  color: var(--atmo-accent, #1185fe);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+:where(.atmo-comment__date) {
+  color: var(--atmo-muted, inherit);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+:where(.atmo-comment__body) {
+  margin-top: 10px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+:where(.atmo-comment__body p) {
+  margin: 0;
+}
+
+/* Reply, Like and Repost under each comment (outside this element, so
+   unscoped). */
+.atmo-comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.atmo-comment-delete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 8px;
+  font-size: 0.9em;
+}
+
+.atmo-comment-delete form {
+  display: contents;
+}
+
+.atmo-comment-delete__text {
+  color: var(--atmo-muted, inherit);
+}
+
+
+.atmo-comment-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--atmo-muted, inherit);
+  font: inherit;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.atmo-comment-action--delete {
+  margin-left: auto;
+}
+
+.atmo-comment-action--danger {
+  color: var(--atmo-danger, #c0392b);
+  font-weight: 700;
+}
+
+.atmo-comment-action:hover,
+.atmo-comment-action:focus-visible,
+.atmo-comment-action[aria-pressed="true"] {
+  color: var(--atmo-accent, #1185fe);
+}
+
+.atmo-comment-action svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.atmo-comment-action[data-kind="like"][aria-pressed="true"] svg {
+  fill: currentColor;
+}

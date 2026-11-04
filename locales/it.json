@@ -85,5 +85,10 @@
   "account.signedInAs": "Accesso effettuato come {{handle}}",
   "account.signedInAsLabel": "Accesso effettuato come",
   "account.signOut": "Esci",
+  "composer.postReply": "Pubblica risposta",
+  "posted.reply": "La tua risposta è pubblicata.",
+  "posted.notHere": "Non comparirà in questa pagina, ma è su Bluesky.",
+  "postActions.replyAs": "Rispondi come {{handle}}",
+  "postActions.quoteAs": "Cita come {{handle}}",
   "credit": "Realizzato con {{link}}"
 }

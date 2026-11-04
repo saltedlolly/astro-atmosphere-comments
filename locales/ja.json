@@ -79,5 +79,10 @@
   "account.signedInAs": "{{handle}}としてログイン中",
   "account.signedInAsLabel": "ログイン中のアカウント",
   "account.signOut": "ログアウト",
+  "composer.postReply": "返信を投稿",
+  "posted.reply": "返信を投稿しました。",
+  "posted.notHere": "このページには表示されませんが、Blueskyに投稿されています。",
+  "postActions.replyAs": "{{handle}}として返信",
+  "postActions.quoteAs": "{{handle}}として引用",
   "credit": "{{link}}で動作しています"
 }

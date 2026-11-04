@@ -85,5 +85,10 @@
   "account.signedInAs": "Sesión iniciada como {{handle}}",
   "account.signedInAsLabel": "Sesión iniciada como",
   "account.signOut": "Cerrar sesión",
+  "composer.postReply": "Publicar respuesta",
+  "posted.reply": "Tu respuesta está publicada.",
+  "posted.notHere": "No aparecerá en esta página, pero está en Bluesky.",
+  "postActions.replyAs": "Responder como {{handle}}",
+  "postActions.quoteAs": "Citar como {{handle}}",
   "credit": "Funciona con {{link}}"
 }
