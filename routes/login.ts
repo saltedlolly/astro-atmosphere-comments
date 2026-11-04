@@ -3,7 +3,7 @@
 // approve this site's request to post comments for them.
 import type { APIRoute } from "astro";
 import { safeReturnPath, withStatus } from "../lib/http";
-import { oauthClient, SCOPE } from "../lib/oauth";
+import { DELETE_SCOPE, oauthClient, SCOPE } from "../lib/oauth";
 
 export const POST: APIRoute = async ({ request, url, redirect }) => {
   const form = await request.formData();
@@ -19,7 +19,9 @@ export const POST: APIRoute = async ({ request, url, redirect }) => {
   try {
     const client = await oauthClient(url.origin);
     const authorizeUrl = await client.authorize(handle, {
-      scope: SCOPE,
+      // The delete route sends readers back here (with permission=delete) when
+      // they first delete a comment and haven't allowed that yet.
+      scope: form.get("permission") === "delete" ? `${SCOPE} ${DELETE_SCOPE}` : SCOPE,
       state: JSON.stringify({ returnTo }),
     });
     return redirect(authorizeUrl.href, 303);

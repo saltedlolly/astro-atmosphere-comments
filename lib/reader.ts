@@ -9,7 +9,7 @@ import { oauthClient, SCOPE } from "./oauth";
 import settings from "./settings";
 import { signedInDid, signOut } from "./visitor";
 
-export type Reader = { did: string; session: OAuthSession };
+export type Reader = { did: string; session: OAuthSession; scopes: string[] };
 
 const APPVIEW_PROXY = "did:web:api.bsky.app#bsky_appview";
 const POST_URI = /^at:\/\/(did:[a-z0-9]+:[a-zA-Z0-9._:%-]+)\/app\.bsky\.feed\.post\/([a-zA-Z0-9._~-]+)$/;
@@ -29,17 +29,32 @@ export async function reader(request: Request, url: URL, cookies: AstroCookies):
     const session = await (await oauthClient(url.origin)).restore(did);
     // Compared by permission name ("repo:app.bsky.feed.like"), since a host
     // may write the parameters after it differently.
-    const granted = (await session.getTokenInfo(false)).scope.split(" ").map((part) => part.split("?")[0]);
+    const scopes = (await session.getTokenInfo(false)).scope.split(" ");
+    const granted = scopes.map((part) => part.split("?")[0]);
     if (!SCOPE.split(" ").every((part) => granted.includes(part.split("?")[0]))) {
       await signOut(cookies);
       return json({ error: "new-permissions" }, 401);
     }
-    return { did, session };
+    return { did, session, scopes };
   } catch {
     // The grant has expired or been revoked: the reader needs to sign in again.
     await signOut(cookies);
     return json({ error: "signed-out" }, 401);
   }
+}
+
+/**
+ * Whether the reader's grant allows `action` on records of `collection`: a
+ * repo permission for that collection (or all of them) listing the action,
+ * or listing no actions, which means all of them.
+ */
+export function allows(reader: Reader, collection: string, action: string): boolean {
+  return reader.scopes.some((scope) => {
+    const [name, query = ""] = scope.split("?");
+    if (name !== `repo:${collection}` && name !== "repo:*") return false;
+    const actions = new URLSearchParams(query).getAll("action");
+    return !actions.length || actions.includes(action);
+  });
 }
 
 /** True for a post by one of the site's own accounts (an announcement). */

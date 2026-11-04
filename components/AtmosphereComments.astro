@@ -7,13 +7,16 @@
 //   post   the announcement's AT URI (at://did/app.bsky.feed.post/rkey).
 //   label   the sign-in form's heading
 //           (default "Sign in to leave a comment, like or repost").
+//   blueskyLink  "Rather not sign in here? Reply on Bluesky instead →" under the
+//           sign-in form (default true; false hides it).
 //   credit  a small "Powered by Atmosphere Comments for Astro" link under the
 //           comments (default true; false hides it).
 //
 // Quote shows a preview of the reader's post with the announcement quoted
 // inside, avatars and link-card picture included (passed on by this site).
 //
-// Typing @ and the start of a handle suggests accounts to mention.
+// Typing @ and the start of a handle suggests accounts to mention, and typing
+// in the sign-in box suggests matching accounts to sign in with.
 //
 // Comments: under every element on the page with a `data-atmosphere-uri`
 // attribute (a comment's AT URI) the component adds Reply, Like and Repost.
@@ -44,9 +47,25 @@ interface Props {
   authorLabel?: string;
   /** A small "Powered by Atmosphere Comments for Astro" link under the comments. Default true. */
   credit?: boolean;
+  /** "Rather not sign in here? Reply on Bluesky instead →" under the sign-in form. Default true. */
+  blueskyLink?: boolean;
 }
 
-const { post = "", label = "Sign in to leave a comment, like or repost", authorLabel = "Author", credit = true } = Astro.props;
+const {
+  post = "",
+  label = "Sign in to leave a comment, like or repost",
+  authorLabel = "Author",
+  credit = true,
+  blueskyLink = true,
+} = Astro.props;
+// The announcement on bsky.app, when the page is given it (otherwise the
+// script fills it in once the thread has loaded).
+const atUri = post.match(/^at:\/\/([^/]+)\/app\.bsky\.feed\.post\/([^/]+)$/);
+const blueskyUrl = atUri
+  ? `https://bsky.app/profile/${atUri[1]}/post/${atUri[2]}`
+  : /^https:\/\/bsky\.app\/profile\/[^/]+\/post\/[^/]+$/.test(post)
+    ? post
+    : "";
 const CREDIT_URL = "https://saltedlolly.com/atmosphere-comments-for-astro/";
 const { base } = settings;
 const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
@@ -67,15 +86,22 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           name="handle"
           type="text"
           inputmode="url"
-          autocomplete="username"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
+          data-form-type="other"
           autocapitalize="none"
           spellcheck="false"
           placeholder="alice.bsky.social"
           required
           />
+          <ul class="atmo__suggestions" id="atmo-handle-suggestions" role="listbox" aria-label="Matching accounts" data-handle-suggestions hidden></ul>
         </span>
         <input type="hidden" name="returnTo" value={returnTo} />
-        <button type="submit" class="atmo__button">Sign in with Atmosphere</button>
+        <button type="submit" class="atmo__button atmo__button--sign-in">
+          <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
+          Sign in with Atmosphere
+        </button>
       </div>
       <p class="atmo__hint">
         You'll approve this on your account's own site (Bluesky's, for most people); your password
@@ -83,6 +109,14 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         No account yet? <a href="https://atmosphereaccount.com">Create a free Atmosphere account</a>.
       </p>
     </form>
+    {blueskyLink && (
+      <p class="atmo__elsewhere" data-elsewhere hidden={!blueskyUrl}>
+        Rather not sign in here?{" "}
+        {/* u-syndication: microformats readers learn this is the post's copy on Bluesky. */}
+        <a class="atmo__elsewhere-link u-syndication" href={blueskyUrl || undefined} data-elsewhere-link>Reply on Bluesky instead →</a>{" "}
+        It shows up here just the same, as do likes and reposts.
+      </p>
+    )}
   </div>
 
   <div class="atmo__signed-in" data-view="signed-in" data-pagefind-ignore hidden>
@@ -182,6 +216,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     "account-not-found": "We couldn't find that account. Check the handle and try again.",
     "invalid-handle": "That doesn't look like a handle. It's usually something like alice.bsky.social.",
     "signed-out": "You've been signed out. Please sign in again.",
+    "needs-permission": "To delete comments here, this site needs one more permission from your account.",
+    "not-allowed": "That can't be done here.",
     "new-permissions": "This site can now also like and repost for you, so it needs your permission again. Please sign in again.",
     "too-long": `Posts can be up to ${MAX} characters.`,
     "too-many": "You're going quickly. Please wait a minute and try again.",
@@ -241,7 +277,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         likeCount: number;
         repostCount: number;
       };
-      type Thread = { uri: string; likeCount: number; repostCount: number; likes: Person[]; reposts: Person[]; replies: Reply[] };
+      type Thread = { uri: string; url: string; likeCount: number; repostCount: number; likes: Person[]; reposts: Person[]; replies: Reply[] };
       let thread: Thread | null = null;
       const reactionsBox = $<HTMLElement>("[data-reactions]");
       const repliesList = $<HTMLOListElement>("[data-replies]");
@@ -355,6 +391,11 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           }
           thread = data.thread;
           post = thread.uri;
+          const elsewhere = this.querySelector<HTMLElement>("[data-elsewhere]");
+          if (elsewhere && thread.url) {
+            elsewhere.querySelector("a")!.href = thread.url;
+            elsewhere.hidden = false;
+          }
           renderReactions();
           repliesList.replaceChildren(...thread.replies.map(replyElement));
         } catch {
@@ -401,6 +442,99 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       };
 
       const openLogin = () => loginForm.querySelector("input")?.focus({ preventScroll: true });
+
+      // Matching accounts under the handle box as the reader types, with their
+      // avatars, so they can see they've found the right one. Picking one signs
+      // in with it. Without JavaScript the box works as a plain text box.
+      {
+        const input = loginForm.querySelector<HTMLInputElement>("#atmo-handle")!;
+        const list = loginForm.querySelector<HTMLUListElement>("[data-handle-suggestions]")!;
+        let found: Suggestion[] = [];
+        let active = -1;
+        let latest = "";
+        let timer: number | undefined;
+        input.setAttribute("role", "combobox");
+        input.setAttribute("aria-autocomplete", "list");
+        input.setAttribute("aria-controls", list.id);
+        input.setAttribute("aria-expanded", "false");
+
+        const close = () => {
+          list.hidden = true;
+          list.replaceChildren();
+          found = [];
+          active = -1;
+          input.setAttribute("aria-expanded", "false");
+          input.removeAttribute("aria-activedescendant");
+        };
+        const highlight = (index: number) => {
+          active = index;
+          list.querySelectorAll("li").forEach((item, i) => item.setAttribute("aria-selected", String(i === index)));
+          if (index >= 0) input.setAttribute("aria-activedescendant", `${list.id}-option-${index}`);
+          else input.removeAttribute("aria-activedescendant");
+        };
+        const choose = (index: number) => {
+          const option = found[index];
+          if (!option) return;
+          input.value = option.handle;
+          close();
+          loginForm.requestSubmit();
+        };
+        const show = (actors: Suggestion[]) => {
+          found = actors.slice(0, 5);
+          if (!found.length || document.activeElement !== input) return close();
+          list.replaceChildren(
+            ...found.map((option, index) => {
+              const item = make("li");
+              item.id = `${list.id}-option-${index}`;
+              item.setAttribute("role", "option");
+              const avatar = make("span", "atmo__avatar atmo__avatar--small");
+              avatar.setAttribute("aria-hidden", "true");
+              setAvatar(avatar, option.displayName || option.handle, option.avatar);
+              item.append(avatar, make("strong", "", option.displayName || option.handle), make("span", "", `@${option.handle}`));
+              // mousedown keeps the focus in the handle box.
+              item.addEventListener("mousedown", (event) => event.preventDefault());
+              item.addEventListener("click", () => choose(index));
+              return item;
+            }),
+          );
+          list.hidden = false;
+          input.setAttribute("aria-expanded", "true");
+          // Nothing is picked until the reader chooses, so Enter still signs in
+          // with exactly what they typed.
+          highlight(-1);
+        };
+
+        input.addEventListener("input", () => {
+          window.clearTimeout(timer);
+          const query = input.value.trim().replace(/^@/, "");
+          latest = query;
+          if (query.length < 2 || query.startsWith("did:") || /\s/.test(query)) return close();
+          timer = window.setTimeout(async () => {
+            try {
+              const response = await fetch(`${base}/typeahead?q=${encodeURIComponent(query)}`, { credentials: "same-origin" });
+              const data = (await response.json()) as { actors?: Suggestion[] };
+              if (query === latest) show(data.actors ?? []);
+            } catch {
+              close();
+            }
+          }, 250);
+        });
+        input.addEventListener("keydown", (event) => {
+          if (list.hidden) return;
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            const step = event.key === "ArrowDown" ? 1 : -1;
+            highlight(active < 0 && step < 0 ? found.length - 1 : (active + step + found.length) % found.length);
+          } else if (event.key === "Enter" && active >= 0) {
+            event.preventDefault();
+            choose(active);
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            close();
+          }
+        });
+        input.addEventListener("blur", () => window.setTimeout(close, 150));
+      }
 
       // An avatar picture, or the name's first letter if there isn't one.
       const setAvatar = (slot: HTMLElement, name: string, src?: string) => {
@@ -749,7 +883,87 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           actions.append(reply, commentButton("like", comment), commentButton("repost", comment));
           (comment.querySelector("article") ?? comment).append(actions);
         });
+        addDeleteButtons();
         return added;
+      };
+
+      // Delete, under the signed-in reader's own comments only.
+      const isMine = (comment: HTMLElement) => !!me.did && !!comment.dataset.atmosphereUri?.startsWith(`at://${me.did}/`);
+
+      const deleteComment = async (comment: HTMLElement, panel: HTMLElement) => {
+        const uri = comment.dataset.atmosphereUri!;
+        panel.replaceChildren(make("span", "atmo-comment-delete__text", "Deleting…"));
+        try {
+          const response = await send("delete", { post: uri });
+          const data = (await response.json()) as { error?: string };
+          if (response.ok) {
+            comment.remove();
+            say("Your comment was deleted.");
+            this.dispatchEvent(new CustomEvent("atmosphere:deleted", { detail: { uri }, bubbles: true }));
+            return;
+          }
+          if (data.error === "needs-permission") return askDeletePermission(comment, panel);
+          panel.remove();
+          handleError(data.error ?? "error");
+        } catch {
+          panel.remove();
+          say(MESSAGES.error);
+        }
+      };
+
+      // Deleting posts isn't part of signing in, so the first delete asks the
+      // reader's account host for it, then carries on when they come back.
+      const askDeletePermission = (comment: HTMLElement, panel: HTMLElement) => {
+        const form = Object.assign(document.createElement("form"), { method: "post", action: `${base}/login` });
+        const field = (name: string, value: string) =>
+          form.append(Object.assign(document.createElement("input"), { type: "hidden", name, value }));
+        field("handle", me.did!);
+        field("permission", "delete");
+        field("returnTo", `${location.pathname}#atmo-delete=${encodeURIComponent(comment.dataset.atmosphereUri!)}`);
+        const go = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", "Continue to approve"), { type: "submit" });
+        const cancel = Object.assign(make("button", "atmo-comment-action", "Cancel"), { type: "button" });
+        cancel.addEventListener("click", () => panel.remove());
+        form.append(go, cancel);
+        panel.replaceChildren(
+          make(
+            "span",
+            "atmo-comment-delete__text",
+            "To delete comments here, this site needs one more permission from your account. You can also delete it in any Bluesky app.",
+          ),
+          form,
+        );
+        go.focus();
+      };
+
+      const deleteButton = (comment: HTMLElement) => {
+        const button = Object.assign(make("button", "atmo-comment-action atmo-comment-action--delete", "Delete"), { type: "button" });
+        button.setAttribute("aria-label", "Delete your comment");
+        button.addEventListener("click", () => {
+          const actions = button.parentElement!;
+          if (actions.nextElementSibling?.matches(".atmo-comment-delete")) return;
+          const panel = make("div", "atmo-comment-delete");
+          const yes = Object.assign(make("button", "atmo-comment-action atmo-comment-action--danger", "Delete"), { type: "button" });
+          const no = Object.assign(make("button", "atmo-comment-action", "Cancel"), { type: "button" });
+          yes.addEventListener("click", () => deleteComment(comment, panel));
+          no.addEventListener("click", () => {
+            panel.remove();
+            button.focus();
+          });
+          panel.append(make("span", "atmo-comment-delete__text", "Delete this comment from Bluesky?"), yes, no);
+          panel.setAttribute("role", "group");
+          panel.setAttribute("aria-label", "Delete your comment");
+          actions.after(panel);
+          no.focus();
+        });
+        return button;
+      };
+
+      const addDeleteButtons = () => {
+        document.querySelectorAll<HTMLElement>("[data-atmosphere-uri]").forEach((comment) => {
+          const actions = comment.querySelector<HTMLElement>(":scope .atmo-comment-actions");
+          if (!actions || actions.querySelector(".atmo-comment-action--delete")) return;
+          if (isSignedIn && isMine(comment)) actions.append(deleteButton(comment));
+        });
       };
 
       // Which of the post and its comments the reader has already liked or reposted.
@@ -793,9 +1007,26 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         isSignedIn = signed;
         signedOut.hidden = signed;
         signedIn.hidden = !signed;
-        if (!signed) return closeReplies();
+        if (!signed) {
+          document.querySelectorAll(".atmo-comment-action--delete, .atmo-comment-delete").forEach((part) => part.remove());
+          return closeReplies();
+        }
         addCommentActions();
         await loadState();
+        // Back from approving the delete permission: finish the delete they asked for.
+        const pending = location.hash.match(/^#atmo-delete=(.+)$/);
+        if (pending) {
+          history.replaceState(history.state, "", `${location.pathname}${location.search}#atmosphere-comments`);
+          const uri = decodeURIComponent(pending[1]);
+          const comment = document.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(uri)}"]`);
+          const actions = comment?.querySelector<HTMLElement>(":scope .atmo-comment-actions");
+          if (comment && actions && isMine(comment)) {
+            const panel = make("div", "atmo-comment-delete");
+            actions.after(panel);
+            comment.scrollIntoView({ block: "center" });
+            await deleteComment(comment, panel);
+          }
+        }
       };
 
       // A message from the sign-in round trip (?atmosphere=…), then tidy the address.
@@ -884,13 +1115,19 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     display: none !important;
   }
 
-  /* The handle box, with the Atmosphere Account logo inside on the left. The
-     logo is single-colour, so it is drawn in the muted text colour. */
+  /* The Atmosphere Account logo inside the handle box, on the left, and at
+     the start of the sign-in button. It is single-colour, so it is drawn in
+     the muted text colour in the box and the button's text colour on it. */
   .atmo__handle {
     position: relative;
     display: flex;
     flex: 1 1 220px;
     min-width: 0;
+  }
+
+  /* Matching accounts sit under the handle box, as wide as it. */
+  .atmo__handle .atmo__suggestions {
+    width: 100%;
   }
 
   .atmo__handle .atmo__logo {
@@ -909,6 +1146,20 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     padding-left: 40px;
   }
 
+  .atmo__button--sign-in {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .atmo__button--sign-in .atmo__logo {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    mask: var(--atmo-logo) center / contain no-repeat;
+  }
+
   /* The comment box when it sits under a comment being replied to. */
   .atmo--inline {
     margin: 4px 0 6px;
@@ -916,6 +1167,16 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
   .atmo--inline .atmo__composer {
     margin-top: 10px;
+  }
+
+  .atmo__elsewhere {
+    max-width: 560px;
+    margin: 14px 0 0;
+    font-size: 0.9em;
+  }
+
+  .atmo__elsewhere-link {
+    font-weight: 700;
   }
 
   .atmo__login,
@@ -1422,6 +1683,24 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     margin-top: 8px;
   }
 
+  :global(.atmo-comment-delete) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    margin-top: 8px;
+    font-size: 0.9em;
+  }
+
+  :global(.atmo-comment-delete form) {
+    display: contents;
+  }
+
+  :global(.atmo-comment-delete__text) {
+    color: var(--atmo-muted, inherit);
+  }
+
+
   :global(.atmo-comment-action) {
     display: inline-flex;
     align-items: center;
@@ -1434,6 +1713,15 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
     font-size: 0.85em;
     font-weight: 600;
     cursor: pointer;
+  }
+
+  :global(.atmo-comment-action--delete) {
+    margin-left: auto;
+  }
+
+  :global(.atmo-comment-action--danger) {
+    color: var(--atmo-danger, #c0392b);
+    font-weight: 700;
   }
 
   :global(.atmo-comment-action:hover),

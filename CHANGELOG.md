@@ -2,8 +2,14 @@
 
 ## 0.2.0 (4 November 2026)
 
-- The sign-in form is shown straight away under each post: a handle box with the Atmosphere logo and a **Sign in with Atmosphere** button. The "Respond with your Atmosphere Account" button that opened it is gone.
+- The sign-in form is shown straight away under each post: a handle box and a **Sign in with Atmosphere** button, both with the Atmosphere logo. The "Respond with your Atmosphere Account" button that opened it is gone.
 - `label` is now the form's heading (default "Sign in to leave a comment, like or repost"). If you set it for the old button's small text, change or remove it.
+- As readers type in the handle box, **matching accounts are suggested** with their avatar, name and handle, so they can see they've found the right one; picking one signs in with it. Enter still signs in with exactly what was typed.
+- Under the sign-in form, **"Rather not sign in here? Reply on Bluesky instead →"** links to the announcement, for readers who'd rather reply in the Bluesky app (`blueskyLink={false}` hides it). If your page already says this in the `after-box` slot, remove one.
+- Readers can **delete their own comments**: a Delete button under each of them, with a confirmation. Signing in no longer asks for permission to delete posts; the first delete asks the reader's account host for it (one more approval), then finishes. The server only ever deletes the reader's own replies under your announcements. Fires `atmosphere:deleted` (`detail`: `uri`).
+- The site's OAuth client metadata moved to `/oauth-client-metadata.json` at the site's root (was `/atmosphere/client-metadata.json`), so Bluesky's approval page names the site by its address ("saltedlolly.com") instead of showing a file address. **Readers already signed in will need to sign in once more**, because their sign-in belonged to the old address. If your site already serves a file at that address, the two will clash.
+- The handle box keeps `name="handle"` (the name most atproto apps use, so browsers can suggest handles typed elsewhere) and asks password managers to leave it alone: it isn't a login for your site, so they offered the wrong one. This follows the community's emerging convention and may change (see AGENTS.md).
+- `--atmo-danger` sets the colour of the confirming Delete button.
 - Pressing Reply, Like or Repost on a comment while signed out moves to the form and puts the cursor in the handle box.
 
 ## 0.1.1 (3 November 2026)

@@ -2,12 +2,13 @@
 
 Bluesky comments for your Astro site, without the reader leaving the page. (On npm: [`astro-atmosphere-comments`](https://www.npmjs.com/package/astro-atmosphere-comments).)
 
-Under each post, readers type their Bluesky handle into the **Sign in with Atmosphere** form (or any other [Atmosphere account](https://atmosphereaccount.com)), and can then:
+Under each post, readers type their Bluesky handle (or that of any other [Atmosphere account](https://atmosphereaccount.com)) into the **Sign in with Atmosphere** form, which suggests matching accounts with their avatars as they type, and can then:
 
 - **comment** on your post, and **reply** to other comments;
 - **like** and **repost** your post, or any comment under it;
 - **quote** your post on their own profile, with a Bluesky-style preview;
-- **@mention** people, with suggestions as they type.
+- **@mention** people, with suggestions as they type;
+- **delete** their own comments.
 
 Everything they post is written to **their own account**, as ordinary Bluesky posts, likes and reposts: comments are replies to your post's announcement on Bluesky. They can delete them in any Bluesky app, and people who prefer the app can reply there instead; it all shows up on your page the same way.
 
@@ -18,11 +19,13 @@ See it on [saltedlolly.com](https://saltedlolly.com/2005/07/13/summer-jam-party-
 ## How it works
 
 1. You announce each post on Bluesky (a post linking to it). That post's thread is the comment section.
-2. A reader signs in with **AT Protocol OAuth, straight to their own account host** (Bluesky's, for most people). There is no third-party login service in between, and your site never sees a password.
-3. Your site asks only for what commenting needs: to create and delete posts, likes and reposts, and to see which posts the reader has already liked or reposted. Readers can revoke it at any time in their Bluesky settings.
+2. A reader signs in with **AT Protocol OAuth, straight to their own account host** (Bluesky's, for most people), which asks them to approve your site, named by its address (example.com). There is no third-party login service in between, and your site never sees a password.
+3. Your site asks only for what commenting needs: to create posts, to create and delete likes and reposts, and to see which posts the reader has already liked or reposted. Permission to delete posts is asked for separately, only the first time a reader deletes one of their comments on your site, and the site only ever uses it on their own comments under your posts. Readers can revoke it all at any time in their Bluesky settings.
 4. Your server keeps each reader's sign-in (a random cookie in their browser; their tokens on your server), and posts on their behalf when they press a button.
 
-Images (avatars, link-card pictures) and @mention searches go through your server, so readers' browsers never contact Bluesky directly.
+Readers who'd rather not sign in can use the **Reply on Bluesky instead** link under the form.
+
+Images (avatars, link-card pictures) and account searches (the suggestions under the sign-in box and for @mentions) go through your server, so readers' browsers never contact Bluesky directly.
 
 ## Requirements
 
@@ -67,7 +70,7 @@ To find an account's DID: `https://bsky.social/xrpc/com.atproto.identity.resolve
 npx astro-atmosphere-comments keygen
 ```
 
-This adds `ATMOSPHERE_PRIVATE_JWK` to your `.env` without printing it. Your site signs its requests to readers' account hosts with it; the public half is published at `/atmosphere/jwks.json`. Set the same variable on your server, keep `.env` out of Git, and keep a backup: **a new key signs every reader out.**
+This adds `ATMOSPHERE_PRIVATE_JWK` to your `.env` without printing it. Your site signs its requests to readers' account hosts with it; the public half is published at `/atmosphere/jwks.json`, and the site's details for account hosts (its name, logo and permissions) at `/oauth-client-metadata.json`. That second file has to be at your site's root: it's the conventional address, and only then does Bluesky's approval page name your site by its address alone. Set the same variable on your server, keep `.env` out of Git, and keep a backup: **a new key signs every reader out.**
 
 On the server, also set `ATMOSPHERE_DATA_DIR` to a folder **outside your deploy folder** (for example `/var/lib/example-com/atmosphere`), so deploys don't sign readers out. It defaults to `.data/atmosphere` in the project.
 
@@ -97,7 +100,7 @@ Locally the integration uses the protocol's development mode, so no key is neede
 
 | Option | Required | What it does |
 | --- | --- | --- |
-| `clientName` | yes | Your site's name on the reader's sign-in screen. |
+| `clientName` | yes | Your site's name, given to readers' account hosts. (Bluesky's approval page shows your site's address instead, unless Bluesky has marked your site as trusted.) |
 | `allowedAuthors` | yes | DIDs of the accounts whose posts can be commented on through your site. Comments from these accounts get the Author badge. |
 | `logoUri` | | A square logo for the sign-in screen (absolute `https://` address). |
 | `policyUri`, `tosUri` | | Your privacy policy and terms, shown on the sign-in screen. |
@@ -111,11 +114,12 @@ Locally the integration uses the protocol's development mode, so no key is neede
 | `post` | The announcement: bsky.app address or AT URI. Optional with Standard.site (above). |
 | `label` | The sign-in form's heading. Default "Sign in to leave a comment, like or repost". |
 | `authorLabel` | The badge on your own comments. Default "Author". |
+| `blueskyLink` | "Rather not sign in here? Reply on Bluesky instead →" under the sign-in form, linking to the announcement (with `u-syndication`, so microformats readers learn it's the post's copy on Bluesky). Default `true`; `blueskyLink={false}` hides it. |
 | `credit` | A small "Powered by Atmosphere Comments for Astro" link at the end. Default `true`; set `credit={false}` to hide it. |
 
 **Slots:** `after-box` goes between the comment box and the comments (a note about other ways to respond, say); the default slot goes after the comments (other responses, older comments).
 
-**Layout, top to bottom:** likes and reposts, the sign-in form (or, signed in, Like, Repost, Quote and the comment box), your `after-box` content, the comments, your default slot content.
+**Layout, top to bottom:** likes and reposts, the sign-in form and the "Reply on Bluesky instead" line (or, signed in, Like, Repost, Quote and the comment box), your `after-box` content, the comments, your default slot content.
 
 ## Styling
 
@@ -130,8 +134,9 @@ It has a plain default look and takes your text colour. Colours come from CSS cu
   --atmo-border: #ddd;
   --atmo-field-bg: #f6f6f6;   /* text boxes */
   --atmo-card-bg: #fafafa;    /* comments */
-  --atmo-menu-bg: #fff;       /* @mention suggestions */
+  --atmo-menu-bg: #fff;       /* account and @mention suggestions */
   --atmo-ring: #fff;          /* the outline round faces */
+  --atmo-danger: #c0392b;     /* Delete, when confirming */
   --atmo-radius: 10px;
 }
 ```
@@ -144,11 +149,12 @@ The component fires (bubbling):
 
 - `atmosphere:commented` after a comment, reply or quote is posted (`detail`: `uri`, `url`, `text`, `author`, `createdAt`, `quote`, `parent`);
 - `atmosphere:reacted` after a like or repost of the post, or undoing one (`detail`: `kind`, `on`, `author`).
+- `atmosphere:deleted` after a reader deletes one of their comments (`detail`: `uri`).
 
 ## Security and privacy
 
-- **What your server stores:** for each signed-in reader, their DID and their OAuth tokens (which can only post, like and repost as described above), plus a random cookie value. Files are readable only by your site's user. Mention this in your privacy policy.
-- **What it refuses:** requests that change something must come from your own pages (checked by `Origin`); only your announcements and comments in their threads can be acted on; comments, likes and searches are rate-limited per account; the image route only passes on avatars and link pictures it has just shown.
+- **What your server stores:** for each signed-in reader, their DID and their OAuth tokens (which can only post, like and repost as described above, and delete posts if the reader allowed it), plus a random cookie value. Files are readable only by your site's user. Mention this in your privacy policy.
+- **What it refuses:** requests that change something must come from your own pages (checked by `Origin`); only your announcements and comments in their threads can be acted on; only a reader's own replies under your announcements can be deleted; comments, likes and searches are rate-limited per account, and searches by readers who aren't signed in per address and overall; the image route only passes on avatars and link pictures it has just shown.
 - **Moderation:** comments appear automatically. Hide one in the Bluesky app (it disappears here too), block the account, or add it to `hidden`.
 - Comments are plain text, as on Bluesky: links, @mentions and #hashtags become links.
 

@@ -6,11 +6,13 @@
 //
 // Sign-in uses AT Protocol OAuth straight to the reader's own account host:
 // no third-party login service is involved. This site only ever holds a
-// grant to create and delete posts, likes and reposts (see SCOPE in
-// lib/oauth.ts).
+// grant to create posts and to create and delete likes and reposts, plus, if
+// a reader allows it when they first delete a comment, to delete posts (see
+// SCOPE and DELETE_SCOPE in lib/oauth.ts).
 //
-// It adds these routes under `base` (default /atmosphere):
-//   client-metadata.json, jwks.json  what account hosts read to know the site
+// It adds /oauth-client-metadata.json at the site's root (what account hosts
+// read to know the site), and these routes under `base` (default /atmosphere):
+//   jwks.json                        the public half of the site's signing key
 //   login (POST)                     starts sign-in with the reader's handle
 //   callback                         where the reader's host sends them back
 //   logout (POST)                    signs out and revokes the site's grant
@@ -30,7 +32,6 @@ import { fileURLToPath } from "node:url";
 const VIRTUAL_ID = "virtual:atmosphere-comments/settings";
 
 const ROUTES = {
-  "client-metadata.json": "client-metadata.json.ts",
   "jwks.json": "jwks.json.ts",
   login: "login.ts",
   callback: "callback.ts",
@@ -39,6 +40,7 @@ const ROUTES = {
   comment: "comment.ts",
   state: "state.ts",
   react: "react.ts",
+  delete: "delete.ts",
   post: "post.ts",
   media: "media.ts",
   typeahead: "typeahead.ts",
@@ -79,6 +81,15 @@ export default function atmosphereComments(options) {
           tosUri: options.tosUri,
           hidden: options.hidden ?? [],
         };
+
+        // The client metadata lives at the address account hosts treat as the
+        // convention, so Bluesky's approval page names the app by the site's
+        // address alone (saltedlolly.com) rather than the full file address.
+        injectRoute({
+          pattern: "/oauth-client-metadata.json",
+          entrypoint: fileURLToPath(new URL("./routes/client-metadata.json.ts", import.meta.url)),
+          prerender: false,
+        });
 
         for (const [path, file] of Object.entries(ROUTES)) {
           injectRoute({
