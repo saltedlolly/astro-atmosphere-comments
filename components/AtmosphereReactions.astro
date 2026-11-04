@@ -69,6 +69,8 @@ const { base } = settings;
   const HEART = '<path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" />';
   const ARROWS = '<path d="M7 8h10l-3-3M17 16H7l3 3M5 13V9.5A1.5 1.5 0 0 1 6.5 8M19 11v3.5a1.5 1.5 0 0 1-1.5 1.5" />';
   const BUBBLE = '<path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h0.5A2.5 2.5 0 0 1 5 13.5Z" />';
+  // The Bluesky butterfly (Simple Icons, CC0), on the Follow button.
+  const BUTTERFLY = '<path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z" />';
   const QUOTE = '<path d="M5 18h5v-5H6.5A4.5 4.5 0 0 1 11 8.5V7a6 6 0 0 0-6 6Zm9 0h5v-5h-3.5A4.5 4.5 0 0 1 20 8.5V7a6 6 0 0 0-6 6Z" />';
   // Messages the sign-in round trip can bring back (?atmosphere=…).
   const SIGN_IN_PROBLEMS: Record<string, string> = {
@@ -365,7 +367,10 @@ const { base } = settings;
           let pointing = false;
           const render = () => {
             button.setAttribute("aria-pressed", String(following));
-            button.textContent = following ? (pointing ? t("follow.unfollow") : `✓ ${t("follow.following")}`) : t("follow.follow", { handle: who });
+            button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${BUTTERFLY}</svg><span></span>`;
+            button.querySelector("span")!.textContent = following
+              ? pointing ? t("follow.unfollow") : `✓ ${t("follow.following")}`
+              : t("follow.follow", { handle: who });
             button.title = following ? t("follow.followingLabel", { handle: who }) : t("follow.followAs", { handle: who, me: handle });
             button.setAttribute("aria-label", button.title);
           };
@@ -399,7 +404,10 @@ const { base } = settings;
           button.addEventListener("click", () => void press());
           followButtons.set(subject, { get following() { return following; }, set, press });
           render();
+          // The button takes the link's place. (Inline, as a site's own style
+          // for the link could otherwise keep it showing.)
           link.hidden = true;
+          link.style.display = "none";
           link.after(button);
           try {
             const response = await fetch(`${base}/follow?subject=${encodeURIComponent(subject)}`, { credentials: "same-origin" });
@@ -649,21 +657,37 @@ const { base } = settings;
   }
 
   /* Follow / Following, in place of a "Follow me" link. */
+  /* Low-key: a slim outlined pill in the accent colour. */
   :global(:where(.atmo-follow)) {
-    padding: 7px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px;
     border: 1px solid var(--atmo-accent, #1185fe);
     border-radius: 999px;
-    background: var(--atmo-accent, #1185fe);
-    color: var(--atmo-on-accent, #fff);
+    background: none;
+    color: var(--atmo-accent, #1185fe);
     font: inherit;
-    font-weight: 700;
+    font-size: 0.85em;
+    font-weight: 600;
+    line-height: 1.5;
     cursor: pointer;
+  }
+
+  :global(:where(.atmo-follow:not([aria-pressed="true"]):hover, .atmo-follow:not([aria-pressed="true"]):focus-visible)) {
+    background: color-mix(in srgb, var(--atmo-accent, #1185fe) 12%, transparent);
+  }
+
+  :global(:where(.atmo-follow svg)) {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
   }
 
   :global(:where(.atmo-follow[aria-pressed="true"])) {
     border-color: var(--atmo-border, #8886);
-    background: none;
-    color: var(--atmo-text, inherit);
+    color: var(--atmo-muted, inherit);
   }
 
   :global(:where(.atmo-follow[aria-pressed="true"]:hover, .atmo-follow[aria-pressed="true"]:focus-visible)) {
