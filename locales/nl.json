@@ -77,5 +77,8 @@
   "postActions.repostLabel": "Dit bericht reposten",
   "dialog.heading": "Log in om te liken of te reposten",
   "dialog.close": "Sluiten",
+  "account.signedInAs": "Ingelogd als {{handle}}",
+  "account.signedInAsLabel": "Ingelogd als",
+  "account.signOut": "Uitloggen",
   "credit": "Mogelijk gemaakt door {{link}}"
 }

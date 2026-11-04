@@ -7,6 +7,11 @@
 //            data-atmosphere-url="https://bsky.app/profile/…/post/…"
 //            data-atmosphere-likes="3" data-atmosphere-reposts="1">
 //
+// It also fills any element marked `data-atmosphere-account` (in your
+// header, say) with the signed-in reader's avatar, which opens a small menu
+// saying who they're signed in as, with Sign out. Signed out, the element
+// stays empty (give it `hidden` so it takes no space).
+//
 // Signed-in readers like and repost from your page. Anyone else who presses
 // Like or Repost is offered the sign-in form in an overlay, and the like or
 // repost is done once they're back. Only posts by the integration's
@@ -226,10 +231,68 @@ const { base } = settings;
         if (button && button.getAttribute("aria-pressed") !== "true") await react(post, button, kind as Kind, true);
       };
 
+      // The reader's avatar wherever the page marks data-atmosphere-account,
+      // opening a menu with who they're signed in as and Sign out.
+      const showAccount = (me: { handle?: string; displayName?: string; avatar?: string }) => {
+        for (const slot of document.querySelectorAll<HTMLElement>("[data-atmosphere-account]")) {
+          if (slot.querySelector(".atmo-account")) continue;
+          const handle = `@${me.handle}`;
+          const account = make("span", "atmo-account");
+          const button = make("button", "atmo-account__button");
+          button.type = "button";
+          button.title = t("account.signedInAs", { handle });
+          button.setAttribute("aria-label", button.title);
+          button.setAttribute("aria-haspopup", "true");
+          button.setAttribute("aria-expanded", "false");
+          const name = me.displayName || me.handle || "";
+          button.textContent = name.trim().charAt(0).toUpperCase();
+          if (me.avatar) {
+            const img = Object.assign(document.createElement("img"), { src: me.avatar, alt: "" });
+            img.onload = () => button.replaceChildren(img);
+          }
+          const menu = make("div", "atmo-account__menu");
+          menu.hidden = true;
+          const who = make("p", "atmo-account__who", t("account.signedInAsLabel"));
+          const strong = make("strong", "", handle);
+          who.append(make("br"), strong);
+          const signOut = make("button", "atmo-account__sign-out", t("account.signOut"));
+          signOut.type = "button";
+          signOut.addEventListener("click", async () => {
+            signOut.disabled = true;
+            await fetch(`${base}/logout`, { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+            location.reload();
+          });
+          menu.append(who, signOut);
+          const close = () => {
+            menu.hidden = true;
+            button.setAttribute("aria-expanded", "false");
+          };
+          button.addEventListener("click", () => {
+            const open = menu.hidden;
+            menu.hidden = !open;
+            button.setAttribute("aria-expanded", String(open));
+            if (open) signOut.focus();
+          });
+          document.addEventListener("click", (event) => {
+            if (!account.contains(event.target as Node)) close();
+          });
+          account.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && !menu.hidden) {
+              close();
+              button.focus();
+            }
+          });
+          account.append(button, menu);
+          slot.append(account);
+          slot.hidden = false;
+        }
+      };
+
       fetch(`${base}/me`, { credentials: "same-origin" })
         .then((response) => response.json())
-        .then((me: { signedIn?: boolean }) => {
+        .then((me: { signedIn?: boolean; handle?: string; displayName?: string; avatar?: string }) => {
           signedIn = !!me.signedIn;
+          if (signedIn) showAccount(me);
         })
         .catch(() => undefined)
         .finally(async () => {
@@ -340,5 +403,77 @@ const { base } = settings;
 
   :global(:where(.atmo-post-action[data-kind="like"][aria-pressed="true"] svg)) {
     fill: currentColor;
+  }
+
+  /* The signed-in reader's avatar and its menu. */
+  :global(:where(.atmo-account)) {
+    position: relative;
+    display: inline-block;
+  }
+
+  :global(:where(.atmo-account__button)) {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--atmo-border, #8886);
+    border-radius: 50%;
+    background: var(--atmo-field-bg, #8882);
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  :global(:where(.atmo-account__button img)) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  :global(:where(.atmo-account__menu)) {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    right: 0;
+    display: grid;
+    gap: 10px;
+    min-width: 200px;
+    padding: 12px 14px;
+    border: 1px solid var(--atmo-border, #8886);
+    border-radius: var(--atmo-radius, 10px);
+    background: var(--atmo-menu-bg, Canvas);
+    color: var(--atmo-text, CanvasText);
+    box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+    text-align: left;
+  }
+
+  :global(:where(.atmo-account__menu[hidden])) {
+    display: none;
+  }
+
+  :global(:where(.atmo-account__who)) {
+    margin: 0;
+    color: var(--atmo-muted, inherit);
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+  }
+
+  :global(:where(.atmo-account__who strong)) {
+    color: var(--atmo-text, inherit);
+  }
+
+  :global(:where(.atmo-account__sign-out)) {
+    justify-self: start;
+    padding: 6px 12px;
+    border: 1px solid var(--atmo-border, #8886);
+    border-radius: var(--atmo-radius, 10px);
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 0.9em;
+    cursor: pointer;
   }
 </style>

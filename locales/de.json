@@ -77,5 +77,8 @@
   "postActions.repostLabel": "Diesen Beitrag reposten",
   "dialog.heading": "Melde dich an, um zu liken oder zu reposten",
   "dialog.close": "Schließen",
+  "account.signedInAs": "Angemeldet als {{handle}}",
+  "account.signedInAsLabel": "Angemeldet als",
+  "account.signOut": "Abmelden",
   "credit": "Bereitgestellt von {{link}}"
 }

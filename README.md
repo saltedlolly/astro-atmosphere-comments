@@ -109,6 +109,12 @@ import AtmosphereReactions from "astro-atmosphere-comments/AtmosphereReactions.a
 
 Each marked post gets a row of icons: Reply and Quote (which open the post on Bluesky), and Repost and Like with their counts. Readers already signed in on your site like and repost straight away. Anyone else is offered the sign-in form in an overlay, and their like or repost is done when they come back. It works with posts from loaders such as [`@ascorbic/bluesky-loader`](https://www.npmjs.com/package/@ascorbic/bluesky-loader) or embeds such as [`@astro-community/astro-embed-bluesky`](https://www.npmjs.com/package/@astro-community/astro-embed-bluesky) (wrap the embed in the marked element). Only posts by your `allowedAuthors` can be liked or reposted through your site.
 
+So readers can see which account they're using, `AtmosphereReactions` also fills any element marked `data-atmosphere-account` (in your header, say) with the signed-in reader's avatar. Clicking it opens a small menu: "Signed in as @handle" and Sign out. When nobody's signed in it stays empty, so give it `hidden`:
+
+```astro
+<span data-atmosphere-account hidden></span>
+```
+
 ### Trying it on your own computer
 
 Run the dev server on `127.0.0.1` and open the site there, not at `localhost`:

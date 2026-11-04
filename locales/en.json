@@ -77,5 +77,8 @@
   "postActions.repostLabel": "Repost this post",
   "dialog.heading": "Sign in to like or repost",
   "dialog.close": "Close",
+  "account.signedInAs": "Signed in as {{handle}}",
+  "account.signedInAsLabel": "Signed in as",
+  "account.signOut": "Sign out",
   "credit": "Powered by {{link}}"
 }

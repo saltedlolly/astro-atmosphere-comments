@@ -80,5 +80,8 @@
   "postActions.repostLabel": "Republier cette publication",
   "dialog.heading": "Connecte-toi pour aimer ou republier",
   "dialog.close": "Fermer",
+  "account.signedInAs": "Connecté en tant que {{handle}}",
+  "account.signedInAsLabel": "Connecté en tant que",
+  "account.signOut": "Se déconnecter",
   "credit": "Propulsé par {{link}}"
 }

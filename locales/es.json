@@ -80,5 +80,8 @@
   "postActions.repostLabel": "Compartir esta publicación",
   "dialog.heading": "Inicia sesión para dar me gusta o compartir",
   "dialog.close": "Cerrar",
+  "account.signedInAs": "Sesión iniciada como {{handle}}",
+  "account.signedInAsLabel": "Sesión iniciada como",
+  "account.signOut": "Cerrar sesión",
   "credit": "Funciona con {{link}}"
 }

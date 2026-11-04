@@ -74,5 +74,8 @@
   "postActions.repostLabel": "この投稿をリポスト",
   "dialog.heading": "ログインしていいねやリポストをする",
   "dialog.close": "閉じる",
+  "account.signedInAs": "{{handle}}としてログイン中",
+  "account.signedInAsLabel": "ログイン中のアカウント",
+  "account.signOut": "ログアウト",
   "credit": "{{link}}で動作しています"
 }
