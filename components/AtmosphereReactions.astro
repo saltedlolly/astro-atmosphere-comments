@@ -15,7 +15,7 @@
 // A link marked `data-atmosphere-follow="<DID>"` (and
 // `data-atmosphere-follow-handle="you.bsky.social"`), such as "Follow me on
 // Bluesky", becomes a Follow / Following button for signed-in readers; a
-// second press unfollows. The first follow asks for one more permission. Only
+// second press unfollows. Only
 // `allowedAuthors` can be followed through your site.
 //
 // Signed-in readers like and repost from your page. Anyone else who presses
@@ -46,8 +46,7 @@ const { base } = settings;
 <atmosphere-reactions data-base={base} data-locale={lang} data-messages={JSON.stringify(messages)}>
   <dialog class="atmo atmo-signin" aria-label={t("dialog.heading")} data-signin-dialog>
     <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
-    {/* Asks only for liking and reposting; commenting is asked for when first used. */}
-    <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} permissions={["react"]} />
+    <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} />
     <p class="atmo-signin__status" role="status" data-dialog-status></p>
   </dialog>
   {/* Before asking the reader's account host for one more permission: what it's for. */}
@@ -324,7 +323,7 @@ const { base } = settings;
         link.addEventListener("click", (event) => {
           if (!signedIn || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault();
-          // Signed in only to like and repost: posting is asked for first.
+          // A sign-in without posting (from an older version): asked for first.
           if (!can("post")) return void askPermission("post", `#atmo-compose=${mode}:${encodeURIComponent(post.dataset.atmospherePost!)}`);
           openCompose(post, mode);
         });

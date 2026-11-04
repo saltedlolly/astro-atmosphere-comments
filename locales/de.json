@@ -94,7 +94,7 @@
   "callback.signingIn": "Anmeldung läuft …",
   "signIn.access": "Deine Anmeldung bleibt in diesem Browser: Der Server dieser Seite sieht sie nie und kann nicht für dich posten, und beim Abmelden wird sie aufgehoben.",
   "signIn.policy": "Wie diese Seite mit deinen Daten umgeht",
-  "composer.needsPermission": "Um hier zu kommentieren, braucht diese Seite eine weitere Erlaubnis von deinem Konto.",
+  "composer.needsPermission": "Um hier als {{handle}} zu kommentieren, braucht diese Seite eine weitere Erlaubnis von deinem Atmosphere-Konto.",
   "comment.hide": "Ausblenden",
   "comment.hideLabel": "Diesen Kommentar ausblenden",
   "comment.hideConfirm": "Diesen Kommentar hier und auf Bluesky ausblenden? In der Bluesky-App kannst du ihn wieder einblenden.",

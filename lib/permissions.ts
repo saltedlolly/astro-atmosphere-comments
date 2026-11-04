@@ -11,10 +11,13 @@
 // through Bluesky's AppView. Nothing here can change their account.
 export const BASE_SCOPE = "atproto rpc:app.bsky.feed.getPosts?aud=did:web:api.bsky.app%23bsky_appview";
 
-// Everything else is asked for in groups, only when a reader first needs it,
-// so nobody grants more than what they use here. (A permission can only name
-// a kind of record, not particular posts, so lib/client/account.ts limits
-// each one to the site's own threads.)
+// Everything else comes in groups. Signing in asks for all that a reader can
+// do here at once (DEFAULT_PERMISSIONS), so there's one approval rather than
+// a trip to their account host for each new thing: as the sign-in stays in
+// their browser, the server can't use any of it, and the page's own code has
+// the same reach either way. (A permission can only name a kind of record,
+// not particular posts, so lib/client/account.ts limits each one to the
+// site's own threads.)
 export const PERMISSIONS = {
   // Comments, replies and quote posts.
   post: "repo:app.bsky.feed.post?action=create",
@@ -33,9 +36,11 @@ export type Permission = keyof typeof PERMISSIONS;
 export const isPermission = (value: unknown): value is Permission =>
   typeof value === "string" && Object.hasOwn(PERMISSIONS, value);
 
-// What the sign-in form under posts asks for: posting, liking and reposting.
-// (The like and repost overlay asks only for "react".)
-export const DEFAULT_PERMISSIONS: Permission[] = ["post", "react"];
+// What signing in asks for: everything readers can do here. "moderate" is
+// added only for the site's own accounts (allowedAuthors), the only ones
+// that can use it. Sign-ins from before a group was added are asked for it
+// when it's first needed.
+export const DEFAULT_PERMISSIONS: Permission[] = ["post", "react", "delete", "follow"];
 
 /** The scope to ask for: the base, plus the groups named. */
 export const scopeFor = (permissions: Iterable<Permission>) =>

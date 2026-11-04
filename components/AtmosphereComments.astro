@@ -121,9 +121,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       </button>
     </div>
 
-    {/* Signed in only to like and repost: posting needs one more permission. */}
+    {/* A sign-in from before posting was asked for: one more permission. */}
     <div class="atmo__permission" data-permission hidden>
-      <p>{t("composer.needsPermission")}</p>
+      <p data-permission-text>{t("composer.needsPermission")}</p>
       <p class="atmo__hint">{t("permission.approve")}</p>
       <div class="atmo__row">
         <button type="button" class="atmo__button" data-permission-continue>{t("comment.continue")}</button>
@@ -774,10 +774,12 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           document.querySelectorAll(".atmo-comment-action--delete, .atmo-comment-action--hide, .atmo-comment-delete").forEach((part) => part.remove());
           return closeReplies();
         }
-        // Signed in only to like and repost (from another page's overlay):
-        // posting needs one more permission, asked for before they type.
+        // A sign-in without posting (from an older version, which asked for
+        // less): one more permission, asked for before they type.
         composer.hidden = !can("post");
         permissionPanel.hidden = can("post");
+        // Which account, as they may have more than one.
+        $<HTMLElement>("[data-permission-text]").textContent = t("composer.needsPermission", { handle: handle ? `@${handle}` : "" });
         addCommentActions();
         addDeleteButtons();
         await loadState();

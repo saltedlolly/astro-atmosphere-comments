@@ -466,8 +466,9 @@ export function send(path: string, body: unknown): Promise<Response> {
 const HANDLE = /^(did:[a-z0-9:._%-]+|[a-z0-9.-]+\.[a-z0-9-]+)$/;
 
 /**
- * Sends the reader to their account host to approve `permissions` (default:
- * posting, liking and reposting), coming back to `returnTo`. A new approval
+ * Sends the reader to their account host to approve everything they can do
+ * here (DEFAULT_PERMISSIONS, plus "moderate" for the site's own accounts)
+ * and any `permissions` named, coming back to `returnTo`. A new approval
  * replaces the old one, so whatever the same account already allowed is
  * asked for again too. If the account can't be found, the reader is sent
  * to `returnTo` with ?atmosphere=<problem>, as the comments expect.
@@ -476,7 +477,16 @@ export async function signIn(input: string, options: { permissions?: Permission[
   const returnTo = safeReturnPath(options.returnTo ?? `${location.pathname}${location.search}${location.hash}`);
   const handle = input.trim().replace(/^@/, "").toLowerCase();
   if (!handle || handle.length > 253 || !HANDLE.test(handle)) return location.assign(withStatus(returnTo, "invalid-handle"));
-  const permissions = new Set<Permission>(options.permissions?.length ? options.permissions : DEFAULT_PERMISSIONS);
+  const permissions = new Set<Permission>([...DEFAULT_PERMISSIONS, ...(options.permissions ?? [])]);
+  // The site's own accounts can also hide comments under their announcements.
+  try {
+    const did = handle.startsWith("did:")
+      ? handle
+      : (((await (await fetch(`${base}/identity?id=${encodeURIComponent(handle)}`)).json()) as { did?: string }).did ?? "");
+    if (settings.allowedAuthors.includes(did)) permissions.add("moderate");
+  } catch {
+    // Found again below, or reported as not found.
+  }
   try {
     const current = await session();
     if (current && current.did === handle) {

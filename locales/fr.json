@@ -97,7 +97,7 @@
   "callback.signingIn": "Connexion en cours…",
   "signIn.access": "Ta connexion reste dans ce navigateur : le serveur de ce site ne la voit jamais et ne peut pas publier à ta place, et te déconnecter l'annule.",
   "signIn.policy": "Comment ce site traite tes données",
-  "composer.needsPermission": "Pour commenter ici, ce site a besoin d'une autorisation de plus de ton compte.",
+  "composer.needsPermission": "Pour commenter ici en tant que {{handle}}, ce site a besoin d'une autorisation de plus de ton compte Atmosphere.",
   "comment.hide": "Masquer",
   "comment.hideLabel": "Masquer ce commentaire",
   "comment.hideConfirm": "Masquer ce commentaire ici et sur Bluesky ? Tu pourras le réafficher dans l'application Bluesky.",

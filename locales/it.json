@@ -97,7 +97,7 @@
   "callback.signingIn": "Accesso in corso…",
   "signIn.access": "Il tuo accesso resta in questo browser: il server di questo sito non lo vede mai e non può pubblicare al posto tuo, e uscendo lo annulli.",
   "signIn.policy": "Come questo sito tratta i tuoi dati",
-  "composer.needsPermission": "Per commentare qui, questo sito ha bisogno di un'altra autorizzazione dal tuo account.",
+  "composer.needsPermission": "Per commentare qui come {{handle}}, questo sito ha bisogno di un'altra autorizzazione dal tuo account Atmosphere.",
   "comment.hide": "Nascondi",
   "comment.hideLabel": "Nascondi questo commento",
   "comment.hideConfirm": "Nascondere questo commento qui e su Bluesky? Puoi mostrarlo di nuovo nell'app di Bluesky.",

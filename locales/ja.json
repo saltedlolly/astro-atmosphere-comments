@@ -91,7 +91,7 @@
   "callback.signingIn": "ログインしています…",
   "signIn.access": "ログイン情報はこのブラウザの中だけに保存されます。このサイトのサーバーがそれを見ることはなく、あなたの代わりに投稿することもできません。ログアウトすると取り消されます。",
   "signIn.policy": "このサイトでのデータの取り扱い",
-  "composer.needsPermission": "ここでコメントするには、このサイトにアカウントからの許可がもうひとつ必要です。",
+  "composer.needsPermission": "ここで{{handle}}としてコメントするには、このサイトにAtmosphereアカウントからの許可がもうひとつ必要です。",
   "comment.hide": "非表示",
   "comment.hideLabel": "このコメントを非表示にする",
   "comment.hideConfirm": "このコメントをこことBlueskyで非表示にしますか？Blueskyのアプリで再表示できます。",

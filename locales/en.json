@@ -94,7 +94,7 @@
   "callback.signingIn": "Signing you in…",
   "signIn.access": "Your sign-in stays in this browser: this site's server never sees it and can't post for you, and signing out cancels it.",
   "signIn.policy": "How this site handles your data",
-  "composer.needsPermission": "To comment here, this site needs one more permission from your account.",
+  "composer.needsPermission": "To comment here as {{handle}}, this site needs one more permission from your Atmosphere account.",
   "comment.hide": "Hide",
   "comment.hideLabel": "Hide this comment",
   "comment.hideConfirm": "Hide this comment here and on Bluesky? You can show it again in the Bluesky app.",

@@ -97,7 +97,7 @@
   "callback.signingIn": "Entrando…",
   "signIn.access": "Seu login fica neste navegador: o servidor deste site nunca o vê nem pode publicar por você, e sair o cancela.",
   "signIn.policy": "Como este site trata seus dados",
-  "composer.needsPermission": "Para comentar aqui, este site precisa de mais uma permissão da sua conta.",
+  "composer.needsPermission": "Para comentar aqui como {{handle}}, este site precisa de mais uma permissão da sua conta Atmosphere.",
   "comment.hide": "Ocultar",
   "comment.hideLabel": "Ocultar este comentário",
   "comment.hideConfirm": "Ocultar este comentário aqui e no Bluesky? Você pode mostrá-lo de novo no app do Bluesky.",

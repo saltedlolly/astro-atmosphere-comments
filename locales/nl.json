@@ -94,7 +94,7 @@
   "callback.signingIn": "Bezig met inloggen…",
   "signIn.access": "Je login blijft in deze browser: de server van deze site ziet hem nooit en kan niet namens jou posten, en uitloggen trekt hem in.",
   "signIn.policy": "Hoe deze site met je gegevens omgaat",
-  "composer.needsPermission": "Om hier te reageren, heeft deze site nog één toestemming van je account nodig.",
+  "composer.needsPermission": "Om hier als {{handle}} te reageren, heeft deze site nog één toestemming van je Atmosphere-account nodig.",
   "comment.hide": "Verbergen",
   "comment.hideLabel": "Deze reactie verbergen",
   "comment.hideConfirm": "Deze reactie hier en op Bluesky verbergen? Je kunt hem in de Bluesky-app weer tonen.",
