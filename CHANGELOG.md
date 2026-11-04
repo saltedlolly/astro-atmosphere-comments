@@ -2,7 +2,7 @@
 
 ## 0.3.0 (4 November 2026)
 
-- **Languages:** the wording now comes from language files (`locales/*.json`, i18next JSON) in English, French, German, Spanish, Portuguese, Italian, Dutch and Japanese, picked from the component's `locale` prop, the integration's `locale` option or Astro's locale for the page, then English. Dates and plurals ("1 like", "2 likes") follow the language. The translations are drafts for native speakers to check; they're managed on Weblate.
+- **Languages:** the wording now comes from language files (`locales/*.json`, i18next JSON) in English, French, German, Spanish, Portuguese, Italian, Dutch and Japanese, picked from the component's `locale` prop, the integration's `locale` option or Astro's locale for the page, then English. Dates and plurals ("1 like", "2 likes") follow the language. The translations are drafts for native speakers to check; translation is being set up on Weblate.
 - **Your own wording:** a `messages` option (and prop) changes any line, by its key in `locales/en.json`.
 - The `label` and `authorLabel` props still work, and win over `messages`.
 

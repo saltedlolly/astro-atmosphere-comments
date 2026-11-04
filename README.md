@@ -138,7 +138,7 @@ atmosphereComments({
 }),
 ```
 
-The translations other than English started as drafts and need checking by native speakers. If you speak one of them, or another language, please help on [Weblate](https://hosted.weblate.org/projects/astro-atmosphere-comments/): corrections there come back to this package. (Bluesky's own approval page is in the reader's language already.)
+The translations other than English started as drafts and need checking by native speakers. Translation is being set up on [Weblate](https://weblate.org), the open-source translation platform; until then, corrections and new languages are very welcome as [GitHub issues or pull requests](https://github.com/saltedlolly/astro-atmosphere-comments/issues). (Bluesky's own approval page is in the reader's language already.)
 
 ## Styling
 
