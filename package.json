@@ -31,7 +31,7 @@
   },
   "types": "./index.d.ts",
   "bin": {
-    "astro-atmosphere-comments": "./bin/cli.mjs"
+    "astro-atmosphere-comments": "bin/cli.mjs"
   },
   "files": [
     "index.mjs",
