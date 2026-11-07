@@ -18,6 +18,14 @@ export function isSitePost(uri: unknown): uri is string {
   return isPostUri(uri) && settings.allowedAuthors.includes(authorOf(uri));
 }
 
+const DOCUMENT_URI = /^at:\/\/(did:[a-z0-9]+:[a-zA-Z0-9._:%-]+)\/site\.standard\.document\/[a-zA-Z0-9._~-]+$/;
+
+/** True for a Standard.site document in the same account as the site's publication. */
+export function isSiteDocument(uri: unknown): uri is string {
+  const publisher = settings.standardSite?.publication.split("/")[2];
+  return typeof uri === "string" && !!publisher && DOCUMENT_URI.exec(uri)?.[1] === publisher;
+}
+
 export type PostView = {
   uri: string;
   cid: string;

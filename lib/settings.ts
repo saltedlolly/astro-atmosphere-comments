@@ -12,6 +12,8 @@ export type AtmosphereSettings = {
   logoUri?: string;
   policyUri?: string;
   tosUri?: string;
+  /** The site's Standard.site publication: turns on Subscribe, and recommending with Like. */
+  standardSite?: { publication: string; feed?: string };
   hidden?: string[];
   locale?: string;
   messages?: Record<string, string>;

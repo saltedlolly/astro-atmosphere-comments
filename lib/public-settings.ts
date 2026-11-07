@@ -13,6 +13,8 @@ export type PublicSettings = {
   logoUri?: string;
   policyUri?: string;
   tosUri?: string;
+  /** The site's Standard.site publication: turns on Subscribe, and recommending with Like. */
+  standardSite?: { publication: string; feed?: string };
 };
 
 export default settings as PublicSettings;

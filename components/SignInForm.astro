@@ -44,6 +44,7 @@ const link = (href: string, text: string) =>
     set:html={th("signIn.anyAccount", {
       atmosphereAccount: link("https://atmosphereaccount.com", t("signIn.atmosphereAccount")),
       bluesky: link("https://bsky.app", "Bluesky"),
+      createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")),
     })}
   />
   <div class="atmo__row">
@@ -76,17 +77,19 @@ const link = (href: string, text: string) =>
     {permissions.map((permission) => <input type="hidden" name="permission" value={permission} />)}
     <button type="submit" class="atmo__button atmo__button--sign-in">
       <span class="atmo__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
+      <span class="atmo__spinner" aria-hidden="true"></span>
       {t("signIn.button")}
     </button>
   </div>
-  <p
-    class="atmo__hint"
-    set:html={th("signIn.privacy", { createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")) })}
-  />
-  <p class="atmo__hint">
-    {t("signIn.access")}
-    {policyUri && <Fragment> <a href={policyUri} target="_blank" rel="noopener">{t("signIn.policy")}</a></Fragment>}
-  </p>
+  {/* The detail, for anyone who wants it. */}
+  <details class="atmo__details">
+    <summary>{t("signIn.more")}</summary>
+    <p class="atmo__hint">{t("signIn.privacy")}</p>
+    <p class="atmo__hint">
+      {t("signIn.access")}
+      {policyUri && <Fragment> <a href={policyUri} target="_blank" rel="noopener">{t("signIn.policy")}</a></Fragment>}
+    </p>
+  </details>
 </form>
 
 <style>
@@ -103,6 +106,17 @@ const link = (href: string, text: string) =>
 
   label {
     font-weight: 700;
+  }
+
+  .atmo__details summary {
+    width: fit-content;
+    color: var(--atmo-muted, inherit);
+    font-size: 0.85em;
+    cursor: pointer;
+  }
+
+  .atmo__details .atmo__hint {
+    margin-top: 6px;
   }
 
   .atmo__hint {
@@ -163,6 +177,39 @@ const link = (href: string, text: string) =>
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+  }
+
+  /* While signing in, a spinner takes the logo's place, so the button keeps its size. */
+  .atmo__spinner {
+    display: none;
+    flex: none;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: atmo-spin 700ms linear infinite;
+  }
+
+  [data-signing-in] .atmo__spinner {
+    display: inline-block;
+  }
+
+  [data-signing-in] .atmo__button .atmo__logo {
+    display: none;
+  }
+
+  @keyframes atmo-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .atmo__spinner {
+      animation-duration: 2.5s;
+    }
   }
 
   .atmo__button .atmo__logo {

@@ -23,7 +23,7 @@
 import type { BrowserOAuthClient, OAuthSession } from "@atproto/oauth-client-browser";
 import { safeReturnPath, withStatus } from "../http";
 import {
-  ALL_SCOPES,
+  allScopes,
   callbackPath,
   clientMetadata,
   DEFAULT_PERMISSIONS,
@@ -34,12 +34,16 @@ import {
   scopesAllow,
 } from "../permissions";
 import settings from "../public-settings";
-import { authorOf, inSiteThread, isPostUri, isSitePost, rkeyOf, type PostView } from "../uris";
+import { authorOf, inSiteThread, isPostUri, isSiteDocument, isSitePost, rkeyOf, type PostView } from "../uris";
 
 type IdentityResolver = NonNullable<ConstructorParameters<typeof BrowserOAuthClient>[0]["identityResolver"]>;
 
 const { base } = settings;
 const REMEMBERED = "atmosphere:did";
+// That the remembered sign-in asked for Standard.site's permission too.
+const ASKED_SOCIAL = "atmosphere:social";
+const RECOMMEND = "site.standard.graph.recommend";
+const SUBSCRIPTION = "site.standard.graph.subscription";
 const APPVIEW_PROXY = "did:web:api.bsky.app#bsky_appview";
 const MAX_GRAPHEMES = 300; // Bluesky's limit for a post
 const graphemes = new Intl.Segmenter();
@@ -55,10 +59,23 @@ const remembered = () => {
 };
 const remember = (did: string) => {
   try {
-    if (did) localStorage.setItem(REMEMBERED, did);
-    else localStorage.removeItem(REMEMBERED);
+    if (did) {
+      localStorage.setItem(REMEMBERED, did);
+      if (settings.standardSite) localStorage.setItem(ASKED_SOCIAL, "1");
+    } else {
+      localStorage.removeItem(REMEMBERED);
+      localStorage.removeItem(ASKED_SOCIAL);
+    }
   } catch {
     // See above.
+  }
+};
+
+const askedSocial = () => {
+  try {
+    return !!localStorage.getItem(ASKED_SOCIAL);
+  } catch {
+    return false;
   }
 };
 
@@ -77,7 +94,7 @@ function client(): Promise<BrowserOAuthClient> {
     );
     const oauth = new BrowserOAuthClient({
       clientMetadata: import.meta.env.DEV
-        ? atprotoLoopbackClientMetadata(buildAtprotoLoopbackClientId({ scope: ALL_SCOPES, redirect_uris: [callbackUrl()] }))
+        ? atprotoLoopbackClientMetadata(buildAtprotoLoopbackClientId({ scope: allScopes(settings), redirect_uris: [callbackUrl()] }))
         : clientMetadata(settings),
       // Accounts are looked up through the site (routes/identity.ts), so the
       // browser contacts only the reader's own account host.
@@ -104,6 +121,20 @@ function session(): Promise<OAuthSession | null> {
   sessionPromise ??= (async () => {
     const did = remembered();
     if (!did) return null;
+    // A sign-in from before the site asked for Standard.site's permission:
+    // cancelled, so the reader signs in once and approves everything together
+    // instead of making a second trip to their account host later. (This looks
+    // at what was asked for, not what was granted, so a host that grants less
+    // can't send a reader round in circles.)
+    if (settings.standardSite && !askedSocial()) {
+      try {
+        await (await (await client()).restore(did)).signOut();
+      } catch {
+        // Already gone.
+      }
+      remember("");
+      return null;
+    }
     try {
       return await (await client()).restore(did);
     } catch {
@@ -175,6 +206,33 @@ async function deleteRecord(reader: Reader, uri: string) {
   const [, repo, collection, rkey] = uri.match(/^at:\/\/([^/]+)\/([^/]+)\/([^/]+)$/) ?? [];
   if (repo !== reader.did || !collection || !rkey) throw new Error("not the reader's record");
   await call(reader, "com.atproto.repo.deleteRecord", { body: { repo: reader.did, collection, rkey } });
+}
+
+/**
+ * The AT URIs of the reader's own records of `collection` whose `field` is
+ * `value`. Read from their account host, so nothing else learns who's asking.
+ */
+async function ownRecords(reader: Reader, collection: string, field: string, value: string): Promise<string[]> {
+  const found: string[] = [];
+  let cursor = "";
+  for (let page = 0; page < 10; page++) {
+    const query = new URLSearchParams({ repo: reader.did, collection, limit: "100", ...(cursor && { cursor }) }).toString();
+    const data = await call<{ cursor?: string; records?: { uri: string; value?: Record<string, unknown> }[] }>(reader, "com.atproto.repo.listRecords", { query });
+    found.push(...(data.records ?? []).filter((record) => record.value?.[field] === value).map((record) => record.uri));
+    if (!data.cursor) break;
+    cursor = data.cursor;
+  }
+  return found;
+}
+
+/** Makes the reader's records say `on`: creates one if there's none, or deletes them all. */
+async function setRecord(reader: Reader, collection: string, field: string, value: string, on: boolean) {
+  const existing = await ownRecords(reader, collection, field, value);
+  if (on && !existing.length) {
+    await createRecord(reader, collection, { $type: collection, [field]: value, createdAt: new Date().toISOString() });
+  } else if (!on) {
+    for (const uri of existing) await deleteRecord(reader, uri);
+  }
 }
 
 const post = (path: string, body: unknown) =>
@@ -286,8 +344,10 @@ async function comment(body: { text?: unknown; root?: unknown; parent?: unknown;
 
 const COLLECTIONS = { like: "app.bsky.feed.like", repost: "app.bsky.feed.repost" } as const;
 
-// Likes or reposts a post (an announcement, or a comment under one), or takes that back.
-async function react(body: { post?: unknown; kind?: unknown; on?: unknown }) {
+// Likes or reposts a post (an announcement, or a comment under one), or takes
+// that back. A like of the post a page is about also recommends that page's
+// Standard.site record (`document`), and un-liking removes the recommend.
+async function react(body: { post?: unknown; kind?: unknown; on?: unknown; document?: unknown }) {
   const signedIn = await reader();
   if (signedIn instanceof Response) return signedIn;
   const { post: uri, kind, on } = body;
@@ -306,6 +366,12 @@ async function react(body: { post?: unknown; kind?: unknown; on?: unknown }) {
       });
     } else if (!on && existing) {
       await deleteRecord(signedIn, existing);
+    }
+    if (kind === "like" && isSitePost(uri) && isSiteDocument(body.document) && allows(signedIn, RECOMMEND, on ? "create" : "delete")) {
+      // The like stands even if this fails: it's what the reader sees here.
+      await setRecord(signedIn, RECOMMEND, "document", body.document, on).catch((error) =>
+        console.warn("[atmosphere] recommend failed:", error instanceof Error ? error.message : error),
+      );
     }
     refreshThread(isSitePost(view.uri) ? view.uri : view.record?.reply?.root?.uri);
     return answer({ kind, on });
@@ -426,6 +492,36 @@ async function follow(body: { subject?: unknown; on?: unknown }) {
   }
 }
 
+/** Whether the site has a Standard.site publication to subscribe to. */
+export const canSubscribe = () => !!settings.standardSite;
+
+/** Whether the signed-in reader subscribes to the site's publication; null if that can't be told. */
+export async function subscribed(): Promise<boolean | null> {
+  const publication = settings.standardSite?.publication;
+  const signedIn = await reader();
+  if (!publication || signedIn instanceof Response) return null;
+  try {
+    return !!(await ownRecords(signedIn, SUBSCRIPTION, "publication", publication)).length;
+  } catch {
+    return null;
+  }
+}
+
+// Subscribes to (or unsubscribes from) the site's own publication, and no other.
+async function subscribe(body: { on?: unknown }) {
+  const signedIn = await reader();
+  if (signedIn instanceof Response) return signedIn;
+  const publication = settings.standardSite?.publication;
+  if (!publication || typeof body.on !== "boolean") return answer({ error: "not-allowed" }, 400);
+  if (!allows(signedIn, SUBSCRIPTION, body.on ? "create" : "delete")) return needs("social");
+  try {
+    await setRecord(signedIn, SUBSCRIPTION, "publication", publication, body.on);
+    return answer({ subscribed: body.on });
+  } catch (error) {
+    return failed(error, "subscribe");
+  }
+}
+
 /** Whether the reader has liked or reposted these posts (those in the site's threads). */
 export async function state(uris: string[]) {
   const signedIn = await reader();
@@ -458,7 +554,7 @@ export async function signOut() {
 
 /** What the comments and reactions send, answered as the old routes did. */
 export function send(path: string, body: unknown): Promise<Response> {
-  const actions: Record<string, (body: never) => Promise<Response>> = { comment, react, delete: remove, hide, follow };
+  const actions: Record<string, (body: never) => Promise<Response>> = { comment, react, delete: remove, hide, follow, subscribe };
   const action = actions[path];
   return action ? action(body as never) : Promise.resolve(answer({ error: "bad-request" }, 400));
 }
@@ -467,7 +563,8 @@ const HANDLE = /^(did:[a-z0-9:._%-]+|[a-z0-9.-]+\.[a-z0-9-]+)$/;
 
 /**
  * Sends the reader to their account host to approve everything they can do
- * here (DEFAULT_PERMISSIONS, plus "moderate" for the site's own accounts)
+ * here (DEFAULT_PERMISSIONS, plus "social" with the `standardSite` option and
+ * "moderate" for the site's own accounts)
  * and any `permissions` named, coming back to `returnTo`. A new approval
  * replaces the old one, so whatever the same account already allowed is
  * asked for again too. If the account can't be found, the reader is sent
@@ -478,6 +575,7 @@ export async function signIn(input: string, options: { permissions?: Permission[
   const handle = input.trim().replace(/^@/, "").toLowerCase();
   if (!handle || handle.length > 253 || !HANDLE.test(handle)) return location.assign(withStatus(returnTo, "invalid-handle"));
   const permissions = new Set<Permission>([...DEFAULT_PERMISSIONS, ...(options.permissions ?? [])]);
+  if (settings.standardSite) permissions.add("social");
   // The site's own accounts can also hide comments under their announcements.
   try {
     const did = handle.startsWith("did:")
@@ -510,22 +608,32 @@ export async function signIn(input: string, options: { permissions?: Permission[
 
 /** Signs in with a sign-in form (SignInForm.astro): its handle box, return address and any permission fields. */
 export function handleSignInForm(form: HTMLFormElement, lang?: string) {
+  const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  let safetyNet: number | undefined;
+  // Disabled with a spinner from the moment signing in starts (a press, Enter
+  // or picking a suggestion), until the browser leaves for the account host.
+  const setBusy = (busy: boolean) => {
+    window.clearTimeout(safetyNet);
+    form.toggleAttribute("data-signing-in", busy);
+    if (button) button.disabled = busy;
+  };
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (form.hasAttribute("data-signing-in")) return;
     const data = new FormData(form);
-    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-    if (button) button.disabled = true;
+    setBusy(true);
+    // Every way signIn() ends leaves the page. If that somehow doesn't happen,
+    // the reader can try again rather than face a spinner for ever.
+    safetyNet = window.setTimeout(() => setBusy(false), 30000);
     void signIn(String(data.get("handle") ?? ""), {
       permissions: data.getAll("permission").map(String) as Permission[],
       returnTo: String(data.get("returnTo") ?? ""),
       lang,
-    }).finally(() => {
-      // Back from the account host with the browser's back button.
-      window.setTimeout(() => button && (button.disabled = false), 1000);
     });
   });
-  // Pages restored from the back-forward cache keep a disabled button otherwise.
-  window.addEventListener("pageshow", () => form.querySelector<HTMLButtonElement>('button[type="submit"]')?.removeAttribute("disabled"));
+  // Back from the account host with the browser's back button: the page can
+  // come back from its cache just as it was left.
+  window.addEventListener("pageshow", () => setBusy(false));
 }
 
 /** On the callback page: finishes signing in, then back to the page the reader was on. */

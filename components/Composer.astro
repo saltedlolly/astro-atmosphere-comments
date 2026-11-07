@@ -56,7 +56,7 @@ const th = (key: string, html: Record<string, string>) => translateHtml(messages
         <div class="atmo__quoted">
           <p class="atmo__preview-author">
             <span class="atmo__avatar atmo__avatar--small" data-quoted-avatar aria-hidden="true"></span>
-            <strong data-quoted-name></strong> <span data-quoted-handle></span>
+            <strong data-quoted-name></strong> <span data-quoted-handle></span> <span data-quoted-age></span>
           </p>
           <p class="atmo__preview-text" data-quoted-text></p>
           <div class="atmo__card" data-card hidden>
@@ -64,7 +64,10 @@ const th = (key: string, html: Record<string, string>) => translateHtml(messages
             <div>
               <strong data-card-title></strong>
               <span data-card-description></span>
-              <span class="atmo__card-domain" data-card-domain></span>
+              <span class="atmo__card-domain">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9s1.3-6.5 3.8-9Z" /></svg>
+                <span data-card-domain></span>
+              </span>
             </div>
           </div>
         </div>

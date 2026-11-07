@@ -44,6 +44,7 @@ const ROUTES = {
 };
 
 const DID = /^did:[a-z0-9]+:[a-zA-Z0-9._:%-]+$/;
+const PUBLICATION = /^at:\/\/did:[a-z0-9]+:[a-zA-Z0-9._:%-]+\/site\.standard\.publication\/[a-zA-Z0-9._~-]+$/;
 
 /**
  * @param {import("./index").AtmosphereCommentsOptions} options
@@ -56,6 +57,10 @@ export default function atmosphereComments(options) {
     throw new Error(
       "atmosphere-comments: `allowedAuthors` must list the DIDs (did:plc:… or did:web:…) of the accounts that post your announcements.",
     );
+  }
+  const standardSite = options.standardSite;
+  if (standardSite && !PUBLICATION.test(standardSite.publication ?? "")) {
+    throw new Error("atmosphere-comments: `standardSite.publication` must be your publication's AT URI (at://did:…/site.standard.publication/…).");
   }
   const base = `/${(options.base ?? "/atmosphere").replace(/^\/+|\/+$/g, "")}`;
   return {
@@ -75,6 +80,7 @@ export default function atmosphereComments(options) {
           logoUri: options.logoUri,
           policyUri: options.policyUri,
           tosUri: options.tosUri,
+          standardSite,
           hidden: options.hidden ?? [],
           locale: options.locale,
           messages: options.messages ?? {},
@@ -105,11 +111,16 @@ export default function atmosphereComments(options) {
           logoUri: settings.logoUri,
           policyUri: settings.policyUri,
           tosUri: settings.tosUri,
+          standardSite,
         };
 
         // The routes and components read the settings from virtual modules.
         updateConfig({
           vite: {
+            // Readers' browsers load the sign-in library only when needed, so
+            // Vite's dev server wouldn't find it to bundle it in advance, and
+            // the old-style modules it depends on then fail in the browser.
+            optimizeDeps: { include: ["astro-atmosphere-comments > @atproto/oauth-client-browser"] },
             plugins: [
               {
                 name: "atmosphere-comments-settings",

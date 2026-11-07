@@ -176,6 +176,20 @@ export function setUpComposer(form: HTMLFormElement, ctx: ComposerContext, behav
   return { textarea, updateCount };
 }
 
+/** A post's age as Bluesky shows it: 10m, 4h, 6d, then the date. */
+function postAge(when: string): string {
+  const date = new Date(when);
+  const lang = document.documentElement.lang || undefined;
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
+  const unit = (value: number, name: string) => new Intl.NumberFormat(lang, { style: "unit", unit: name, unitDisplay: "narrow" }).format(value);
+  if (minutes < 1) return unit(1, "minute");
+  if (minutes < 60) return unit(minutes, "minute");
+  if (minutes < 1440) return unit(Math.floor(minutes / 60), "hour");
+  if (minutes < 43200) return unit(Math.floor(minutes / 1440), "day");
+  const thisYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString(lang, { month: "short", day: "numeric", ...(!thisYear && { year: "numeric" }) });
+}
+
 /**
  * The quote preview inside a box: the reader's words as they type, with the
  * post being quoted beneath, as Bluesky will show it. Call update() as they
@@ -199,6 +213,7 @@ export function quotePreview(form: HTMLFormElement, textarea: HTMLTextAreaElemen
       const quoted = (await response.json()) as {
         author: { handle: string; displayName?: string; avatar?: string };
         text: string;
+        indexedAt?: string;
         external?: { uri: string; title: string; description: string; thumb?: string };
       };
       loaded = uri;
@@ -206,6 +221,7 @@ export function quotePreview(form: HTMLFormElement, textarea: HTMLTextAreaElemen
       $<HTMLElement>("[data-quoted-name]").textContent = quotedName;
       ctx.setAvatar($<HTMLElement>("[data-quoted-avatar]"), quotedName, quoted.author.avatar);
       $<HTMLElement>("[data-quoted-handle]").textContent = `@${quoted.author.handle}`;
+      $<HTMLElement>("[data-quoted-age]").textContent = quoted.indexedAt ? `· ${postAge(quoted.indexedAt)}` : "";
       $<HTMLElement>("[data-quoted-text]").textContent = quoted.text;
       const card = $<HTMLElement>("[data-card]");
       card.hidden = !quoted.external;

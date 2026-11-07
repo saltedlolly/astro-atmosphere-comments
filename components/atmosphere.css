@@ -118,6 +118,222 @@ dialog.atmo:not([open]) {
   gap: 8px;
 }
 
+/* The sign-in overlay, shared by both components. */
+dialog.atmo.atmo-signin {
+  /* Centred on the screen, whatever margin a site gives .atmo. */
+  margin: auto;
+  width: min(92vw, 520px);
+  padding: 22px 22px 18px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: calc(var(--atmo-radius, 10px) + 6px);
+  background: var(--atmo-dialog-bg, var(--atmo-menu-bg, Canvas));
+  color: var(--atmo-text, CanvasText);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
+}
+
+/* The sign-in form is short, and its account suggestions can reach past the
+   overlay's edge. (The comment box's overlay can be tall, so it keeps scrolling.) */
+dialog.atmo.atmo-signin:has(> .atmo__login) {
+  overflow: visible;
+}
+
+/* As wide as the form, so names and handles fit on one line. */
+.atmo-signin .atmo__suggestions {
+  min-width: min(474px, calc(92vw - 46px));
+}
+
+.atmo-signin::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+
+.atmo-signin .atmo__login {
+  margin-top: 0;
+}
+
+.atmo-signin__close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: var(--atmo-muted, inherit);
+  font: inherit;
+  font-size: 1.4em;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.atmo-signin__status {
+  margin: 10px 0 0;
+  color: var(--atmo-muted, inherit);
+  font-size: 0.9em;
+}
+
+.atmo-signin__status:empty {
+  display: none;
+}
+
+/* Signed out: looks like the comment box, and opens the sign-in overlay. */
+.atmo__prompt-box {
+  display: grid;
+  gap: 8px;
+  max-width: 560px;
+  margin-top: 14px;
+}
+
+.atmo__prompt-box[hidden] {
+  display: none;
+}
+
+.atmo__prompt-box .atmo__button:disabled {
+  cursor: not-allowed;
+}
+
+.atmo__prompt {
+  /* A button centres its text; a text box starts at the top left. */
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 84px;
+  padding: 12px 14px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: var(--atmo-radius, 10px);
+  background: var(--atmo-field-bg, transparent);
+  color: var(--atmo-muted, inherit);
+  font: inherit;
+  text-align: left;
+  vertical-align: top;
+  cursor: text;
+}
+
+.atmo__prompt:hover,
+.atmo__prompt:focus-visible {
+  border-color: var(--atmo-accent, #1185fe);
+}
+
+/* Subscribe and its menu: a split button, with Like and Repost once signed
+   in, or on its own above the sign-in form. */
+.atmo-subscribe {
+  position: relative;
+  display: inline-flex;
+}
+
+.atmo-subscribe[hidden] {
+  display: none;
+}
+
+.atmo-subscribe .atmo-subscribe__button {
+  border-radius: 999px 0 0 999px;
+}
+
+.atmo-subscribe__button[hidden] {
+  display: none;
+}
+
+.atmo-subscribe__button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.atmo-subscribe__logo {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  mask: var(--atmo-logo) center / contain no-repeat;
+}
+
+.atmo-subscribe .atmo-subscribe__more {
+  padding: 0 10px 0 8px;
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+}
+
+/* Subscribed: both halves look like one button. */
+.atmo-subscribe:has([aria-pressed="true"]) .atmo-subscribe__more {
+  border-color: color-mix(in srgb, var(--atmo-accent, #1185fe) 40%, transparent);
+  background: color-mix(in srgb, var(--atmo-accent, #1185fe) 8%, transparent);
+  color: var(--atmo-accent, #1185fe);
+}
+
+.atmo-subscribe .atmo-subscribe__more svg {
+  width: 15px;
+  height: 15px;
+}
+
+.atmo-subscribe__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  width: min(260px, 80vw);
+  padding: 6px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: var(--atmo-radius, 10px);
+  background: var(--atmo-menu-bg, Canvas);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+}
+
+.atmo-subscribe__menu[hidden] {
+  display: none;
+}
+
+.atmo-subscribe__note {
+  margin: 0 0 6px;
+  padding: 6px 10px 10px;
+  border-bottom: 1px solid var(--atmo-border, #8886);
+  color: var(--atmo-muted, inherit);
+  font-size: 0.85em;
+}
+
+.atmo-subscribe__menu > a[hidden] {
+  display: none;
+}
+
+.atmo-subscribe__menu svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.atmo-subscribe__menu svg circle,
+.atmo-subscribe__menu svg.atmo-subscribe__filled {
+  fill: currentColor;
+  stroke: none;
+}
+
+.atmo-subscribe__menu > a,
+.atmo-subscribe__menu > button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: calc(var(--atmo-radius, 10px) - 4px);
+  background: none;
+  color: var(--atmo-text, inherit);
+  font: inherit;
+  font-size: 0.9em;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.atmo-subscribe__menu > a:hover,
+.atmo-subscribe__menu > a:focus-visible,
+.atmo-subscribe__menu > button:hover,
+.atmo-subscribe__menu > button:focus-visible {
+  background: var(--atmo-field-bg, #8882);
+  color: var(--atmo-accent, #1185fe);
+}
+
 .atmo__action {
   display: inline-flex;
   align-items: center;
@@ -149,7 +365,9 @@ dialog.atmo:not([open]) {
 }
 
 .atmo__action[aria-pressed="true"] {
-  border-color: var(--atmo-accent, #1185fe);
+  /* Softer than the text, like the outlines of the buttons beside it. */
+  border-color: color-mix(in srgb, var(--atmo-accent, #1185fe) 40%, transparent);
+  background: color-mix(in srgb, var(--atmo-accent, #1185fe) 8%, transparent);
   color: var(--atmo-accent, #1185fe);
 }
 
@@ -358,6 +576,10 @@ dialog.atmo:not([open]) {
   overflow-wrap: anywhere;
 }
 
+.atmo__preview-text:empty {
+  display: none;
+}
+
 .atmo__preview-text.is-placeholder {
   color: var(--atmo-muted, inherit);
   font-style: italic;
@@ -386,6 +608,13 @@ dialog.atmo:not([open]) {
   padding: 10px 12px;
 }
 
+.atmo__card [data-card-title] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .atmo__card [data-card-description] {
   display: -webkit-box;
   overflow: hidden;
@@ -393,8 +622,23 @@ dialog.atmo:not([open]) {
   -webkit-line-clamp: 2;
 }
 
-.atmo__card-domain {
+.atmo__card .atmo__card-domain {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--atmo-border, #8886);
   font-size: 0.85em;
+}
+
+.atmo__card-domain svg {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
 }
 
 /* The likes and reposts, and the comments. These are drawn by the script,

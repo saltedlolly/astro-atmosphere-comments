@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0 (7 November 2026)
+
+**Buttons for everyone, and Standard.site support for readers.** The buttons and sign-in change applies to every site; Subscribe and recommending are optional.
+
+- **Signed-out readers see the same buttons:** Like, Repost, Quote and a "Write a comment…" box show under every post. Pressing one opens a sign-in overlay that says what it's for, and what they pressed is finished once they're back. The sign-in form and "Reply on Bluesky instead" moved into that overlay, with the detail on how signing in works behind a "How does signing in work?" toggle. New keys `signIn.more`, `comment.signIn`. In `AtmosphereReactions`, Reply and Quote now open it too, rather than going to Bluesky (⌘-click still does). Sites that style `.atmo__signed-out` should check their rules: it's gone. `signIn.heading` and `signInFirst.…` wording changed, and the `label` prop now sets the overlay's heading when commenting.
+
+- **`standardSite` option:** `{ publication: "at://did:…/site.standard.publication/…" }`. The package still doesn't publish Standard.site records; it works with any tool that does.
+- **Subscribe:** a button under each post, with Like and Repost (`.atmo-subscribe`), writes a `site.standard.graph.subscription` record to the reader's own account. Anyone not signed in gets the sign-in form and is subscribed once they're back. Only your publication can be subscribed to. Anywhere else, with `AtmosphereReactions` in your layout, a `<button data-atmosphere-subscribe hidden>` becomes Subscribe / ✓ Subscribed.
+- **Menu beside Subscribe:** a line on what subscribing does, Copy link, RSS feed (with the option's `feed`), View on Bluesky and View on Standard Reader.
+- **Like also recommends:** with the option set, Like on a post whose page has `<link rel="site.standard.document">` also writes a `site.standard.graph.recommend` record, and un-liking removes it. Likes on comments and on the posts `AtmosphereReactions` shows stay Bluesky likes. Recommend counts aren't shown yet.
+- **Signing in shows it's started:** the Sign in button is disabled with a spinner from the moment a reader presses it, presses Enter or picks a suggested account, until the browser leaves for their account host. New class `.atmo__spinner`.
+- **Quote preview closer to Bluesky:** it shows the quoted post's age and the card's divider with the domain, and leaves out empty text.
+- **One approval:** whichever button a reader presses, signing in asks for everything at once. Standard.site's permission (`include:site.standard.authSocial`) is part of the first sign-in, with no second trip to the account host.
+
+### Upgrading from 0.5
+
+- **If you set `standardSite`, readers already signed in are signed out once** and sign in again, so everything is approved together. Without the option, sign-ins carry on as they were.
+- New wording keys (`subscribe.…`, `signInFirst.likePost`, `signInFirst.repostPost`, `signInFirst.quotePost`, `comment.prompt`), in English until they're translated.
+
 ## 0.5.0 (4 November 2026)
 
 **Readers' sign-ins now stay in their own browsers.** This changes how the package works, so read "Upgrading" below.

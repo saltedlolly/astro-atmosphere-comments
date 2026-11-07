@@ -17,6 +17,17 @@ export type AtmosphereCommentsOptions = {
   policyUri?: string;
   tosUri?: string;
   /**
+   * Your Standard.site publication, if you publish one. Turns on the Subscribe
+   * button, and makes Like under a post also recommend its Standard.site
+   * record. Readers are asked for this in the same approval as everything else.
+   */
+  standardSite?: {
+    /** The publication record's AT URI: at://did:…/site.standard.publication/… */
+    publication: string;
+    /** Your feed's address, for the menu beside Subscribe, e.g. "/feed/". */
+    feed?: string;
+  };
+  /**
    * Comments never to show: bsky.app post or profile addresses, AT URIs,
    * handles or DIDs (on top of replies hidden on Bluesky and moderation labels).
    */

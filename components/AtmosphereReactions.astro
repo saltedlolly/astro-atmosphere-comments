@@ -18,6 +18,14 @@
 // second press unfollows. Only
 // `allowedAuthors` can be followed through your site.
 //
+// With the integration's `standardSite` option, a button marked
+// `data-atmosphere-subscribe` (and `hidden`, as it needs JavaScript) becomes
+// Subscribe / ✓ Subscribed for the site's publication. Anyone not signed in is
+// offered the sign-in form first, and subscribed once they're back. Its label
+// goes in an element inside it marked `data-atmosphere-subscribe-label`;
+// without one it keeps its own content (style it by `aria-pressed`).
+// (AtmosphereComments has its own panel for this under each post.)
+//
 // Signed-in readers like and repost from your page. Anyone else who presses
 // Like or Repost is offered the sign-in form in an overlay, and the like or
 // repost is done once they're back. Only posts by the integration's
@@ -25,7 +33,8 @@
 //
 // Props: locale, messages (as for AtmosphereComments).
 import settings from "../lib/settings";
-import { messagesFor, pickLocale, translate } from "../lib/i18n";
+import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
+import { escapeHtml } from "../lib/translate";
 import SignInForm from "./SignInForm.astro";
 import Composer from "./Composer.astro";
 import "./atmosphere.css";
@@ -47,6 +56,14 @@ const { base } = settings;
   <dialog class="atmo atmo-signin" aria-label={t("dialog.heading")} data-signin-dialog>
     <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
     <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} />
+    <p
+      class="atmo__elsewhere"
+      data-dialog-elsewhere
+      hidden
+      set:html={translateHtml(messages, lang, "elsewhere.text", {
+        link: `<a target="_blank" rel="noopener" class="atmo__elsewhere-link">${escapeHtml(t("elsewhere.link"))}</a>`,
+      })}
+    />
     <p class="atmo-signin__status" role="status" data-dialog-status></p>
   </dialog>
   {/* Before asking the reader's account host for one more permission: what it's for. */}
@@ -77,6 +94,7 @@ const { base } = settings;
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
   import { MAX, quotePreview, setUpComposer, type Posted } from "../lib/client/composer";
   import { following, handleSignInForm, me as whoIsSignedIn, send as act, signIn, signOut as endSignIn, state } from "../lib/client/account";
+  import { addSubscribeButtons, finishPendingSubscribe, loadSubscribed } from "../lib/client/subscribe";
   import type { Permission } from "../lib/permissions";
 
   const HEART = '<path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" />';
@@ -232,14 +250,28 @@ const { base } = settings;
         return element;
       };
 
-      // Not signed in: the sign-in form, coming back to finish this like or repost.
-      const askToSignIn = (kind: Kind, uri: string, problem = "") => {
-        form.querySelector<HTMLInputElement>("[data-return-to]")!.value =
-          `${location.pathname}${location.search}#atmo-react=${kind}:${encodeURIComponent(uri)}`;
+      // The sign-in overlay: says what it's for, and comes back to `hash`,
+      // where what the reader pressed is finished.
+      const dialogHeading = form.querySelector("label")!;
+      const dialogElsewhere = dialog.querySelector<HTMLElement>("[data-dialog-elsewhere]")!;
+      const openSignIn = (heading: string, hash: string, problem = "", blueskyUrl = "") => {
+        dialogHeading.textContent = heading;
+        dialog.setAttribute("aria-label", heading);
+        form.querySelector<HTMLInputElement>("[data-return-to]")!.value = `${location.pathname}${location.search}${hash}`;
         status.textContent = problem;
+        dialogElsewhere.hidden = !blueskyUrl;
+        if (blueskyUrl) dialogElsewhere.querySelector("a")!.href = blueskyUrl;
         if (!dialog.open) dialog.showModal();
         form.querySelector<HTMLInputElement>('input[name="handle"]')!.focus();
       };
+      const blueskyUrlOf = (uri: string) => posts().find((post) => post.dataset.atmospherePost === uri)?.dataset.atmosphereUrl ?? "";
+      const SIGN_IN_HEADINGS = { like: "signInFirst.likePost", repost: "signInFirst.repostPost", reply: "signInFirst.reply", quote: "signInFirst.quotePost" };
+      // Not signed in: the overlay, coming back to finish this like or repost.
+      const askToSignIn = (kind: Kind, uri: string, problem = "") =>
+        openSignIn(t(SIGN_IN_HEADINGS[kind]), `#atmo-react=${kind}:${encodeURIComponent(uri)}`, problem, blueskyUrlOf(uri));
+      // The same for Reply and Quote, coming back to the comment box.
+      const askToSignInToCompose = (mode: "reply" | "quote", uri: string, problem = "") =>
+        openSignIn(t(SIGN_IN_HEADINGS[mode]), `#atmo-compose=${mode}:${encodeURIComponent(uri)}`, problem, blueskyUrlOf(uri));
 
 
       const icon = (paths: string) => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
@@ -308,7 +340,8 @@ const { base } = settings;
       };
 
       // Reply and Quote: the comment box in an overlay for signed-in readers,
-      // otherwise the post on Bluesky (as also with ⌘-click or a middle click).
+      // otherwise the sign-in overlay. ⌘-click or a middle click opens the post
+      // on Bluesky.
       // Icons only, as on Bluesky, with their names for screen readers and as
       // tooltips.
       const bskyLink = (post: HTMLElement, paths: string) => {
@@ -321,8 +354,9 @@ const { base } = settings;
         labelLink(link);
         link.innerHTML = icon(paths);
         link.addEventListener("click", (event) => {
-          if (!signedIn || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault();
+          if (!signedIn) return askToSignInToCompose(mode, post.dataset.atmospherePost!);
           // A sign-in without posting (from an older version): asked for first.
           if (!can("post")) return void askPermission("post", `#atmo-compose=${mode}:${encodeURIComponent(post.dataset.atmospherePost!)}`);
           openCompose(post, mode);
@@ -439,6 +473,14 @@ const { base } = settings;
         }
       };
 
+      // Subscribe buttons the site places (the comments look after their own).
+      const askToSubscribe = (problem = "") => openSignIn(t("subscribe.signIn"), "#atmo-subscribe", problem);
+      addSubscribeButtons(
+        [...document.querySelectorAll<HTMLButtonElement>("[data-atmosphere-subscribe]")].filter((button) => !button.closest("atmosphere-comments")),
+        t,
+        askToSubscribe,
+      );
+
       // Back from approving following: follow as they asked.
       const finishPendingFollow = async () => {
         const pending = location.hash.match(/^#atmo-follow=(.+)$/);
@@ -477,16 +519,28 @@ const { base } = settings;
         if (button && button.getAttribute("aria-pressed") !== "true") await react(post, button, kind as Kind, true);
       };
 
-      // Back from allowing posting: open the Reply or Quote box they pressed.
-      const finishPendingCompose = () => {
+      // Back from signing in or allowing posting: open the Reply or Quote box they pressed.
+      const finishPendingCompose = async () => {
         const pending = location.hash.match(/^#atmo-compose=(reply|quote):(.+)$/);
         if (!pending) return;
         const url = new URL(location.href);
+        const problem = url.searchParams.get("atmosphere") ?? "";
         if (!document.querySelector("atmosphere-comments")) url.searchParams.delete("atmosphere");
-        history.replaceState(history.state, "", `${url.pathname}${url.search}`);
         const uri = decodeURIComponent(pending[2]);
+        const mode = pending[1] as "reply" | "quote";
+        // The page may still be loading its posts (a server island, say).
+        for (let tries = 0; tries < 40 && !posts().some((post) => post.dataset.atmospherePost === uri); tries++) {
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+        history.replaceState(history.state, "", `${url.pathname}${url.search}`);
         const post = posts().find((candidate) => candidate.dataset.atmospherePost === uri);
-        if (post && signedIn && can("post")) openCompose(post, pending[1] as "reply" | "quote");
+        if (!post) return;
+        post.scrollIntoView({ block: "center" });
+        if (!signedIn) {
+          if (SIGN_IN_PROBLEMS[problem]) askToSignInToCompose(mode, uri, t(SIGN_IN_PROBLEMS[problem]));
+        } else if (can("post")) {
+          openCompose(post, mode);
+        }
       };
 
       // The reader's avatar wherever the page marks data-atmosphere-account,
@@ -566,11 +620,13 @@ const { base } = settings;
           addActions();
           await loadState();
           await finishPending();
-          finishPendingCompose();
+          await finishPendingCompose();
           if (signedIn) {
             await setUpFollow();
             await finishPendingFollow();
+            await loadSubscribed();
           }
+          await finishPendingSubscribe(t, askToSubscribe);
         });
 
       // Posts that arrive later (a server island, say) get buttons too.
@@ -587,18 +643,6 @@ const { base } = settings;
 </script>
 
 <style>
-  .atmo-signin {
-    /* Centred on the screen, whatever margin a site gives .atmo. */
-    margin: auto;
-    width: min(92vw, 520px);
-    padding: 22px 22px 18px;
-    border: 1px solid var(--atmo-border, #8886);
-    border-radius: calc(var(--atmo-radius, 10px) + 6px);
-    background: var(--atmo-dialog-bg, var(--atmo-menu-bg, Canvas));
-    color: var(--atmo-text, CanvasText);
-    box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
-  }
-
   .atmo-permission p {
     margin: 0 0 10px;
   }
@@ -607,28 +651,6 @@ const { base } = settings;
     /* Clear of the close button. */
     padding-right: 32px;
     font-weight: 700;
-  }
-
-  .atmo-signin::backdrop {
-    background: rgb(0 0 0 / 0.55);
-  }
-
-  .atmo-signin :global(.atmo__login) {
-    margin-top: 0;
-  }
-
-  .atmo-signin__close {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    padding: 4px 8px;
-    border: 0;
-    background: none;
-    color: var(--atmo-muted, inherit);
-    font: inherit;
-    font-size: 1.4em;
-    line-height: 1;
-    cursor: pointer;
   }
 
   .atmo-compose {
@@ -641,16 +663,6 @@ const { base } = settings;
 
   .atmo-compose__done p {
     margin: 0 0 12px;
-  }
-
-  .atmo-signin__status {
-    margin: 10px 0 0;
-    color: var(--atmo-muted, inherit);
-    font-size: 0.9em;
-  }
-
-  .atmo-signin__status:empty {
-    display: none;
   }
 
   /* The row under each post. Defaults carry no weight, so a site's own

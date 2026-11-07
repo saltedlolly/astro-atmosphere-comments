@@ -23,9 +23,9 @@ See it on [saltedlolly.com](https://saltedlolly.com/2005/07/13/summer-jam-party-
 1. You announce each post on Bluesky (a post linking to it). That post's thread is the comment section.
 2. A reader signs in with **AT Protocol OAuth, straight to their own account host** (Bluesky's, for most people), which asks them to approve your site, named by its address (example.com). There is no third-party login service in between, and your site never sees a password.
 3. **The sign-in stays in the reader's browser.** Your server never sees it: comments, likes and reposts go from the reader's browser straight to their own account host. So your server has no way to post for anyone, a copy of your server's files holds nothing about your readers, and when a reader signs out, the sign-in is cancelled at their host and deleted from their browser. That's it: nothing is left anywhere.
-4. Your site asks, in one approval, only for what readers can do on it: to create posts, to like and repost, to delete their comments and to follow your accounts (and, when one of your own accounts signs in, to hide comments). Each is used only on your posts, the comments under them and your accounts. Readers can see and cancel it all at their account host.
+4. Your site asks, in one approval, only for what readers can do on it: to create posts, to like and repost, to delete their comments and to follow your accounts (and, when one of your own accounts signs in, to hide comments; with the `standardSite` option, to subscribe and recommend). Each is used only on your posts, the comments under them and your accounts. Readers can see and cancel it all at their account host.
 
-Readers who'd rather not sign in can use the **Reply on Bluesky instead** link under the form.
+Everyone sees Like, Repost, Quote and a box to write a comment. Pressing any of them signed out opens an overlay to sign in, and what they pressed is finished once they're back. Readers who'd rather not sign in can use the **Reply on Bluesky instead** link in the overlay.
 
 Images (avatars, link-card pictures), account searches (the suggestions under the sign-in box and for @mentions) and account lookups when signing in go through your server, so readers' browsers contact only their own account host, never Bluesky's other servers.
 
@@ -110,6 +110,16 @@ A "follow me" link can become a **Follow** button for signed-in readers: mark it
    data-atmosphere-follow="did:plc:…" data-atmosphere-follow-handle="you.bsky.social">Follow me on Bluesky</a>
 ```
 
+If you publish [Standard.site](https://standard.site) records, set the integration's `standardSite` option. Readers can then **subscribe** to your publication from your site, and read new posts in apps such as Leaflet or Standard Reader. `AtmosphereComments` shows a Subscribe button under each post, with Like and Repost. To put a button anywhere else (with `AtmosphereReactions` in your layout), mark it as below; it stays hidden without the option or JavaScript. Anyone not signed in is offered the sign-in form, and subscribed once they're back; a second press unsubscribes.
+
+```astro
+<button type="button" data-atmosphere-subscribe hidden>
+  <span data-atmosphere-subscribe-label>Subscribe</span>
+</button>
+```
+
+Without a `data-atmosphere-subscribe-label` element the button keeps your own content, and you show the state with `[aria-pressed="true"]` in your CSS.
+
 So readers can see which account they're using, `AtmosphereReactions` also fills any element marked `data-atmosphere-account` (in your header, say) with the signed-in reader's avatar. Clicking it opens a small menu: "Signed in as @handle" and Sign out. When nobody's signed in it stays empty, so give it `hidden`:
 
 ```astro
@@ -134,6 +144,7 @@ Locally the integration uses the protocol's development mode, so it works withou
 | `allowedAuthors` | yes | DIDs of the accounts whose posts can be commented on through your site. Comments from these accounts get the Author badge. |
 | `logoUri` | | A square logo for the sign-in screen (absolute `https://` address). |
 | `policyUri`, `tosUri` | | Your privacy policy and terms, shown on the sign-in screen. The privacy policy is also linked under the sign-in form. |
+| `standardSite` | | `{ publication: "at://did:…/site.standard.publication/…", feed: "/feed/" }`, your [Standard.site](https://standard.site) publication and, optionally, your feed for the Subscribe menu (Copy link, RSS feed, View on Bluesky, View on Standard Reader). Turns on the Subscribe button (above), and makes Like under a post also recommend the post's record, when its page has `<link rel="site.standard.document">` (the button's tooltip says so); un-liking removes the recommend. Likes on comments stay Bluesky likes. Adds Standard.site's permission to the one approval. This package doesn't publish the records: use your own script or a publishing tool. |
 | `hidden` | | Comments never to show: bsky.app post or profile addresses, AT URIs, handles or DIDs. Replies you hide in the Bluesky app, and posts with Bluesky's moderation labels (spam and so on), are left out anyway. |
 | `base` | | Where the integration's routes live. Default `/atmosphere`. |
 | `locale` | | The language of the wording, such as `"fr"` or `"pt-BR"` (see Languages). |
@@ -144,16 +155,16 @@ Locally the integration uses the protocol's development mode, so it works withou
 | Prop | What it does |
 | --- | --- |
 | `post` | The announcement: bsky.app address or AT URI. Optional with Standard.site (above). |
-| `label` | The sign-in form's heading. Default "Sign in to leave a comment, like or repost". |
+| `label` | The sign-in overlay's heading when commenting. Default "Sign in to leave a comment". |
 | `authorLabel` | The badge on your own comments. Default "Author". |
-| `blueskyLink` | "Rather not sign in here? Reply on Bluesky instead →" under the sign-in form, linking to the announcement (with `u-syndication`, so microformats readers learn it's the post's copy on Bluesky). Default `true`; `blueskyLink={false}` hides it. |
+| `blueskyLink` | "Rather not sign in here? Reply on Bluesky instead →" in the sign-in overlay, linking to the announcement (with `u-syndication`, so microformats readers learn it's the post's copy on Bluesky). Default `true`; `blueskyLink={false}` hides it. |
 | `locale`, `messages` | The same as the integration's options, for this one component. |
 | `locale`, `messages` (also on `AtmosphereReactions`) | See Languages. |
 | `credit` | A small "Powered by Atmosphere Comments for Astro" link at the end. Default `true`; set `credit={false}` to hide it. |
 
 **Slots:** `after-box` goes between the comment box and the comments (a note about other ways to respond, say); the default slot goes after the comments (other responses, older comments).
 
-**Layout, top to bottom:** likes and reposts, the sign-in form and the "Reply on Bluesky instead" line (or, signed in, Like, Repost, Quote and the comment box), your `after-box` content, the comments, your default slot content.
+**Layout, top to bottom:** likes and reposts, Like, Repost, Quote and the comment box, your `after-box` content, the comments, your default slot content.
 
 ## Languages
 
@@ -207,7 +218,7 @@ The component fires (bubbling):
 
 - **Readers' sign-ins stay in their browsers.** The OAuth library (`@atproto/oauth-client-browser`) keeps the tokens in the browser's storage, together with a key the browser makes and won't let even the page's own code read out; the tokens only work with that key. Your server never receives them, sets no cookies and stores nothing about readers. Signing out cancels the sign-in at the reader's account host and deletes it from the browser.
 - **What that does and doesn't promise.** Your server can't act for anyone, ever. While a reader has your page open, though, your page's code can use their sign-in, as with any web app they sign in to, so the code that runs matters: it's this package's open source code, and comments are only ever shown as plain text (links, @mentions and #hashtags become links; nothing is rendered as HTML). A [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) on your site adds a second line of defence.
-- **What's checked before anything is sent** (by the browser code, `lib/client/account.ts`): only your announcements and the comments under them can be replied to, liked, reposted or quoted; only a reader's own replies under your announcements can be deleted; only your `allowedAuthors` can be followed; only an announcement's author can hide comments under it.
+- **What's checked before anything is sent** (by the browser code, `lib/client/account.ts`): only your announcements and the comments under them can be replied to, liked, reposted or quoted; only a reader's own replies under your announcements can be deleted; only your `standardSite` publication can be subscribed to, and only documents in its account recommended; only your `allowedAuthors` can be followed; only an announcement's author can hide comments under it.
 - **What your server does:** it shows the threads, looks up accounts and suggestions, finds the links and mentions in a comment before it's posted, and passes on avatars and link pictures it has just shown. None of it needs to know who a reader is. Each route that calls Bluesky is rate-limited per address, with an overall cap; requests that aren't simple reads must come from your own pages (checked by `Origin`). Readers' addresses are used only for those limits, never stored.
 - **Trade-off:** account hosts trust browser sign-ins less than ones kept on a server, so they last less long (Bluesky's currently last about two weeks), and there's no way for a site to sign everyone out at once. For a reader who'd rather not trust your server, that's the point.
 - **People who'd rather not be shown publicly:** Bluesky's setting "Discourage apps from showing my account to logged-out users" is respected, as your page is public. A comment from such an account shows only as "Not shown here…" (no name, picture or words reach the page), the replies under it stay, and the account is left out of the faces of who liked and reposted.

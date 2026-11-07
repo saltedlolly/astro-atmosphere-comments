@@ -18,6 +18,7 @@ export const GET: APIRoute = async ({ url }) => {
     return json({
       author: publicProfile(quoted.author),
       text: quoted.text,
+      indexedAt: quoted.indexedAt,
       ...(external && {
         external: {
           uri: external.uri,

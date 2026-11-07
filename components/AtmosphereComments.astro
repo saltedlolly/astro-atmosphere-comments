@@ -1,14 +1,14 @@
 ---
-// The comment box under a post: a form to sign in with an Atmosphere account
-// (Bluesky or any other), then, once signed in, Like, Repost and Quote buttons and a box to write a
-// comment (a reply to the post's announcement, or to one of its comments).
+// Under a post: Like, Repost and Quote buttons and a box to write a comment (a
+// reply to the post's announcement, or to one of its comments). Signed out,
+// they open an overlay to sign in with an Atmosphere account (Bluesky or any
+// other), and what the reader pressed is finished once they're back.
 //
 // Props:
 //   post   the announcement's AT URI (at://did/app.bsky.feed.post/rkey).
-//   label   the sign-in form's heading
-//           (default "Sign in to leave a comment, like or repost").
-//   blueskyLink  "Rather not sign in here? Reply on Bluesky instead →" under the
-//           sign-in form (default true; false hides it).
+//   label   the sign-in overlay's heading when commenting (default "Sign in to leave a comment").
+//   blueskyLink  "Rather not sign in here? Reply on Bluesky instead →" in the
+//           sign-in overlay (default true; false hides it).
 //   credit  a small "Powered by Atmosphere Comments for Astro" link under the
 //           comments (default true; false hides it).
 //
@@ -31,12 +31,17 @@
 // text, author, createdAt, quote, parent }), and after a like or repost (or
 // undoing one) `atmosphere:reacted` (detail: { kind, on, author }), so a site
 // can show it straight away.
+//
+// With the integration's `standardSite` option, Like on the post also
+// recommends the page's Standard.site record (<link rel="site.standard.document">),
+// and un-liking removes the recommend. Likes on comments stay Bluesky likes.
 import settings from "../lib/settings";
 import SignInForm from "./SignInForm.astro";
 import Composer from "./Composer.astro";
 import "./atmosphere.css";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
+import logo from "../assets/union.svg?url";
 
 interface Props {
   /**
@@ -45,13 +50,13 @@ interface Props {
    * is used to find it.
    */
   post?: string;
-  /** The sign-in form's heading. */
+  /** The sign-in overlay's heading when commenting. */
   label?: string;
   /** The badge on comments by the site's own accounts. */
   authorLabel?: string;
   /** A small "Powered by Atmosphere Comments for Astro" link under the comments. Default true. */
   credit?: boolean;
-  /** "Rather not sign in here? Reply on Bluesky instead →" under the sign-in form. Default true. */
+  /** "Rather not sign in here? Reply on Bluesky instead →" in the sign-in overlay. Default true. */
   blueskyLink?: boolean;
   /** The language of the wording, e.g. "fr". Overrides the integration's `locale`. */
   locale?: string;
@@ -90,22 +95,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 <atmosphere-comments class="atmo" id="atmosphere-comments" data-post={post} data-base={base} data-locale={lang} data-messages={JSON.stringify(messages)}>
   <div class="atmo-reactions" data-reactions data-pagefind-ignore hidden></div>
 
-  <div class="atmo__signed-out" data-view="signed-out" data-pagefind-ignore>
-    <SignInForm id="atmo" returnTo={returnTo} messages={messages} lang={lang} />
-    {blueskyLink && (
-      <p
-        class="atmo__elsewhere"
-        data-elsewhere
-        hidden={!blueskyUrl}
-        set:html={th("elsewhere.text", {
-          // u-syndication: microformats readers learn this is the post's copy on Bluesky.
-          link: link(blueskyUrl || undefined, t("elsewhere.link"), ' class="atmo__elsewhere-link u-syndication" data-elsewhere-link'),
-        })}
-      />
-    )}
-  </div>
-
-  <div class="atmo__signed-in" data-view="signed-in" data-pagefind-ignore hidden>
+  {/* For everyone: signed out, these open the sign-in overlay below, and what was pressed is finished on coming back. */}
+  <div class="atmo__signed-in" data-view="main" data-pagefind-ignore hidden>
     <div class="atmo__actions" role="group" aria-label={t("actions.label")}>
       <button type="button" class="atmo__action" data-react="like" aria-pressed="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" /></svg>
@@ -119,6 +110,31 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h5v-5H6.5A4.5 4.5 0 0 1 11 8.5V7a6 6 0 0 0-6 6Zm9 0h5v-5h-3.5A4.5 4.5 0 0 1 20 8.5V7a6 6 0 0 0-6 6Z" /></svg>
         <span>{t("actions.quote")}</span>
       </button>
+      {/* With the `standardSite` option. */}
+        {settings.standardSite && (
+      <div class="atmo-subscribe" data-subscribe-panel data-pagefind-ignore hidden>
+        <button type="button" class="atmo__action atmo-subscribe__button" data-atmosphere-subscribe hidden>
+          <span class="atmo-subscribe__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
+          <span data-atmosphere-subscribe-label>{t("subscribe.subscribe")}</span>
+        </button>
+        <button type="button" class="atmo__action atmo-subscribe__more" aria-label={t("subscribe.more")} title={t("subscribe.more")} aria-expanded="false" data-subscribe-more>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
+        <div class="atmo-subscribe__menu" data-subscribe-menu hidden>
+          <p
+            class="atmo-subscribe__note"
+            set:html={th("subscribe.panelText", {
+              leaflet: link("https://leaflet.pub", "Leaflet"),
+              standardReader: link("https://standard-reader.app", "Standard Reader"),
+            })}
+          />
+          <button type="button" data-subscribe-copy={settings.site} data-copied={t("subscribe.copied")}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg><span data-copy-label>{t("subscribe.copyLink")}</span></button>
+          {settings.standardSite.feed && <a href={settings.standardSite.feed}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11a8 8 0 0 1 8 8M5 5a14 14 0 0 1 14 14" /><circle cx="6" cy="18" r="1" /></svg><span>{t("subscribe.feed")}</span></a>}
+          <a href={blueskyUrl || undefined} hidden={!blueskyUrl} data-subscribe-bluesky target="_blank" rel="noopener"><svg class="atmo-subscribe__filled" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z" /></svg><span>{t("subscribe.viewBluesky")}</span></a>
+          <a href={`https://standard-reader.app/p/${settings.standardSite.publication.split("/")[2]}/${settings.standardSite.publication.split("/")[4]}`} target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg><span>{t("subscribe.standardReader")}</span></a>
+        </div>
+      </div>
+    )}
     </div>
 
     {/* A sign-in from before posting was asked for: one more permission. */}
@@ -131,8 +147,34 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       </div>
     </div>
 
+    {/* Signed out: looks like the comment box, and opens the sign-in overlay. */}
+    <div class="atmo__prompt-box" data-comment-prompt hidden>
+      <button type="button" class="atmo__prompt" data-comment-prompt-open>{t("comment.prompt")}</button>
+      <div class="atmo__row atmo__row--end">
+        <button type="button" class="atmo__link-button" data-comment-prompt-open>{t("comment.signIn")}</button>
+        <button type="button" class="atmo__button" disabled>{t("composer.postComment")}</button>
+      </div>
+    </div>
+
     <Composer id="atmo" messages={messages} lang={lang} signOut />
   </div>
+
+  <dialog class="atmo atmo-signin" aria-label={t("signIn.heading")} data-signin-dialog data-pagefind-ignore>
+    <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
+    <SignInForm id="atmo" returnTo={returnTo} messages={messages} lang={lang} />
+    {blueskyLink && (
+      <p
+        class="atmo__elsewhere"
+        data-elsewhere
+        hidden={!blueskyUrl}
+        set:html={th("elsewhere.text", {
+          // u-syndication: microformats readers learn this is the post's copy on Bluesky.
+          link: link(blueskyUrl || undefined, t("elsewhere.link"), ' class="atmo__elsewhere-link u-syndication" data-elsewhere-link'),
+        })}
+      />
+    )}
+    <p class="atmo-signin__status" role="status" data-dialog-status></p>
+  </dialog>
 
   <p class="atmo__status" data-status role="status" data-pagefind-ignore></p>
 
@@ -154,6 +196,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
   import { MAX, quotePreview, setUpComposer, type ComposerBehaviour, type Posted } from "../lib/client/composer";
   import { handleSignInForm, me as whoIsSignedIn, send, signIn, signOut, state } from "../lib/client/account";
+  import { addSubscribeButtons, finishPendingSubscribe, forgetSubscribed, loadSubscribed } from "../lib/client/subscribe";
   import type { Permission } from "../lib/permissions";
   import { authorOf } from "../lib/uris";
 
@@ -186,8 +229,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // Standard.site record is turned into one when the thread loads.
       let post = this.dataset.post?.startsWith("at://") ? this.dataset.post : "";
       const $ = <T extends Element>(selector: string) => this.querySelector<T>(selector)!;
-      const signedOut = $<HTMLElement>("[data-view='signed-out']");
-      const signedIn = $<HTMLElement>("[data-view='signed-in']");
+      const commentPrompt = $<HTMLElement>("[data-comment-prompt]");
       const composer = $<HTMLFormElement>("[data-composer]");
       const permissionPanel = $<HTMLElement>("[data-permission]");
       // A clean copy of the comment box, for reply boxes under comments.
@@ -342,7 +384,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // Nothing to respond to: hide the box and likes, but keep whatever the
       // site put in the slots.
       const deactivate = () => {
-        for (const part of this.querySelectorAll<HTMLElement>("[data-view], [data-reactions], [data-replies], [data-credit]")) {
+        for (const part of this.querySelectorAll<HTMLElement>("[data-view], [data-reactions], [data-replies], [data-credit], [data-subscribe-panel]")) {
           part.hidden = true;
         }
         this.classList.add("is-inactive");
@@ -364,6 +406,11 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           }
           thread = data.thread;
           post = thread.uri;
+          const viewOnBluesky = this.querySelector<HTMLAnchorElement>("[data-subscribe-bluesky]");
+          if (viewOnBluesky && thread.url) {
+            viewOnBluesky.href = thread.url;
+            viewOnBluesky.hidden = false;
+          }
           const elsewhere = this.querySelector<HTMLElement>("[data-elsewhere]");
           if (elsewhere && thread.url) {
             elsewhere.querySelector("a")!.href = thread.url;
@@ -414,7 +461,36 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         renderReactions();
       };
 
-      const openLogin = () => loginForm.querySelector("input")?.focus({ preventScroll: true });
+      // The sign-in overlay: for whatever a signed-out reader pressed. They come
+      // back to `hash` on this page, and it's finished then (resumePending).
+      const signInDialog = $<HTMLDialogElement>("[data-signin-dialog]");
+      const dialogHeading = loginForm.querySelector("label")!;
+      const dialogStatus = $<HTMLElement>("[data-dialog-status]");
+      const openSignIn = (heading: string, hash: string, problem = "") => {
+        dialogHeading.textContent = heading;
+        signInDialog.setAttribute("aria-label", heading);
+        loginForm.querySelector<HTMLInputElement>("[data-return-to]")!.value = `${location.pathname}${location.search}${hash}`;
+        dialogStatus.textContent = problem;
+        if (!signInDialog.open) signInDialog.showModal();
+        loginForm.querySelector<HTMLInputElement>('input[name="handle"]')!.focus();
+      };
+      signInDialog.querySelector("[data-close]")!.addEventListener("click", () => signInDialog.close());
+      // A click on the dimmed page around the overlay closes it.
+      signInDialog.addEventListener("click", (event) => {
+        if (event.target === signInDialog) signInDialog.close();
+      });
+      const SIGN_IN_HEADINGS: Record<string, string> = {
+        like: "signInFirst.likePost",
+        repost: "signInFirst.repostPost",
+        quote: "signInFirst.quotePost",
+        comment: "signIn.heading",
+        reply: "signInFirst.reply",
+        "comment-like": "signInFirst.like",
+        "comment-repost": "signInFirst.repost",
+      };
+      const askToSignIn = (kind: string, uri?: string, problem?: string) =>
+        openSignIn(t(SIGN_IN_HEADINGS[kind]), `#atmo-do=${kind}${uri ? `:${encodeURIComponent(uri)}` : ""}`, problem);
+      commentPrompt.querySelectorAll("[data-comment-prompt-open]").forEach((opener) => opener.addEventListener("click", () => askToSignIn("comment")));
 
       enhanceHandleBox(loginForm, base);
       handleSignInForm(loginForm, lang);
@@ -488,6 +564,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         main.textarea.focus();
       });
       $<HTMLButtonElement>("[data-quote]").addEventListener("click", () => {
+        if (!isSignedIn) return askToSignIn("quote");
         if (!can("post")) return explainPermission("post");
         setMainMode("quote");
         main.textarea.focus();
@@ -538,11 +615,49 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // and Repost with their counts, as in the Bluesky app.
       const HEART = '<path d="M12 20.5s-7.5-4.4-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.7-7.5 10.1-7.5 10.1Z" />';
       const ARROWS = '<path d="M7 8h10l-3-3M17 16H7l3 3M5 13V9.5A1.5 1.5 0 0 1 6.5 8M19 11v3.5a1.5 1.5 0 0 1-1.5 1.5" />';
-      const signInFirst = (message: string) => {
-        this.scrollIntoView({ block: "center", behavior: "smooth" });
-        say(message);
-        openLogin();
-      };
+
+      // Subscribe: not signed in, the overlay, coming back to subscribe.
+      const subscribePanel = this.querySelector<HTMLElement>("[data-subscribe-panel]");
+      const askToSubscribe = (problem?: string) => openSignIn(t("subscribe.signIn"), "#atmo-subscribe", problem);
+      if (subscribePanel) addSubscribeButtons([...subscribePanel.querySelectorAll<HTMLButtonElement>("[data-atmosphere-subscribe]")], t, askToSubscribe);
+
+      // The ⌄ menu beside Subscribe: more ways to follow the site.
+      const moreButton = subscribePanel?.querySelector<HTMLButtonElement>("[data-subscribe-more]");
+      const moreMenu = subscribePanel?.querySelector<HTMLElement>("[data-subscribe-menu]");
+      if (subscribePanel && moreButton && moreMenu) {
+        const setMenu = (open: boolean) => {
+          moreMenu.hidden = !open;
+          moreButton.setAttribute("aria-expanded", String(open));
+        };
+        moreButton.addEventListener("click", () => {
+          setMenu(moreMenu.hidden);
+          if (!moreMenu.hidden) moreMenu.querySelector<HTMLElement>("[data-subscribe-copy]")?.focus();
+        });
+        document.addEventListener("click", (event) => {
+          if (!subscribePanel.contains(event.target as Node)) setMenu(false);
+        });
+        subscribePanel.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && !moreMenu.hidden) {
+            setMenu(false);
+            moreButton.focus();
+          }
+        });
+        const copy = moreMenu.querySelector<HTMLButtonElement>("[data-subscribe-copy]")!;
+        const copyText = copy.querySelector<HTMLElement>("[data-copy-label]")!;
+        const copyLabel = copyText.textContent;
+        copy.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(copy.dataset.subscribeCopy!);
+            copyText.textContent = copy.dataset.copied!;
+            window.setTimeout(() => {
+              copyText.textContent = copyLabel;
+              setMenu(false);
+            }, 1200);
+          } catch {
+            // Clipboard refused: the button stays as it was.
+          }
+        });
+      }
 
       // What the reader has liked or reposted, by post (filled in by loadState).
       let known: Record<string, { liked: boolean; reposted: boolean }> = {};
@@ -562,7 +677,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         };
         setCount(count);
         button.addEventListener("click", async () => {
-          if (!isSignedIn) return signInFirst(t(kind === "like" ? "signInFirst.like" : "signInFirst.repost"));
+          if (!isSignedIn) return askToSignIn(kind === "like" ? "comment-like" : "comment-repost", comment.dataset.atmosphereUri);
           const on = button.getAttribute("aria-pressed") !== "true";
           const before = Number(button.dataset.count || 0);
           button.setAttribute("aria-pressed", String(on));
@@ -595,7 +710,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           });
           reply.setAttribute("aria-label", t("comment.replyTo", { name: author }));
           reply.addEventListener("click", () => {
-            if (!isSignedIn) return signInFirst(t("signInFirst.reply"));
+            if (!isSignedIn) return askToSignIn("reply", comment.dataset.atmosphereUri);
             if (!can("post")) return explainPermission("post");
             openReply(comment, author);
           });
@@ -767,6 +882,31 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         }
       };
 
+      // Back from the sign-in overlay: finishes what the reader pressed. If
+      // signing in failed, the overlay opens again to say so.
+      const resumePending = (signed: boolean) => {
+        const pending = location.hash.match(/^#atmo-do=([a-z-]+)(?::(.+))?$/);
+        if (!pending) return;
+        const [, kind, encoded] = pending;
+        const uri = encoded ? decodeURIComponent(encoded) : undefined;
+        history.replaceState(history.state, "", `${location.pathname}${location.search}#atmosphere-comments`);
+        if (!signed) {
+          if (result && result !== "signed-in" && SIGN_IN_HEADINGS[kind]) askToSignIn(kind, uri, message(result));
+          return;
+        }
+        const comment = uri ? document.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(uri)}"]`) : null;
+        const press = (button: HTMLElement | null | undefined) => {
+          if (button?.getAttribute("aria-pressed") !== "true") button?.click();
+        };
+        (comment ?? this).scrollIntoView({ block: "center" });
+        if (kind === "like" || kind === "repost") press(reactButton(kind));
+        else if (kind === "quote") $<HTMLButtonElement>("[data-quote]").click();
+        else if (kind === "comment") main.textarea.focus({ preventScroll: true });
+        else if (kind === "reply" && comment) openReply(comment, comment.dataset.atmosphereAuthor || t("comment.someone"));
+        else if (kind === "comment-like" && comment) press(comment.querySelector<HTMLElement>(".atmo-comment-action[data-kind='like']"));
+        else if (kind === "comment-repost" && comment) press(comment.querySelector<HTMLElement>(".atmo-comment-action[data-kind='repost']"));
+      };
+
       const show = async (signed: boolean, handle?: string, displayName?: string, avatar?: string) => {
         if (handle) {
           $<HTMLElement>("[data-preview-name]").textContent = displayName || handle;
@@ -778,10 +918,20 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         await threadReady;
         if (this.classList.contains("is-inactive")) return;
         isSignedIn = signed;
-        signedOut.hidden = signed;
-        signedIn.hidden = !signed;
+        commentPrompt.hidden = signed;
+        if (subscribePanel) {
+          subscribePanel.hidden = false;
+          if (signed) void loadSubscribed();
+          else forgetSubscribed();
+          await finishPendingSubscribe(t, askToSubscribe);
+        }
         if (!signed) {
           document.querySelectorAll(".atmo-comment-action--delete, .atmo-comment-action--hide, .atmo-comment-delete").forEach((part) => part.remove());
+          composer.hidden = true;
+          permissionPanel.hidden = true;
+          setPressed("like", false);
+          setPressed("repost", false);
+          resumePending(false);
           return closeReplies();
         }
         // A sign-in without posting (from an older version, which asked for
@@ -793,6 +943,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         addCommentActions();
         addDeleteButtons();
         await loadState();
+        resumePending(true);
         // Back from approving the delete or hide permission: ask them to
         // confirm the delete or hide they started.
         const pending = location.hash.match(/^#atmo-(delete|hide)=(.+)$/);
@@ -816,7 +967,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         history.replaceState(history.state, "", url);
       }
 
+      // These need this script, so they're hidden without it.
       this.classList.add("is-loading");
+      $<HTMLElement>("[data-view='main']").hidden = false;
       whoIsSignedIn()
         .then((found) => {
           me = found;
@@ -839,12 +992,19 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // Like and Repost: shown as done straight away, put back if it fails.
       const reactButton = (kind: string) => $<HTMLButtonElement>(`[data-react='${kind}']`);
       const setPressed = (kind: string, on: boolean) => reactButton(kind).setAttribute("aria-pressed", String(on));
+      // Liking also recommends the page's Standard.site record: says so.
+      if (subscribePanel && document.querySelector('link[rel="site.standard.document"]')) {
+        reactButton("like").title = t("actions.likeAndRecommend");
+      }
       for (const kind of ["like", "repost"]) {
         reactButton(kind).addEventListener("click", async () => {
+          if (!isSignedIn) return askToSignIn(kind);
           const on = reactButton(kind).getAttribute("aria-pressed") !== "true";
           setPressed(kind, on);
           try {
-            const response = await send("react", { post, kind, on });
+            // Liking the post also recommends the page's Standard.site record, if it has one.
+            const document_ = kind === "like" ? document.querySelector('link[rel="site.standard.document"]')?.getAttribute("href") : undefined;
+            const response = await send("react", { post, kind, on, document: document_ ?? undefined });
             if (!response.ok) {
               setPressed(kind, !on);
               const { error, permission } = (await response.json()) as { error?: string; permission?: string };

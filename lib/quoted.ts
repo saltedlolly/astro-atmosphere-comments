@@ -5,6 +5,8 @@ import { profileFor, type Profile } from "./profile";
 export type Quoted = {
   author: Profile;
   text: string;
+  /** When Bluesky received the post (for a backdated announcement, not its stated date). */
+  indexedAt?: string;
   external?: { uri: string; title: string; description: string; thumbSource?: string };
 };
 
@@ -22,6 +24,7 @@ export async function quotedPost(uri: string): Promise<Quoted | null> {
   const [post] = ((await response.json()) as {
     posts?: {
       author: { did: string };
+      indexedAt?: string;
       record: { text?: string };
       embed?: { external?: { uri: string; title: string; description: string; thumb?: string } };
     }[];
@@ -31,6 +34,7 @@ export async function quotedPost(uri: string): Promise<Quoted | null> {
   const quoted: Quoted = {
     author: await profileFor(post.author.did),
     text: post.record.text ?? "",
+    indexedAt: post.indexedAt,
     ...(external && {
       external: {
         uri: external.uri,
