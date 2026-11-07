@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 (7 November 2026)
+
+- Uses the current AT Protocol library (`@atproto/api` 0.30, was 0.25), the same version as Atmosphere Publishing for Astro, so a site using both installs it once.
+- README: using it with [Atmosphere Publishing for Astro](https://github.com/saltedlolly/astro-atmosphere-publishing), and with other Standard.site publishers such as Sequoia.
+
 ## 0.6.0 (7 November 2026)
 
 **Buttons for everyone, and Standard.site support for readers.** The buttons and sign-in change applies to every site; Subscribe and recommending are optional.

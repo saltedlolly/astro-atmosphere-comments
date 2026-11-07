@@ -110,6 +110,8 @@ A "follow me" link can become a **Follow** button for signed-in readers: mark it
    data-atmosphere-follow="did:plc:…" data-atmosphere-follow-handle="you.bsky.social">Follow me on Bluesky</a>
 ```
 
+**Publishing to Standard.site:** [Atmosphere Publishing for Astro](https://github.com/saltedlolly/astro-atmosphere-publishing) is the companion integration made to work with this one. It publishes your posts' Standard.site records, announces new posts on Bluesky and adds each page's `<link rel="site.standard.document">` tag, so the comment box finds each post's announcement without a `post` prop. Its `publicationFromState()` helper gives the `standardSite` option your publication (below). Other publishers work too, as long as they add that tag and set the record's `bskyPostRef`, as [Sequoia](https://sequoia.pub) does.
+
 If you publish [Standard.site](https://standard.site) records, set the integration's `standardSite` option. Readers can then **subscribe** to your publication from your site, and read new posts in apps such as Leaflet or Standard Reader. `AtmosphereComments` shows a Subscribe button under each post, with Like and Repost. To put a button anywhere else (with `AtmosphereReactions` in your layout), mark it as below; it stays hidden without the option or JavaScript. Anyone not signed in is offered the sign-in form, and subscribed once they're back; a second press unsubscribes.
 
 ```astro
