@@ -99,6 +99,7 @@
   "follow.following": "Following",
   "follow.followAs": "Follow {{handle}} as {{me}}",
   "follow.followingLabel": "You follow {{handle}}",
+  "follow.link": "Follow {{handle}} on Bluesky",
   "subscribe.subscribe": "Subscribe",
   "subscribe.subscribed": "✓ Subscribed",
   "subscribe.subscribeLabel": "Subscribe with your Atmosphere account, to read new posts in apps such as Leaflet or Standard Reader",

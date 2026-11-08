@@ -1,0 +1,63 @@
+---
+// "Follow @handle on Bluesky →": a link to the account's Bluesky profile,
+// which AtmosphereReactions (in the layout) turns into a Follow / ✓ Following
+// button for signed-in readers. Signed out it stays a link, so readers follow
+// on Bluesky itself: nobody is asked to sign in here just to follow.
+//
+// Props (all optional):
+//   account   the account to follow, by DID or handle (default: the
+//             `standardSite` publication's account). Must be one of the
+//             integration's `allowedAuthors` for the button to work.
+//   label     the link's text, instead of "Follow @handle on Bluesky"
+//   class     classes for the link
+//   locale, messages  as for AtmosphereComments
+import settings from "../lib/settings";
+import { messagesFor, pickLocale, translate } from "../lib/i18n";
+import { profileFor } from "../lib/profile";
+import { resolveHandle } from "../lib/resolve";
+
+interface Props {
+  account?: string;
+  label?: string;
+  class?: string;
+  locale?: string;
+  messages?: Record<string, string>;
+}
+
+const lang = pickLocale(Astro.props.locale, settings.locale, Astro.currentLocale);
+const messages = messagesFor(lang, { ...settings.messages, ...Astro.props.messages });
+
+// The DID and handle, looked up when the page is built.
+const given = (Astro.props.account ?? settings.standardSite?.publication?.split("/")[2] ?? "").replace(/^@/, "");
+let did = "";
+let handle = "";
+if (given.startsWith("did:")) {
+  did = given;
+  const profile = await profileFor(did).catch(() => null);
+  if (profile && profile.handle !== did) handle = profile.handle;
+} else if (given) {
+  handle = given;
+  did = await resolveHandle(given).catch(() => "");
+}
+if (given && !did) {
+  console.warn(`[atmosphere-comments] AtmosphereFollow: couldn't find the account ${given}, so it's a plain link.`);
+} else if (did && !settings.allowedAuthors.includes(did)) {
+  console.warn(
+    `[atmosphere-comments] AtmosphereFollow: ${handle || did} isn't in allowedAuthors, so it stays a link for everyone.`,
+  );
+}
+const label =
+  Astro.props.label ??
+  (handle ? translate(messages, lang, "follow.link", { handle: `@${handle}` }) : translate(messages, lang, "subscribe.follow"));
+---
+
+{(did || handle) && (
+  <a
+    class:list={["atmo-follow-link", Astro.props.class]}
+    href={`https://bsky.app/profile/${handle || did}`}
+    target="_blank"
+    rel="noopener"
+    data-atmosphere-follow={did && settings.allowedAuthors.includes(did) ? did : undefined}
+    data-atmosphere-follow-handle={handle || undefined}
+  >{label} →</a>
+)}

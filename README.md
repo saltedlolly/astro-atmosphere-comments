@@ -105,7 +105,17 @@ Give `data-atmosphere-url` with the author's handle, as above. An address with a
 
 Each marked post gets a row of icons: Reply, Repost, Quote and Like, with counts for Repost and Like. Readers already signed in on your site like and repost straight away, and Reply and Quote open the comment box in an overlay (Reply with the post being replied to above the box, Quote with the quote preview); what they post goes to Bluesky, not your page, and the overlay says so with a link to it. Anyone else is offered the sign-in form in an overlay when they press Like or Repost (their like or repost is done when they come back, with a brief "Liked" or "Reposted" over the button), and Reply and Quote open the post on Bluesky. It works with posts from loaders such as [`@ascorbic/bluesky-loader`](https://www.npmjs.com/package/@ascorbic/bluesky-loader) or embeds such as [`@astro-community/astro-embed-bluesky`](https://www.npmjs.com/package/@astro-community/astro-embed-bluesky) (wrap the embed in the marked element). Only posts by your `allowedAuthors` can be liked or reposted through your site.
 
-A "follow me" link can become a **Follow** button for signed-in readers: mark it with the account's DID and handle. It shows "Following" once they do (a second press unfollows, as on Bluesky). Only your `allowedAuthors` can be followed through your site, and the account's owner (who can't follow themselves) keeps the plain link.
+A **Follow** button: `AtmosphereFollow` shows "Follow @you.bsky.social on Bluesky →", a link to the account's Bluesky profile, and for signed-in readers it becomes a Follow button, showing "Following" once they do (a second press unfollows, as on Bluesky). Readers who aren't signed in just follow on Bluesky: they're never asked to sign in here for it.
+
+```astro
+---
+import AtmosphereFollow from "astro-atmosphere-comments/AtmosphereFollow.astro";
+---
+
+<AtmosphereFollow account="you.bsky.social" />
+```
+
+`account` takes a handle or a DID (default: your `standardSite` publication's account), `label` replaces the wording and `class` styles the link; the handle and DID are looked up when the page is built. Only your `allowedAuthors` can be followed through your site (others stay a link, with a warning in the build), and the account's owner, who can't follow themselves, keeps the plain link. It needs `AtmosphereReactions` in your layout. A link of your own works too, marked with the account's DID and handle:
 
 ```astro
 <a href="https://bsky.app/profile/you.bsky.social"

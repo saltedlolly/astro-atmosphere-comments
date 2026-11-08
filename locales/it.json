@@ -95,6 +95,7 @@
   "follow.following": "Segui già",
   "follow.followAs": "Segui {{handle}} come {{me}}",
   "follow.followingLabel": "Segui {{handle}}",
+  "follow.link": "Segui {{handle}} su Bluesky",
   "credit": "Realizzato con {{link}}",
   "callback.signingIn": "Accesso in corso…",
   "signIn.policy": "Come questo sito tratta i tuoi dati",

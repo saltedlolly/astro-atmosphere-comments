@@ -12,7 +12,8 @@ async function getJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function resolveHandle(handle: string): Promise<string> {
+/** A handle → its DID, through Bluesky's public service. */
+export async function resolveHandle(handle: string): Promise<string> {
   const { did } = await getJson<{ did: string }>(
     `${APPVIEW}com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`,
   );

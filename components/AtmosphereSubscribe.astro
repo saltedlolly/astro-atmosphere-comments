@@ -17,14 +17,15 @@
 //   bluesky   adds "View on Bluesky", going here (under a post: its thread)
 //
 // The menu's note ends by suggesting following the publication's account on
-// Bluesky, with a link to its profile, which AtmosphereReactions turns into a
-// Follow / Following button for signed-in readers.
+// Bluesky, with AtmosphereFollow: a link to its profile, which AtmosphereReactions
+// turns into a Follow / Following button for signed-in readers.
 //   locale, messages  as for AtmosphereComments
 import logo from "../assets/union.svg?url";
 import settings from "../lib/settings";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
 import { profileFor } from "../lib/profile";
+import AtmosphereFollow from "./AtmosphereFollow.astro";
 import "./atmosphere.css";
 
 interface Props {
@@ -72,16 +73,7 @@ const accountHandle = account && account.handle !== did ? account.handle : "";
             standardReader: link("https://standard-reader.app", "Standard Reader"),
           }) + (accountHandle ? ` ${escapeHtml(translate(messages, lang, "subscribe.followNote", { handle: `@${accountHandle}` }))}` : "")}
         />
-        {accountHandle && (
-          <a
-            class="atmo-subscribe__follow"
-            href={`https://bsky.app/profile/${accountHandle}`}
-            target="_blank"
-            rel="noopener"
-            data-atmosphere-follow={did}
-            data-atmosphere-follow-handle={accountHandle}
-          >{t("subscribe.follow")} →</a>
-        )}
+        {accountHandle && <AtmosphereFollow account={did} label={t("subscribe.follow")} class="atmo-subscribe__follow" locale={lang} messages={messages} />}
       </div>
       <button type="button" data-subscribe-copy={copyUrl} data-copied={t("subscribe.copied")}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg><span data-copy-label>{t("subscribe.copyLink")}</span></button>
       {feed && <a href={feed}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11a8 8 0 0 1 8 8M5 5a14 14 0 0 1 14 14" /><circle cx="6" cy="18" r="1" /></svg><span>{t("subscribe.feed")}</span></a>}

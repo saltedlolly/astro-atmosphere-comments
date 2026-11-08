@@ -32,6 +32,7 @@
     },
     "./AtmosphereComments.astro": "./components/AtmosphereComments.astro",
     "./AtmosphereReactions.astro": "./components/AtmosphereReactions.astro",
+    "./AtmosphereFollow.astro": "./components/AtmosphereFollow.astro",
     "./AtmosphereSubscribe.astro": "./components/AtmosphereSubscribe.astro"
   },
   "types": "./index.d.ts",

@@ -89,6 +89,7 @@
   "follow.following": "フォロー中",
   "follow.followAs": "{{me}}として{{handle}}をフォロー",
   "follow.followingLabel": "{{handle}}をフォローしています",
+  "follow.link": "Blueskyで{{handle}}をフォロー",
   "credit": "{{link}}で動作しています",
   "callback.signingIn": "ログインしています…",
   "signIn.policy": "このサイトでのデータの取り扱い",
