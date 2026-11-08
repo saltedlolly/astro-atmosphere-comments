@@ -276,6 +276,12 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
 }
 
+/* <AtmosphereSubscribe align="end">: near the right-hand edge, the menu opens leftwards. */
+.atmo-subscribe--end .atmo-subscribe__menu {
+  right: 0;
+  left: auto;
+}
+
 .atmo-subscribe__menu[hidden] {
   display: none;
 }
@@ -286,6 +292,7 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   border-bottom: 1px solid var(--atmo-border, #8886);
   color: var(--atmo-muted, inherit);
   font-size: 0.85em;
+  line-height: 1.5;
 }
 
 .atmo-subscribe__menu > a[hidden] {

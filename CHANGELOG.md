@@ -1,7 +1,10 @@
 # Changelog
 
-## 0.7.1 (8 November 2026)
+## 0.8.0 (8 November 2026)
 
+- **New `AtmosphereSubscribe` component:** the Subscribe button and its ⌄ menu, to place anywhere, such as at the top of a blog's list of posts (with `AtmosphereReactions` in the layout, which works the button and offers signing in). Props, all optional: `align` (`"end"` opens the menu leftwards, for a button near the right-hand edge), `copyUrl` (what Copy link copies), `links` (extra menu items, e.g. "Add to Feedly") and `bluesky`. Shows nothing without `standardSite`. `AtmosphereComments` uses it for the one under each post, so the two can't drift apart; the menu's script moved into it.
+- **"View on Leaflet"** in the menu (`https://leaflet.pub/lish/<did>/<rkey>`), which shows any Standard.site publication, not only ones made with Leaflet. New key `subscribe.leaflet`.
+- The menu's note now names pckt too, and mentions feed readers when the site has a feed (`subscribe.panelText` changed, new `subscribe.panelTextFeed`); its line height is 1.5.
 - **A clear "Liked" or "Reposted" after signing in.** When a reader presses Like or Repost while signed out, it's finished once they're back from signing in. Now a small bubble pops up over the button, with its icon enlarged and the word, then fades, so it's clear it went through. It appears only once the account host has accepted it, and readers who ask for less motion get a plain fade. In both components, for posts and comments. New `lib/client/done.ts`; styles `.atmo-done`; buttons are marked `data-busy` while their request runs.
 - **Replying from `AtmosphereReactions` shows the post being replied to** above the box, as the Quote preview does, because the reply won't appear on that page. The post comes through the site's `post` route (as the Quote preview's does), and also gives "Replying to" its author's handle. The preview's markup is now a shared `PostPreview` component (`.atmo__parent` for this one).
 - **"Replying to" never shows a DID.** In `AtmosphereReactions`, a post whose `data-atmosphere-url` names its author by DID (`https://bsky.app/profile/did:plc:…/post/…`) used to show "Replying to @did:plc:…". It now shows "Replying to someone" until the post being replied to has loaded (see above), then its author's `@handle`. If that fails, it stays "someone". Addresses with a handle are shown straight away, as before.

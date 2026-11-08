@@ -112,5 +112,8 @@
   "comment.withheldTitle": "Reactie verborgen",
   "comment.withheldSignedIn": "De reactie kon nu niet worden geladen. Probeer de pagina opnieuw te laden.",
   "signInFirst.view": "Log in om verborgen reacties te zien",
-  "reactions.hiddenPerson": "Iemand die zijn of haar account alleen toont aan mensen die zijn ingelogd"
+  "reactions.hiddenPerson": "Iemand die zijn of haar account alleen toont aan mensen die zijn ingelogd",
+  "subscribe.panelText": "Abonneer je om nieuwe berichten te lezen in apps zoals {{leaflet}}, {{pckt}} of {{standardReader}}.",
+  "subscribe.panelTextFeed": "Abonneer je om nieuwe berichten te lezen in apps zoals {{leaflet}}, {{pckt}} of {{standardReader}}, of volg de feed in elke feedlezer.",
+  "subscribe.leaflet": "Bekijk op Leaflet"
 }

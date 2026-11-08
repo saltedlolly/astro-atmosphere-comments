@@ -109,5 +109,8 @@
   "comment.withheldTitle": "非表示のコメント",
   "comment.withheldSignedIn": "読み込めませんでした。ページを再読み込みしてください。",
   "signInFirst.view": "ログインすると非表示のコメントを表示できます",
-  "reactions.hiddenPerson": "ログインしている人にだけアカウントを表示している人"
+  "reactions.hiddenPerson": "ログインしている人にだけアカウントを表示している人",
+  "subscribe.panelText": "購読すると、{{leaflet}}、{{pckt}}、{{standardReader}}などのアプリで新しい投稿を読めます。",
+  "subscribe.panelTextFeed": "購読すると、{{leaflet}}、{{pckt}}、{{standardReader}}などのアプリで新しい投稿を読めます。フィードリーダーでフィードをフォローすることもできます。",
+  "subscribe.leaflet": "Leafletで見る"
 }

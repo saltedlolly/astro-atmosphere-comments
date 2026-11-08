@@ -112,5 +112,8 @@
   "comment.withheldTitle": "Kommentar ausgeblendet",
   "comment.withheldSignedIn": "Er konnte gerade nicht geladen werden. Lade die Seite neu.",
   "signInFirst.view": "Melde dich an, um ausgeblendete Kommentare zu sehen",
-  "reactions.hiddenPerson": "Jemand, der sein Konto nur angemeldeten Leuten zeigt"
+  "reactions.hiddenPerson": "Jemand, der sein Konto nur angemeldeten Leuten zeigt",
+  "subscribe.panelText": "Abonniere, um neue Beiträge in Apps wie {{leaflet}}, {{pckt}} oder {{standardReader}} zu lesen.",
+  "subscribe.panelTextFeed": "Abonniere, um neue Beiträge in Apps wie {{leaflet}}, {{pckt}} oder {{standardReader}} zu lesen, oder folge dem Feed in einem beliebigen Feedreader.",
+  "subscribe.leaflet": "Auf Leaflet ansehen"
 }

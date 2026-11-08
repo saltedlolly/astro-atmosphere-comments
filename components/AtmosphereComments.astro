@@ -38,6 +38,7 @@
 import settings from "../lib/settings";
 import SignInForm from "./SignInForm.astro";
 import Composer from "./Composer.astro";
+import AtmosphereSubscribe from "./AtmosphereSubscribe.astro";
 import "./atmosphere.css";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
@@ -110,31 +111,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h5v-5H6.5A4.5 4.5 0 0 1 11 8.5V7a6 6 0 0 0-6 6Zm9 0h5v-5h-3.5A4.5 4.5 0 0 1 20 8.5V7a6 6 0 0 0-6 6Z" /></svg>
         <span>{t("actions.quote")}</span>
       </button>
-      {/* With the `standardSite` option. */}
-        {settings.standardSite && (
-      <div class="atmo-subscribe" data-subscribe-panel data-pagefind-ignore hidden>
-        <button type="button" class="atmo__action atmo-subscribe__button" data-atmosphere-subscribe hidden>
-          <span class="atmo-subscribe__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
-          <span data-atmosphere-subscribe-label>{t("subscribe.subscribe")}</span>
-        </button>
-        <button type="button" class="atmo__action atmo-subscribe__more" aria-label={t("subscribe.more")} title={t("subscribe.more")} aria-expanded="false" data-subscribe-more>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-        </button>
-        <div class="atmo-subscribe__menu" data-subscribe-menu hidden>
-          <p
-            class="atmo-subscribe__note"
-            set:html={th("subscribe.panelText", {
-              leaflet: link("https://leaflet.pub", "Leaflet"),
-              standardReader: link("https://standard-reader.app", "Standard Reader"),
-            })}
-          />
-          <button type="button" data-subscribe-copy={settings.site} data-copied={t("subscribe.copied")}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg><span data-copy-label>{t("subscribe.copyLink")}</span></button>
-          {settings.standardSite.feed && <a href={settings.standardSite.feed}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11a8 8 0 0 1 8 8M5 5a14 14 0 0 1 14 14" /><circle cx="6" cy="18" r="1" /></svg><span>{t("subscribe.feed")}</span></a>}
-          <a href={blueskyUrl || undefined} hidden={!blueskyUrl} data-subscribe-bluesky target="_blank" rel="noopener"><svg class="atmo-subscribe__filled" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z" /></svg><span>{t("subscribe.viewBluesky")}</span></a>
-          <a href={`https://standard-reader.app/p/${settings.standardSite.publication.split("/")[2]}/${settings.standardSite.publication.split("/")[4]}`} target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg><span>{t("subscribe.standardReader")}</span></a>
-        </div>
-      </div>
-    )}
+      {/* With the `standardSite` option: Subscribe and its ⌄ menu. "View on Bluesky" is this post's thread. */}
+      <AtmosphereSubscribe bluesky={blueskyUrl || undefined} locale={lang} messages={messages} />
     </div>
 
     {/* A sign-in from before posting was asked for: one more permission. */}
@@ -670,43 +648,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const askToSubscribe = (problem?: string) => openSignIn(t("subscribe.signIn"), "#atmo-subscribe", problem);
       if (subscribePanel) addSubscribeButtons([...subscribePanel.querySelectorAll<HTMLButtonElement>("[data-atmosphere-subscribe]")], t, askToSubscribe);
 
-      // The ⌄ menu beside Subscribe: more ways to follow the site.
-      const moreButton = subscribePanel?.querySelector<HTMLButtonElement>("[data-subscribe-more]");
-      const moreMenu = subscribePanel?.querySelector<HTMLElement>("[data-subscribe-menu]");
-      if (subscribePanel && moreButton && moreMenu) {
-        const setMenu = (open: boolean) => {
-          moreMenu.hidden = !open;
-          moreButton.setAttribute("aria-expanded", String(open));
-        };
-        moreButton.addEventListener("click", () => {
-          setMenu(moreMenu.hidden);
-          if (!moreMenu.hidden) moreMenu.querySelector<HTMLElement>("[data-subscribe-copy]")?.focus();
-        });
-        document.addEventListener("click", (event) => {
-          if (!subscribePanel.contains(event.target as Node)) setMenu(false);
-        });
-        subscribePanel.addEventListener("keydown", (event) => {
-          if (event.key === "Escape" && !moreMenu.hidden) {
-            setMenu(false);
-            moreButton.focus();
-          }
-        });
-        const copy = moreMenu.querySelector<HTMLButtonElement>("[data-subscribe-copy]")!;
-        const copyText = copy.querySelector<HTMLElement>("[data-copy-label]")!;
-        const copyLabel = copyText.textContent;
-        copy.addEventListener("click", async () => {
-          try {
-            await navigator.clipboard.writeText(copy.dataset.subscribeCopy!);
-            copyText.textContent = copy.dataset.copied!;
-            window.setTimeout(() => {
-              copyText.textContent = copyLabel;
-              setMenu(false);
-            }, 1200);
-          } catch {
-            // Clipboard refused: the button stays as it was.
-          }
-        });
-      }
+      // The ⌄ menu beside Subscribe is worked by AtmosphereSubscribe itself.
 
       // What the reader has liked or reposted, by post (filled in by loadState).
       let known: Record<string, { liked: boolean; reposted: boolean }> = {};

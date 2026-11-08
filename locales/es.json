@@ -115,5 +115,8 @@
   "comment.withheldTitle": "Comentario oculto",
   "comment.withheldSignedIn": "No se ha podido cargar. Prueba a recargar la página.",
   "signInFirst.view": "Inicia sesión para ver los comentarios ocultos",
-  "reactions.hiddenPerson": "Alguien que solo muestra su cuenta a quien haya iniciado sesión"
+  "reactions.hiddenPerson": "Alguien que solo muestra su cuenta a quien haya iniciado sesión",
+  "subscribe.panelText": "Suscríbete para leer las nuevas entradas en aplicaciones como {{leaflet}}, {{pckt}} o {{standardReader}}.",
+  "subscribe.panelTextFeed": "Suscríbete para leer las nuevas entradas en aplicaciones como {{leaflet}}, {{pckt}} o {{standardReader}}, o sigue el feed en cualquier lector de feeds.",
+  "subscribe.leaflet": "Ver en Leaflet"
 }
