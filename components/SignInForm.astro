@@ -30,7 +30,14 @@ interface Props {
 
 const { id, returnTo, messages, lang, heading, permissions = [] } = Astro.props;
 const { policyUri } = settings;
-const t = (key: string) => translate(messages, lang, key);
+const t = (key: string, vars?: Record<string, string>) => translate(messages, lang, key, vars);
+// The site's name in "… can use it only for what you approved", e.g. saltedlolly.com.
+let siteName = "";
+try {
+  siteName = new URL(settings.site).hostname;
+} catch {
+  siteName = "";
+}
 const th = (key: string, html: Record<string, string>) => translateHtml(messages, lang, key, html);
 // Links lead off the page, so they open in a new tab.
 const link = (href: string, text: string) =>
@@ -40,12 +47,13 @@ const link = (href: string, text: string) =>
 <form class="atmo__login" id={`${id}-login`} data-login-form>
   <label for={`${id}-handle`}>{heading ?? t("signIn.heading")}</label>
   <p
-    class="atmo__hint"
+    class="atmo__hint atmo__hint--accounts"
     set:html={th("signIn.anyAccount", {
       atmosphereAccount: link("https://atmosphereaccount.com", t("signIn.atmosphereAccount")),
       bluesky: link("https://bsky.app", "Bluesky"),
-      createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")),
-    })}
+    }) +
+      "<br>" +
+      th("signIn.noAccount", { createAccount: link("https://atmosphereaccount.com", t("signIn.createAccount")) })}
   />
   <div class="atmo__row">
     <span class="atmo__handle">
@@ -84,9 +92,8 @@ const link = (href: string, text: string) =>
   {/* The detail, for anyone who wants it. */}
   <details class="atmo__details">
     <summary>{t("signIn.more")}</summary>
-    <p class="atmo__hint">{t("signIn.privacy")}</p>
     <p class="atmo__hint">
-      {t("signIn.access")}
+      {t("signIn.privacy", { site: siteName || t("signIn.thisSite") })}
       {policyUri && <Fragment> <a href={policyUri} target="_blank" rel="noopener">{t("signIn.policy")}</a></Fragment>}
     </p>
   </details>
@@ -108,6 +115,11 @@ const link = (href: string, text: string) =>
     font-weight: 700;
   }
 
+  /* The two lines about accounts, above the box: a little more room. */
+  .atmo__hint.atmo__hint--accounts {
+    line-height: 1.7;
+  }
+
   .atmo__details summary {
     width: fit-content;
     color: var(--atmo-muted, inherit);
@@ -123,6 +135,8 @@ const link = (href: string, text: string) =>
     margin: 0;
     color: var(--atmo-muted, inherit);
     font-size: 0.9em;
+    /* Tighter than a site's body text, which is often set for long reading. */
+    line-height: 1.5;
   }
 
   .atmo__row {
