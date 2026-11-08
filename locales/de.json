@@ -107,5 +107,9 @@
   "permission.post": "Um von dieser Seite aus zu antworten und zu zitieren, braucht sie eine weitere Erlaubnis von deinem Atmosphere-Konto: Beiträge erstellen.",
   "permission.react": "Um von dieser Seite aus zu liken und zu reposten, braucht sie eine weitere Erlaubnis von deinem Atmosphere-Konto: liken und reposten und das zurücknehmen.",
   "permission.approve": "Die Seite deines Kontos (für die meisten die von Bluesky) bittet dich, das zu bestätigen, und vielleicht vorher, dich dort anzumelden. Danach kommst du direkt hierher zurück.",
-  "comment.withheld": "Hier nicht angezeigt: Die Person bittet Apps, ihre Beiträge nicht Leuten zu zeigen, die nicht angemeldet sind."
+  "comment.withheld": "Die Person zeigt ihre Beiträge nur Leuten, die angemeldet sind. Melde dich an, um ihn zu sehen.",
+  "comment.withheldTitle": "Kommentar ausgeblendet",
+  "comment.withheldSignedIn": "Er konnte gerade nicht geladen werden. Lade die Seite neu.",
+  "signInFirst.view": "Melde dich an, um ausgeblendete Kommentare zu sehen",
+  "reactions.hiddenPerson": "Jemand, der sein Konto nur angemeldeten Leuten zeigt"
 }

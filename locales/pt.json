@@ -110,5 +110,9 @@
   "permission.post": "Para responder e citar por este site, ele precisa de mais uma permissão da sua conta Atmosphere: criar publicações.",
   "permission.react": "Para curtir e repostar por este site, ele precisa de mais uma permissão da sua conta Atmosphere: curtir e repostar, e desfazer isso.",
   "permission.approve": "O site da sua conta (o do Bluesky, para a maioria das pessoas) vai pedir que você aprove, e talvez que entre lá primeiro. Depois você volta direto para cá.",
-  "comment.withheld": "Não exibido aqui: o autor pede aos apps que não mostrem suas publicações a quem não está conectado."
+  "comment.withheld": "O autor mostra suas publicações apenas a quem está conectado. Entre para ver.",
+  "comment.withheldTitle": "Comentário oculto",
+  "comment.withheldSignedIn": "Não foi possível carregá-lo agora. Tente recarregar a página.",
+  "signInFirst.view": "Entre para ver os comentários ocultos",
+  "reactions.hiddenPerson": "Alguém que mostra sua conta apenas a quem está conectado"
 }

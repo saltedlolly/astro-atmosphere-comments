@@ -110,5 +110,9 @@
   "permission.post": "Pour répondre et citer depuis ce site, il a besoin d'une autorisation de plus de ton compte Atmosphere : créer des publications.",
   "permission.react": "Pour aimer et republier depuis ce site, il a besoin d'une autorisation de plus de ton compte Atmosphere : aimer et republier, et l'annuler.",
   "permission.approve": "Le site de ton compte (celui de Bluesky, pour la plupart des gens) te demandera de l'approuver, et peut-être de t'y connecter d'abord. Ensuite, tu reviendras directement ici.",
-  "comment.withheld": "Non affiché ici : son auteur demande aux applications de ne pas montrer ses publications aux personnes non connectées."
+  "comment.withheld": "Son auteur ne montre ses publications qu'aux personnes connectées. Connectez-vous pour le voir.",
+  "comment.withheldTitle": "Commentaire masqué",
+  "comment.withheldSignedIn": "Il n'a pas pu être chargé. Essayez de recharger la page.",
+  "signInFirst.view": "Connectez-vous pour voir les commentaires masqués",
+  "reactions.hiddenPerson": "Une personne qui ne montre son compte qu'aux personnes connectées"
 }

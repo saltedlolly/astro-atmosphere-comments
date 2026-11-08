@@ -35,6 +35,7 @@ import {
 } from "../permissions";
 import settings from "../public-settings";
 import { authorOf, inSiteThread, isPostUri, isSiteDocument, isSitePost, rkeyOf, type PostView } from "../uris";
+import type { Facet } from "../richtext";
 
 type IdentityResolver = NonNullable<ConstructorParameters<typeof BrowserOAuthClient>[0]["identityResolver"]>;
 
@@ -535,6 +536,44 @@ export async function state(uris: string[]) {
     return answer({ posts });
   } catch (error) {
     return failed(error, "state");
+  }
+}
+
+export type WithheldPost = {
+  uri: string;
+  author: { did: string; handle: string; displayName?: string };
+  record: { text?: string; createdAt?: string; facets?: Facet[] };
+  likeCount: number;
+  repostCount: number;
+};
+
+/**
+ * Comments whose authors ask not to be shown to people who aren't signed in,
+ * read as the signed-in reader (the site only gives their AT URIs). Only posts
+ * in the site's threads; nothing if no one is signed in.
+ */
+export async function withheldPosts(uris: string[]): Promise<WithheldPost[]> {
+  const signedIn = await reader();
+  if (signedIn instanceof Response || !uris.length) return [];
+  try {
+    const views = (await postsAsReader(signedIn, [...new Set(uris)].filter(isPostUri).slice(0, 100))) as (PostView & {
+      author?: { did: string; handle?: string; displayName?: string };
+      record?: { text?: string; createdAt?: string; facets?: Facet[] };
+      likeCount?: number;
+      repostCount?: number;
+    })[];
+    return views
+      .filter((view) => inSiteThread(view) && view.author?.did)
+      .map((view) => ({
+        uri: view.uri,
+        author: { did: view.author!.did, handle: view.author!.handle || view.author!.did, displayName: view.author!.displayName?.trim() || undefined },
+        record: { text: view.record?.text, createdAt: view.record?.createdAt, facets: view.record?.facets },
+        likeCount: view.likeCount ?? 0,
+        repostCount: view.repostCount ?? 0,
+      }));
+  } catch (error) {
+    failed(error, "withheld comments");
+    return [];
   }
 }
 

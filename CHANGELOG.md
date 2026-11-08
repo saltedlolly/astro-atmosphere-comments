@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 (8 November 2026)
+
+**Comments from people who show their posts only to signed-in readers.** Those accounts use Bluesky's "Discourage apps from showing my account to logged-out users".
+
+- **Signed-in readers see them:** the reader's browser fetches those comments through the reader's own sign-in (`app.bsky.feed.getPosts`, already part of the approval, so nobody has to sign in again). They then show as normal comments, with Reply, Like and Repost. Signing out puts the placeholders back. The server still never sends their names, pictures or words; the page holds only each comment's address (its AT URI).
+- **Signed-out readers get a clearer placeholder:** a blurred stand-in made of grey bars (never the real comment), with "Comment hidden" and a line saying to sign in to see it. Clicking it opens the sign-in overlay, and the page scrolls to the comment once they're back. The replies under it stay, as before. Styles: `.atmo-comment--withheld`, `.atmo-withheld__ghost`, `.atmo-withheld__cover`; `.atmo-comment__withheld` is gone.
+- **Like and repost counts match the faces:** those accounts are no longer left out of the faces. Signed out, they show as a faceless silhouette (`.atmo-avatar-anonymous`) with no name or link; signed in, their real face, looked up through the site's `profile` route. The thread data gives only their DID (`withheld: true`).
+- A broken avatar picture now falls back to the person's initial.
+- New wording keys `comment.withheldTitle`, `comment.withheldSignedIn`, `signInFirst.view`, `reactions.hiddenPerson`; `comment.withheld` changed. Draft translations in all eight languages.
+
 ## 0.6.1 (7 November 2026)
 
 - Uses the current AT Protocol library (`@atproto/api` 0.30, was 0.25), the same version as Atmosphere Publishing for Astro, so a site using both installs it once.

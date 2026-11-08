@@ -126,5 +126,9 @@
   "permission.post": "To reply and quote from this site, it needs one more permission from your Atmosphere account: to create posts.",
   "permission.react": "To like and repost from this site, it needs one more permission from your Atmosphere account: to like and repost, and to undo that.",
   "permission.approve": "Your account's own site (Bluesky's, for most people) will ask you to approve it, and may ask you to sign in there first. Then you'll come straight back here.",
-  "comment.withheld": "Not shown here: its author asks apps not to show their posts to people who aren't signed in."
+  "comment.withheld": "Its author shows their posts only to people who are signed in. Sign in to see it.",
+  "comment.withheldTitle": "Comment hidden",
+  "comment.withheldSignedIn": "It couldn't be loaded just now. Try reloading the page.",
+  "signInFirst.view": "Sign in to see hidden comments",
+  "reactions.hiddenPerson": "Someone who shows their account only to people who are signed in"
 }

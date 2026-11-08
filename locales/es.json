@@ -110,5 +110,9 @@
   "permission.post": "Para responder y citar desde este sitio, necesita un permiso más de tu cuenta de Atmosphere: crear publicaciones.",
   "permission.react": "Para dar me gusta y republicar desde este sitio, necesita un permiso más de tu cuenta de Atmosphere: dar me gusta y republicar, y deshacerlo.",
   "permission.approve": "El sitio de tu cuenta (el de Bluesky, para la mayoría) te pedirá que lo apruebes, y quizá que inicies sesión allí primero. Después volverás directamente aquí.",
-  "comment.withheld": "No se muestra aquí: su autor pide a las aplicaciones que no muestren sus publicaciones a quien no haya iniciado sesión."
+  "comment.withheld": "Su autor solo muestra sus publicaciones a quien haya iniciado sesión. Inicia sesión para verlo.",
+  "comment.withheldTitle": "Comentario oculto",
+  "comment.withheldSignedIn": "No se ha podido cargar. Prueba a recargar la página.",
+  "signInFirst.view": "Inicia sesión para ver los comentarios ocultos",
+  "reactions.hiddenPerson": "Alguien que solo muestra su cuenta a quien haya iniciado sesión"
 }

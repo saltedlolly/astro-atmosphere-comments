@@ -110,5 +110,9 @@
   "permission.post": "Per rispondere e citare da questo sito, serve un'altra autorizzazione dal tuo account Atmosphere: creare post.",
   "permission.react": "Per mettere mi piace e ripubblicare da questo sito, serve un'altra autorizzazione dal tuo account Atmosphere: mettere mi piace e ripubblicare, e annullarlo.",
   "permission.approve": "Il sito del tuo account (quello di Bluesky, per la maggior parte delle persone) ti chiederà di approvare, e forse prima di accedere. Poi tornerai subito qui.",
-  "comment.withheld": "Non mostrato qui: l'autore chiede alle app di non mostrare i suoi post a chi non ha effettuato l'accesso."
+  "comment.withheld": "L'autore mostra i suoi post solo a chi ha effettuato l'accesso. Accedi per vederlo.",
+  "comment.withheldTitle": "Commento nascosto",
+  "comment.withheldSignedIn": "Non è stato possibile caricarlo. Prova a ricaricare la pagina.",
+  "signInFirst.view": "Accedi per vedere i commenti nascosti",
+  "reactions.hiddenPerson": "Qualcuno che mostra il proprio account solo a chi ha effettuato l'accesso"
 }

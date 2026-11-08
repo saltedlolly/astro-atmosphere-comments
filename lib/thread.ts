@@ -9,9 +9,11 @@
 // Accounts that ask apps not to show them to logged-out people (Bluesky's
 // "Discourage apps from showing my account to logged-out users", the
 // !no-unauthenticated label) are respected too, as the page is public:
-// their comments become a bare placeholder (no name, picture, address or
-// words), keeping the replies under them, which are other people's, and
-// they're left out of the faces of who liked and reposted.
+// their comments become a bare placeholder (no name, picture or words, only
+// the comment's AT URI), keeping the replies under them, which are other
+// people's, and their faces among who liked and reposted become anonymous (only
+// their DID), so the counts match. A signed-in reader's browser then fetches
+// them with the reader's own sign-in and shows them (AtmosphereComments.astro).
 // Cached for two minutes per announcement; if Bluesky can't be reached the
 // last good copy is kept.
 import { rememberAvatar } from "./avatars";
@@ -27,7 +29,15 @@ const MAX_FACES = 48;
 const HIDING_LABELS = new Set(["!hide", "!takedown", "!suspend", "spam", "porn", "sexual", "nudity", "graphic-media", "gore"]);
 const LOGGED_IN_ONLY = "!no-unauthenticated";
 
-export type Person = { did: string; handle: string; displayName?: string; avatar?: string; url: string };
+export type Person = {
+  did: string;
+  handle: string;
+  displayName?: string;
+  avatar?: string;
+  url: string;
+  /** Asks not to be shown to logged-out people: only the DID is given (an anonymous face). */
+  withheld?: true;
+};
 
 export type Reply = {
   uri: string;
@@ -42,8 +52,9 @@ export type Reply = {
   likeCount: number;
   repostCount: number;
   /**
-   * Its author asks not to be shown to logged-out people: everything else
-   * is left empty, and the page shows a placeholder in its place.
+   * Its author asks not to be shown to logged-out people: everything but
+   * `uri` and `depth` is left empty, and the page shows a placeholder in its
+   * place (and the real comment to signed-in readers).
    */
   withheld?: true;
 };
@@ -97,6 +108,13 @@ function person(author: Author): Person | null {
 /** Whether an account asks apps not to show it to people who aren't signed in. */
 const loggedInOnly = (author?: Author) => !!author?.labels?.some((label) => label.val === LOGGED_IN_ONLY);
 
+/** Someone who liked or reposted: anonymous (their DID only) if they ask not to be shown to logged-out people. */
+function face(actor: Author | undefined): Person[] {
+  const found = actor && person(actor);
+  if (!found) return [];
+  return [loggedInOnly(actor) ? { did: found.did, handle: "", url: "", withheld: true } : found];
+}
+
 function isHidden(post: ThreadPost, author: Person, url: string): boolean {
   const labels = [...(post.labels ?? []), ...(post.author?.labels ?? [])];
   if (labels.some((label) => label.val && HIDING_LABELS.has(label.val))) return true;
@@ -116,7 +134,7 @@ function collect(nodes: ThreadNode[] = [], depth: number, hiddenByAuthor: Set<st
     if (isHidden(post, author, url)) continue;
     if (loggedInOnly(post.author)) {
       out.push({
-        uri: "",
+        uri: post.uri,
         url: "",
         author: { did: "", handle: "", url: "" },
         byAuthor: false,
@@ -161,8 +179,8 @@ async function fetchThread(uri: string): Promise<Thread> {
     url: rootAuthor ? `${rootAuthor.url}/post/${uri.split("/").pop()}` : "",
     likeCount: root.likeCount ?? likes.length,
     repostCount: root.repostCount ?? repostedBy.length,
-    likes: likes.flatMap(({ actor }) => (actor && !loggedInOnly(actor) ? [person(actor)].filter((p): p is Person => !!p) : [])),
-    reposts: repostedBy.filter((actor) => !loggedInOnly(actor)).map(person).filter((p): p is Person => !!p),
+    likes: likes.flatMap(({ actor }) => face(actor)),
+    reposts: repostedBy.flatMap(face),
     replies,
   };
 }

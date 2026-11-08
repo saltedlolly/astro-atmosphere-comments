@@ -195,7 +195,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   import { translate } from "../lib/translate";
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
   import { MAX, quotePreview, setUpComposer, type ComposerBehaviour, type Posted } from "../lib/client/composer";
-  import { handleSignInForm, me as whoIsSignedIn, send, signIn, signOut, state } from "../lib/client/account";
+  import { handleSignInForm, me as whoIsSignedIn, send, signIn, signOut, state, withheldPosts } from "../lib/client/account";
+  import publicSettings from "../lib/public-settings";
+  import { segments } from "../lib/richtext";
   import { addSubscribeButtons, finishPendingSubscribe, forgetSubscribed, loadSubscribed } from "../lib/client/subscribe";
   import type { Permission } from "../lib/permissions";
   import { authorOf } from "../lib/uris";
@@ -268,7 +270,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
 
       // The thread: likes and reposts above the comment box, and the comments
       // below it, read through this site (routes/thread.ts).
-      type Person = { did: string; handle: string; displayName?: string; avatar?: string; url: string };
+      type Person = { did: string; handle: string; displayName?: string; avatar?: string; url: string; withheld?: true };
       type Reply = {
         uri: string;
         url: string;
@@ -283,6 +285,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       };
       type Thread = { uri: string; url: string; likeCount: number; repostCount: number; likes: Person[]; reposts: Person[]; replies: Reply[] };
       let thread: Thread | null = null;
+      // Withheld comments and faces, as a signed-in reader sees them (by AT URI and DID).
+      const revealedReplies = new Map<string, Reply>();
+      const revealedPeople = new Map<string, Person>();
       const reactionsBox = $<HTMLElement>("[data-reactions]");
       const repliesList = $<HTMLOListElement>("[data-replies]");
       const authorLabel = t("comment.author");
@@ -298,11 +303,23 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         if (text !== undefined) element.textContent = text;
         return element;
       };
-      const avatarOf = (person: Pick<Person, "handle" | "displayName" | "avatar">, className: string) => {
-        if (person.avatar) return Object.assign(make("img", className), { src: person.avatar, alt: "", loading: "lazy" as const });
+      const initialOf = (person: Pick<Person, "handle" | "displayName">, className: string) => {
         const initial = make("span", `${className} atmo-avatar-initial`, nameOf(person).replace("@", "").charAt(0).toUpperCase());
         initial.setAttribute("aria-hidden", "true");
         return initial;
+      };
+      // A faceless avatar, for someone who asks not to be shown to people who aren't signed in.
+      const anonymousAvatar = (className: string) => {
+        const face = make("span", `${className} atmo-avatar-anonymous`);
+        face.setAttribute("aria-hidden", "true");
+        return face;
+      };
+      const avatarOf = (person: Pick<Person, "handle" | "displayName" | "avatar"> & { withheld?: true }, className: string) => {
+        if (person.withheld) return anonymousAvatar(className);
+        if (!person.avatar) return initialOf(person, className);
+        const img = Object.assign(make("img", className), { src: person.avatar, alt: "", loading: "lazy" as const });
+        img.addEventListener("error", () => img.replaceWith(initialOf(person, className)), { once: true });
+        return img;
       };
 
       const renderReactions = () => {
@@ -318,7 +335,16 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             group.dataset.reaction = kind;
             group.append(make("p", "atmo-reactions__count", t(kind === "like" ? "reactions.likes" : "reactions.reposts", { count })));
             const faces = make("ul", "atmo-facepile");
-            for (const person of people) {
+            for (const shown of people) {
+              const person = (shown.withheld && revealedPeople.get(shown.did)) || shown;
+              if (person.withheld) {
+                // Counted, but not identified: signed out, or not yet looked up.
+                const item = make("li");
+                item.title = t("reactions.hiddenPerson");
+                item.append(anonymousAvatar("atmo-facepile__avatar"));
+                faces.append(item);
+                continue;
+              }
               const link = Object.assign(make("a"), { href: person.url, title: nameOf(person), rel: "ugc nofollow noopener", target: "_blank" });
               link.setAttribute("aria-label", nameOf(person));
               link.append(avatarOf(person, "atmo-facepile__avatar"));
@@ -339,9 +365,30 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         // Its author asks not to be shown to logged-out people: a placeholder,
         // keeping the replies under it in place. (No AT URI, so no actions.)
         if (reply.withheld) {
+          const revealed = revealedReplies.get(reply.uri);
+          if (revealed) return replyElement({ ...revealed, depth: reply.depth });
           item.classList.add("atmo-comment--withheld");
+          if (reply.uri) item.dataset.withheldUri = reply.uri;
+          // A blurred, made-up comment (never the real one) under the explanation.
           const article = make("article");
-          article.append(make("p", "atmo-comment__withheld", t("comment.withheld")));
+          const ghost = make("div", "atmo-withheld__ghost");
+          ghost.setAttribute("aria-hidden", "true");
+          const ghostHeader = make("div", "atmo-comment__header");
+          const bar = (width: string) => Object.assign(make("span", "atmo-withheld__bar"), { style: `width: ${width}` });
+          const ghostNames = make("div", "atmo-withheld__names");
+          ghostNames.append(bar("9em"), bar("13em"));
+          ghostHeader.append(anonymousAvatar("atmo-comment__avatar"), ghostNames);
+          const ghostText = make("div", "atmo-withheld__text");
+          ghostText.append(bar("100%"), bar("92%"), bar("60%"));
+          ghost.append(ghostHeader, ghostText);
+          const cover = make("button", "atmo-withheld__cover");
+          cover.type = "button";
+          cover.append(make("strong", "", t("comment.withheldTitle")), make("span", "", t(isSignedIn ? "comment.withheldSignedIn" : "comment.withheld")));
+          cover.disabled = isSignedIn;
+          cover.addEventListener("click", () => {
+            if (!isSignedIn) askToSignIn("view", reply.uri || undefined);
+          });
+          article.append(ghost, cover);
           item.append(article);
           return item;
         }
@@ -487,6 +534,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         reply: "signInFirst.reply",
         "comment-like": "signInFirst.like",
         "comment-repost": "signInFirst.repost",
+        view: "signInFirst.view",
       };
       const askToSignIn = (kind: string, uri?: string, problem?: string) =>
         openSignIn(t(SIGN_IN_HEADINGS[kind]), `#atmo-do=${kind}${uri ? `:${encodeURIComponent(uri)}` : ""}`, problem);
@@ -907,6 +955,53 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         else if (kind === "comment-repost" && comment) press(comment.querySelector<HTMLElement>(".atmo-comment-action[data-kind='repost']"));
       };
 
+      // Draws the comments and faces again (after revealing, or signing out).
+      const redrawThread = () => {
+        if (!thread) return;
+        renderReactions();
+        repliesList.replaceChildren(...thread.replies.map(replyElement));
+      };
+      // Signed in: the comments and faces of people who ask not to be shown to
+      // people who aren't signed in, fetched as the reader and shown.
+      const revealWithheld = async () => {
+        if (!thread) return;
+        const uris = thread.replies.filter((reply) => reply.withheld && reply.uri && !revealedReplies.has(reply.uri)).map((reply) => reply.uri);
+        const dids = [...new Set([...thread.likes, ...thread.reposts].filter((person) => person.withheld && person.did && !revealedPeople.has(person.did)).map((person) => person.did))].slice(0, 20);
+        if (!uris.length && !dids.length) return;
+        const [posts, people] = await Promise.all([
+          withheldPosts(uris),
+          Promise.all(
+            dids.map((did) =>
+              fetch(`${base}/profile?did=${encodeURIComponent(did)}`)
+                .then((response) => (response.ok ? (response.json() as Promise<Pick<Person, "did" | "handle" | "displayName" | "avatar">>) : null))
+                .catch(() => null),
+            ),
+          ),
+        ]);
+        if (!isSignedIn) return;
+        for (const found of posts) {
+          const handle = found.author.handle;
+          const profileUrl = `https://bsky.app/profile/${encodeURIComponent(handle)}`;
+          revealedReplies.set(found.uri, {
+            uri: found.uri,
+            url: `${profileUrl}/post/${found.uri.split("/").pop()}`,
+            author: { did: found.author.did, handle, displayName: found.author.displayName, avatar: `${base}/media?avatar=${encodeURIComponent(found.author.did)}`, url: profileUrl },
+            byAuthor: publicSettings.allowedAuthors.includes(found.author.did),
+            createdAt: found.record.createdAt ?? "",
+            text: segments(found.record.text ?? "", found.record.facets),
+            depth: 0,
+            likeCount: found.likeCount,
+            repostCount: found.repostCount,
+          });
+        }
+        for (const found of people) {
+          if (found?.did && found.handle && found.handle !== found.did) {
+            revealedPeople.set(found.did, { ...found, url: `https://bsky.app/profile/${encodeURIComponent(found.handle)}` });
+          }
+        }
+        redrawThread();
+      };
+
       const show = async (signed: boolean, handle?: string, displayName?: string, avatar?: string) => {
         if (handle) {
           $<HTMLElement>("[data-preview-name]").textContent = displayName || handle;
@@ -931,6 +1026,11 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           permissionPanel.hidden = true;
           setPressed("like", false);
           setPressed("repost", false);
+          if (revealedReplies.size || revealedPeople.size) {
+            revealedReplies.clear();
+            revealedPeople.clear();
+            redrawThread();
+          }
           resumePending(false);
           return closeReplies();
         }
@@ -940,6 +1040,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         permissionPanel.hidden = can("post");
         // Which account, as they may have more than one.
         $<HTMLElement>("[data-permission-text]").textContent = t("composer.needsPermission", { handle: handle ? `@${handle}` : "" });
+        await revealWithheld().catch(() => undefined);
         addCommentActions();
         addDeleteButtons();
         await loadState();
