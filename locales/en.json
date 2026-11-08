@@ -114,7 +114,7 @@
   "subscribe.leaflet": "View on Leaflet",
   "subscribe.panelText": "Subscribe to read new blog posts in apps such as {{leaflet}} or {{standardReader}}.",
   "subscribe.panelTextFeed": "Subscribe to read new blog posts in apps such as {{leaflet}} or {{standardReader}}, or follow the feed in any feed reader.",
-  "subscribe.followNote": "To see everything {{handle}} posts, follow it on Bluesky.",
+  "subscribe.followNote": "To see everything {{handle}} posts, Follow on Bluesky.",
   "subscribe.follow": "Follow on Bluesky",
   "credit": "Powered by {{link}}",
   "callback.signingIn": "Signing you in…",

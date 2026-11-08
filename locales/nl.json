@@ -116,7 +116,7 @@
   "reactions.hiddenPerson": "Iemand die zijn of haar account alleen toont aan mensen die zijn ingelogd",
   "subscribe.panelText": "Abonneer je om nieuwe blogberichten te lezen in apps zoals {{leaflet}} of {{standardReader}}.",
   "subscribe.panelTextFeed": "Abonneer je om nieuwe blogberichten te lezen in apps zoals {{leaflet}} of {{standardReader}}, of volg de feed in elke feedlezer.",
-  "subscribe.followNote": "Volg {{handle}} op Bluesky om alles te zien wat het account plaatst.",
+  "subscribe.followNote": "Om alles te zien wat {{handle}} plaatst: Volgen op Bluesky.",
   "subscribe.follow": "Volgen op Bluesky",
   "subscribe.leaflet": "Bekijk op Leaflet"
 }

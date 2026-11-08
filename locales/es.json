@@ -119,7 +119,7 @@
   "reactions.hiddenPerson": "Alguien que solo muestra su cuenta a quien haya iniciado sesión",
   "subscribe.panelText": "Suscríbete para leer las nuevas entradas del blog en aplicaciones como {{leaflet}} o {{standardReader}}.",
   "subscribe.panelTextFeed": "Suscríbete para leer las nuevas entradas del blog en aplicaciones como {{leaflet}} o {{standardReader}}, o sigue el feed en cualquier lector de feeds.",
-  "subscribe.followNote": "Para ver todo lo que publica {{handle}}, síguelo en Bluesky.",
+  "subscribe.followNote": "Para ver todo lo que publica {{handle}}: Seguir en Bluesky.",
   "subscribe.follow": "Seguir en Bluesky",
   "subscribe.leaflet": "Ver en Leaflet"
 }

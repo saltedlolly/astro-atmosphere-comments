@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 (8 November 2026)
+
+- **The Subscribe menu's follow note ends with the button's words:** "To see everything @handle posts, Follow on Bluesky." (was "…, follow it on Bluesky."), leading straight into the "Follow on Bluesky →" button beneath it. Key `subscribe.followNote`, reworded in all eight languages to end with that language's `subscribe.follow` text.
+
 ## 0.8.0 (8 November 2026)
 
 - **New `AtmosphereFollow` component:** "Follow @handle on Bluesky →", a link to the account's profile that becomes a Follow / ✓ Following button for signed-in readers (with `AtmosphereReactions` in the layout). Signed out it stays a link, so nobody is asked to sign in just to follow. Props, all optional: `account` (handle or DID; default the `standardSite` publication's account), `label`, `class`. The handle and DID are looked up when the page is built, with a warning if the account can't be found or isn't in `allowedAuthors`. The Subscribe menu's "Follow on Bluesky" uses it. New key `follow.link`.
