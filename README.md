@@ -114,7 +114,7 @@ A "follow me" link can become a **Follow** button for signed-in readers: mark it
 
 **Publishing to Standard.site:** [Atmosphere Publishing for Astro](https://github.com/saltedlolly/astro-atmosphere-publishing) is the companion integration made to work with this one. It publishes your posts' Standard.site records, announces new posts on Bluesky and adds each page's `<link rel="site.standard.document">` tag, so the comment box finds each post's announcement without a `post` prop. Its `publicationFromState()` helper gives the `standardSite` option your publication (below). Other publishers work too, as long as they add that tag and set the record's `bskyPostRef`, as [Sequoia](https://sequoia.pub) does.
 
-If you publish [Standard.site](https://standard.site) records, set the integration's `standardSite` option. Readers can then **subscribe** to your publication from your site, and read new posts in apps such as Leaflet or Standard Reader. `AtmosphereComments` shows a Subscribe button under each post, with Like and Repost, and a ⌄ menu of more ways to follow your site: Copy link, your feed (the option's `feed`), View on Bluesky, View on Standard Reader and View on Leaflet.
+If you publish [Standard.site](https://standard.site) records, set the integration's `standardSite` option. Readers can then **subscribe** to your publication from your site, and read new posts in apps such as Leaflet or Standard Reader. `AtmosphereComments` shows a Subscribe button under each post, with Like and Repost, and a ⌄ menu of more ways to follow your site: a note on what subscribing does with a Follow on Bluesky link, Copy link, your feed (the option's `feed`), View on Bluesky (the post's thread), View on Standard Reader and View on Leaflet.
 
 The same button and menu can go anywhere, such as at the top of your blog's list of posts, with `AtmosphereSubscribe` (and `AtmosphereReactions` in your layout, which works the button and offers signing in):
 
@@ -130,7 +130,7 @@ import AtmosphereSubscribe from "astro-atmosphere-comments/AtmosphereSubscribe.a
 />
 ```
 
-All its props are optional. `align="end"` lines the menu up with the button's right-hand edge, for a button near the right of the page (the default, `"start"`, lines it up on the left). `copyUrl` is what Copy link copies (default: your site's address). `links` adds items to the end of the menu. `bluesky` changes where View on Bluesky goes (default: your publication's account). It shows nothing without the `standardSite` option, and needs JavaScript.
+All its props are optional. `align="end"` lines the menu up with the button's right-hand edge, for a button near the right of the page (the default, `"start"`, lines it up on the left). `copyUrl` is what Copy link copies (default: your site's address). `links` adds items to the end of the menu. `bluesky` adds a View on Bluesky item going there (under each post it's the post's thread). The menu's note also suggests following your publication's account on Bluesky, with a link to its profile that becomes a Follow / Following button for signed-in readers; subscribing itself never follows. It shows nothing without the `standardSite` option, and needs JavaScript.
 
 For a button of your own design instead (with `AtmosphereReactions` in your layout), mark it as below; it stays hidden without the option or JavaScript. Anyone not signed in is offered the sign-in form, and subscribed once they're back; a second press unsubscribes.
 

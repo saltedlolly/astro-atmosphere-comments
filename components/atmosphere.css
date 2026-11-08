@@ -295,6 +295,22 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   line-height: 1.5;
 }
 
+.atmo-subscribe__note p {
+  margin: 0;
+}
+
+/* "Follow on Bluesky →" under the note, which AtmosphereReactions turns into
+   a Follow / Following button for signed-in readers. */
+.atmo-subscribe__follow {
+  display: inline-block;
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.atmo-subscribe__note .atmo-follow {
+  margin-top: 8px;
+}
+
 .atmo-subscribe__menu > a[hidden] {
   display: none;
 }

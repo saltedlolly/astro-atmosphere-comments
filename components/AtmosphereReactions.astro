@@ -440,7 +440,16 @@ const { base } = settings;
       // Follow buttons in place of links marked data-atmosphere-follow, for
       // signed-in readers: "Follow @handle", then "Following" (a second press
       // unfollows, as on Bluesky, without inviting it).
-      const followButtons = new Map<string, { following: boolean; set: (on: boolean) => void; press: () => Promise<void> }>();
+      // One entry per account, however many links for it the page has (say,
+      // one in a toolbar and one in the Subscribe menu): they all agree.
+      type FollowState = {
+        following: boolean;
+        buttons: HTMLButtonElement[];
+        renders: (() => void)[];
+        set: (on: boolean) => void;
+        press: () => Promise<void>;
+      };
+      const followButtons = new Map<string, FollowState>();
       // Following isn't part of signing in: the first follow asks the
       // reader's account host for it, then carries on when they're back.
       const askFollowPermission = (subject: string, who: string) =>
@@ -448,19 +457,47 @@ const { base } = settings;
       const setUpFollow = async () => {
         for (const link of document.querySelectorAll<HTMLElement>("[data-atmosphere-follow]")) {
           const subject = link.dataset.atmosphereFollow!;
-          if (followButtons.has(subject) || link.nextElementSibling?.matches(".atmo-follow")) continue;
+          if (link.nextElementSibling?.matches(".atmo-follow")) continue;
           // Nobody can follow themselves: the account's owner keeps the link.
           if (subject === me.did) continue;
           const who = link.dataset.atmosphereFollowHandle ? `@${link.dataset.atmosphereFollowHandle}` : t("comment.someone");
+          let state = followButtons.get(subject);
+          const isNew = !state;
+          if (!state) {
+            const created: FollowState = {
+              following: false,
+              buttons: [],
+              renders: [],
+              set: (on) => {
+                created.following = on;
+                created.renders.forEach((render) => render());
+              },
+              press: async () => {
+                created.buttons.forEach((each) => (each.disabled = true));
+                try {
+                  const response = await act("follow", { subject, on: !created.following });
+                  const data = (await response.json().catch(() => ({}))) as { following?: boolean; error?: string };
+                  if (response.ok) return created.set(!!data.following);
+                  if (data.error === "needs-permission") return void askFollowPermission(subject, who);
+                  if (data.error === "signed-out") location.reload();
+                } finally {
+                  created.buttons.forEach((each) => (each.disabled = false));
+                }
+              },
+            };
+            state = created;
+            followButtons.set(subject, state);
+          }
           const button = make("button", "atmo-follow");
           button.type = "button";
-          let isFollowing = false;
           // The account's avatar, through the site (its own accounts' are always served).
           const avatar = make("img", "atmo-follow__avatar");
           avatar.src = `${base}/media?avatar=${encodeURIComponent(subject)}`;
           avatar.alt = "";
           avatar.onerror = () => avatar.remove();
+          const current = state;
           const render = () => {
+            const isFollowing = current.following;
             button.setAttribute("aria-pressed", String(isFollowing));
             // The butterfly, then "Follow" with the account's avatar beside its
             // handle (wherever the language puts the handle), or the avatar
@@ -477,32 +514,19 @@ const { base } = settings;
             button.title = isFollowing ? t("follow.followingLabel", { handle: who }) : t("follow.followAs", { handle: who, me: handle });
             button.setAttribute("aria-label", button.title);
           };
-          const set = (on: boolean) => {
-            isFollowing = on;
-            render();
-          };
-          const press = async () => {
-            button.disabled = true;
-            try {
-              const response = await act("follow", { subject, on: !isFollowing });
-              const data = (await response.json().catch(() => ({}))) as { following?: boolean; error?: string };
-              if (response.ok) return set(!!data.following);
-              if (data.error === "needs-permission") return void askFollowPermission(subject, who);
-              if (data.error === "signed-out") location.reload();
-            } finally {
-              button.disabled = false;
-            }
-          };
-          button.addEventListener("click", () => void press());
-          followButtons.set(subject, { get following() { return isFollowing; }, set, press });
+          button.addEventListener("click", () => void current.press());
+          current.buttons.push(button);
+          current.renders.push(render);
           render();
           // The button takes the link's place. (Inline, as a site's own style
           // for the link could otherwise keep it showing.)
           link.hidden = true;
           link.style.display = "none";
           link.after(button);
-          const known = await following(subject);
-          if (known !== null) set(known);
+          if (isNew) {
+            const known = await following(subject);
+            if (known !== null) current.set(known);
+          }
         }
       };
 

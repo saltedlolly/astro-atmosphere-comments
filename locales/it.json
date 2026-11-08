@@ -116,7 +116,9 @@
   "comment.withheldSignedIn": "Non è stato possibile caricarlo. Prova a ricaricare la pagina.",
   "signInFirst.view": "Accedi per vedere i commenti nascosti",
   "reactions.hiddenPerson": "Qualcuno che mostra il proprio account solo a chi ha effettuato l'accesso",
-  "subscribe.panelText": "Iscriviti per leggere i nuovi articoli in app come {{leaflet}}, {{pckt}} o {{standardReader}}.",
-  "subscribe.panelTextFeed": "Iscriviti per leggere i nuovi articoli in app come {{leaflet}}, {{pckt}} o {{standardReader}}, oppure segui il feed in qualsiasi lettore di feed.",
+  "subscribe.panelText": "Iscriviti per leggere i nuovi articoli del blog in app come {{leaflet}}, {{pckt}} o {{standardReader}}.",
+  "subscribe.panelTextFeed": "Iscriviti per leggere i nuovi articoli del blog in app come {{leaflet}}, {{pckt}} o {{standardReader}}, oppure segui il feed in qualsiasi lettore di feed.",
+  "subscribe.followNote": "Per vedere tutto ciò che pubblica {{handle}}, seguilo su Bluesky.",
+  "subscribe.follow": "Segui su Bluesky",
   "subscribe.leaflet": "Vedi su Leaflet"
 }
