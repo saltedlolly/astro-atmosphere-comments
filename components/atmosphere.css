@@ -562,6 +562,7 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
 }
 
 .atmo__preview-post p,
+.atmo__quoted p,
 .atmo__card span {
   margin: 0;
 }
@@ -943,4 +944,73 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
     radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--atmo-muted, #888) 70%, transparent) 0 18%, transparent 19%),
     radial-gradient(ellipse 34% 26% at 50% 88%, color-mix(in srgb, var(--atmo-muted, #888) 70%, transparent) 0 99%, transparent 100%),
     var(--atmo-field-bg, #8882);
+}
+
+/* "Liked" / "Reposted" over a button, when something pressed before signing
+   in is finished once the reader is back (lib/client/done.ts): the button's
+   icon, enlarged, pops in above it with the word, then floats up and fades. */
+.atmo-has-done {
+  position: relative;
+}
+
+.atmo-done {
+  position: absolute;
+  z-index: 30;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 14px 6px;
+  border: 1px solid var(--atmo-border, #8886);
+  border-radius: var(--atmo-radius, 10px);
+  background: var(--atmo-dialog-bg, var(--atmo-menu-bg, Canvas));
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.25);
+  color: var(--atmo-accent, #1185fe);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: atmo-done 1.8s ease-out forwards;
+}
+
+/* Specific enough to beat a button's own icon size; its colours still apply. */
+.atmo-has-done .atmo-done svg.atmo-done__icon {
+  width: 34px;
+  height: 34px;
+  animation: atmo-done-pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.atmo-done__label {
+  color: var(--atmo-text, CanvasText);
+}
+
+@keyframes atmo-done {
+  0% { opacity: 0; transform: translate(-50%, 6px); }
+  12% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
+}
+
+@keyframes atmo-done-pop {
+  0% { transform: scale(0.3); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atmo-done {
+    animation-name: atmo-done-fade;
+  }
+
+  .atmo-has-done .atmo-done svg.atmo-done__icon {
+    animation: none;
+  }
+
+  @keyframes atmo-done-fade {
+    0%, 100% { opacity: 0; }
+    12%, 75% { opacity: 1; }
+  }
 }

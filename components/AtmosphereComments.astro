@@ -195,6 +195,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   import { translate } from "../lib/translate";
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
   import { MAX, quotePreview, setUpComposer, type ComposerBehaviour, type Posted } from "../lib/client/composer";
+  import { showDoneWhenPressed } from "../lib/client/done";
   import { handleSignInForm, me as whoIsSignedIn, send, signIn, signOut, state, withheldPosts } from "../lib/client/account";
   import publicSettings from "../lib/public-settings";
   import { segments } from "../lib/richtext";
@@ -728,6 +729,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           if (!isSignedIn) return askToSignIn(kind === "like" ? "comment-like" : "comment-repost", comment.dataset.atmosphereUri);
           const on = button.getAttribute("aria-pressed") !== "true";
           const before = Number(button.dataset.count || 0);
+          // Busy until the account host answers (lib/client/done.ts waits for it).
+          button.dataset.busy = "";
           button.setAttribute("aria-pressed", String(on));
           setCount(Math.max(0, before + (on ? 1 : -1)));
           try {
@@ -738,6 +741,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
             setCount(before);
             const { error, permission } = (problem ?? {}) as { error?: string; permission?: string };
             handleError(error ?? "error", say, permission);
+          } finally {
+            delete button.dataset.busy;
           }
         });
         return button;
@@ -943,8 +948,11 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           return;
         }
         const comment = uri ? document.querySelector<HTMLElement>(`[data-atmosphere-uri="${CSS.escape(uri)}"]`) : null;
+        // Pressed for them, with a brief "Liked" or "Reposted" once it's gone through.
         const press = (button: HTMLElement | null | undefined) => {
-          if (button?.getAttribute("aria-pressed") !== "true") button?.click();
+          if (!button || button.getAttribute("aria-pressed") === "true") return;
+          showDoneWhenPressed(button, t(kind.endsWith("like") ? "actions.liked" : "actions.reposted"));
+          button.click();
         };
         (comment ?? this).scrollIntoView({ block: "center" });
         if (kind === "like" || kind === "repost") press(reactButton(kind));
@@ -1101,6 +1109,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         reactButton(kind).addEventListener("click", async () => {
           if (!isSignedIn) return askToSignIn(kind);
           const on = reactButton(kind).getAttribute("aria-pressed") !== "true";
+          // Busy until the account host answers (lib/client/done.ts waits for it).
+          reactButton(kind).dataset.busy = "";
           setPressed(kind, on);
           try {
             // Liking the post also recommends the page's Standard.site record, if it has one.
@@ -1122,6 +1132,8 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           } catch {
             setPressed(kind, !on);
             say(message("error"));
+          } finally {
+            delete reactButton(kind).dataset.busy;
           }
         });
       }

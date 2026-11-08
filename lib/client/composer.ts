@@ -190,14 +190,59 @@ function postAge(when: string): string {
   return date.toLocaleDateString(lang, { month: "short", day: "numeric", ...(!thisYear && { year: "numeric" }) });
 }
 
+/** A post as the site's `post` route gives it (routes/post.ts). */
+export type ShownPost = {
+  author: { handle: string; displayName?: string; avatar?: string };
+  text: string;
+  indexedAt?: string;
+  external?: { uri: string; title: string; description: string; thumb?: string };
+};
+
+/** Fetches one of the site's posts through the site, or null if it can't. */
+export async function fetchPost(base: string, uri: string): Promise<ShownPost | null> {
+  try {
+    const response = await fetch(`${base}/post?uri=${encodeURIComponent(uri)}`);
+    return response.ok ? ((await response.json()) as ShownPost) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Fills a PostPreview (components/PostPreview.astro) inside `container` with `post`. */
+export function showPost(container: HTMLElement, post: ShownPost, ctx: ComposerContext) {
+  const $ = <T extends Element>(selector: string) => container.querySelector<T>(selector)!;
+  const name = post.author.displayName || post.author.handle;
+  $<HTMLElement>("[data-quoted-name]").textContent = name;
+  ctx.setAvatar($<HTMLElement>("[data-quoted-avatar]"), name, post.author.avatar);
+  $<HTMLElement>("[data-quoted-handle]").textContent = `@${post.author.handle}`;
+  $<HTMLElement>("[data-quoted-age]").textContent = post.indexedAt ? `· ${postAge(post.indexedAt)}` : "";
+  $<HTMLElement>("[data-quoted-text]").textContent = post.text;
+  $<HTMLElement>("[data-quoted-text]").hidden = !post.text;
+  const card = $<HTMLElement>("[data-card]");
+  card.hidden = !post.external;
+  if (post.external) {
+    $<HTMLElement>("[data-card-title]").textContent = post.external.title;
+    $<HTMLElement>("[data-card-description]").textContent = post.external.description;
+    $<HTMLElement>("[data-card-domain]").textContent = new URL(post.external.uri).hostname;
+    const img = $<HTMLImageElement>("[data-card-image]");
+    img.hidden = true;
+    img.removeAttribute("src");
+    if (post.external.thumb) {
+      img.onload = () => (img.hidden = false);
+      img.onerror = () => (img.hidden = true);
+      img.src = post.external.thumb;
+    }
+  }
+}
+
 /**
  * The quote preview inside a box: the reader's words as they type, with the
  * post being quoted beneath, as Bluesky will show it. Call update() as they
  * type and load(uri) when quoting starts.
  */
 export function quotePreview(form: HTMLFormElement, textarea: HTMLTextAreaElement, ctx: ComposerContext) {
-  const $ = <T extends Element>(selector: string) => form.querySelector<T>(selector)!;
-  const previewText = $<HTMLElement>("[data-preview-text]");
+  const previewText = form.querySelector<HTMLElement>("[data-preview-text]")!;
+  const quoted = form.querySelector<HTMLElement>("[data-quoted-post]")!;
   let loaded = "";
   const update = () => {
     const words = textarea.value.trim();
@@ -207,39 +252,11 @@ export function quotePreview(form: HTMLFormElement, textarea: HTMLTextAreaElemen
   const load = async (uri: string) => {
     update();
     if (loaded === uri) return;
-    try {
-      const response = await fetch(`${ctx.base}/post?uri=${encodeURIComponent(uri)}`);
-      if (!response.ok) return;
-      const quoted = (await response.json()) as {
-        author: { handle: string; displayName?: string; avatar?: string };
-        text: string;
-        indexedAt?: string;
-        external?: { uri: string; title: string; description: string; thumb?: string };
-      };
-      loaded = uri;
-      const quotedName = quoted.author.displayName || quoted.author.handle;
-      $<HTMLElement>("[data-quoted-name]").textContent = quotedName;
-      ctx.setAvatar($<HTMLElement>("[data-quoted-avatar]"), quotedName, quoted.author.avatar);
-      $<HTMLElement>("[data-quoted-handle]").textContent = `@${quoted.author.handle}`;
-      $<HTMLElement>("[data-quoted-age]").textContent = quoted.indexedAt ? `· ${postAge(quoted.indexedAt)}` : "";
-      $<HTMLElement>("[data-quoted-text]").textContent = quoted.text;
-      const card = $<HTMLElement>("[data-card]");
-      card.hidden = !quoted.external;
-      if (quoted.external) {
-        $<HTMLElement>("[data-card-title]").textContent = quoted.external.title;
-        $<HTMLElement>("[data-card-description]").textContent = quoted.external.description;
-        $<HTMLElement>("[data-card-domain]").textContent = new URL(quoted.external.uri).hostname;
-        const img = $<HTMLImageElement>("[data-card-image]");
-        img.hidden = true;
-        if (quoted.external.thumb) {
-          img.onload = () => (img.hidden = false);
-          img.onerror = () => (img.hidden = true);
-          img.src = quoted.external.thumb;
-        }
-      }
-    } catch {
-      // The preview is a nicety: quoting still works without it.
-    }
+    // The preview is a nicety: quoting still works without it.
+    const post = await fetchPost(ctx.base, uri);
+    if (!post) return;
+    loaded = uri;
+    showPost(quoted, post, ctx);
   };
   return { update, load };
 }

@@ -92,7 +92,8 @@ const { base } = settings;
 <script>
   import { translate } from "../lib/translate";
   import { enhanceHandleBox } from "../lib/client/handle-suggestions";
-  import { MAX, quotePreview, setUpComposer, type Posted } from "../lib/client/composer";
+  import { MAX, fetchPost, quotePreview, setUpComposer, showPost, type Posted, type ShownPost } from "../lib/client/composer";
+  import { showDone } from "../lib/client/done";
   import { following, handleSignInForm, me as whoIsSignedIn, send as act, signIn, signOut as endSignIn, state } from "../lib/client/account";
   import { addSubscribeButtons, finishPendingSubscribe, loadSubscribed } from "../lib/client/subscribe";
   import type { Permission } from "../lib/permissions";
@@ -211,51 +212,45 @@ const { base } = settings;
       const quote = quotePreview(composeForm, composer.textarea, composerContext);
       $c<HTMLElement>("[data-cancel-context]").hidden = true;
 
-      // A post's address may name its author by DID rather than handle (Bluesky
-      // accepts both). A DID is never shown: the handle is looked up through
-      // the site's profile route, once per DID for the page.
-      const handles = new Map<string, Promise<string | null>>();
-      const handleOf = (did: string) => {
-        if (!handles.has(did)) {
-          handles.set(
-            did,
-            fetch(`${base}/profile?did=${encodeURIComponent(did)}`)
-              .then((response) => (response.ok ? response.json() : null))
-              .then((profile) => {
-                const handle = typeof profile?.handle === "string" ? profile.handle : "";
-                return handle && !handle.startsWith("did:") && handle !== "handle.invalid" ? handle : null;
-              })
-              .catch(() => null),
-          );
-        }
-        return handles.get(did)!;
+      // The post being replied to, shown above the box, since the reply won't
+      // appear on this page: fetched through the site once per post.
+      const parent = $c<HTMLElement>("[data-parent]");
+      const fetched = new Map<string, Promise<ShownPost | null>>();
+      const postFor = (uri: string) => {
+        if (!fetched.has(uri)) fetched.set(uri, fetchPost(base, uri));
+        return fetched.get(uri)!;
       };
+      // A handle, never a DID: a post's address may name its author either way
+      // (Bluesky accepts both), and a lookup that fails gives back the DID.
+      const shownHandle = (handle?: string | null) =>
+        handle && !handle.startsWith("did:") && handle !== "handle.invalid" ? handle : null;
       const replyingTo = (handle?: string | null) =>
-        t("composer.replyingTo", { name: handle ? `@${handle}` : t("comment.someone") });
+        t("composer.replyingTo", { name: shownHandle(handle) ? `@${handle}` : t("comment.someone") });
 
       const openCompose = (post: HTMLElement, mode: "reply" | "quote") => {
         composeRoot = post.dataset.atmospherePost!;
         composeMode = mode;
-        // From the bsky.app address, or else the post's at:// URI.
-        const named =
-          post.dataset.atmosphereUrl?.match(/\/profile\/([^/]+)\//)?.[1] ?? composeRoot.match(/^at:\/\/([^/]+)\//)?.[1];
+        // From the bsky.app address until the post itself arrives.
         let author: string | undefined;
         try {
-          author = named && decodeURIComponent(named);
+          author = decodeURIComponent(post.dataset.atmosphereUrl?.match(/\/profile\/([^/]+)\//)?.[1] ?? "");
         } catch {
           author = undefined;
         }
         const context = $c<HTMLElement>("[data-context-text]");
         $c<HTMLElement>("[data-context]").hidden = false;
+        parent.hidden = true;
         if (mode === "quote") context.textContent = t("composer.quoting");
-        else if (author?.startsWith("did:")) {
-          // "someone" until the handle is known, and if it can't be found.
-          context.textContent = replyingTo(null);
+        else {
+          context.textContent = replyingTo(author);
           const root = composeRoot;
-          void handleOf(author).then((handle) => {
-            if (handle && composeRoot === root && composeMode === "reply") context.textContent = replyingTo(handle);
+          void postFor(root).then((shown) => {
+            if (!shown || composeRoot !== root || composeMode !== "reply") return;
+            showPost(parent, shown, composerContext);
+            parent.hidden = false;
+            if (shownHandle(shown.author.handle)) context.textContent = replyingTo(shown.author.handle);
           });
-        } else context.textContent = replyingTo(author);
+        }
         $c<HTMLElement>("[data-verb]").textContent = t(mode === "quote" ? "composer.quote" : "comment.reply");
         $c<HTMLElement>("[data-submit]").textContent = t(mode === "quote" ? "composer.postQuote" : "composer.postReply");
         $c<HTMLElement>("[data-preview]").hidden = mode !== "quote";
@@ -554,7 +549,11 @@ const { base } = settings;
           return;
         }
         const button = post.querySelector<HTMLButtonElement>(`.atmo-post-action[data-kind='${kind}']`);
-        if (button && button.getAttribute("aria-pressed") !== "true") await react(post, button, kind as Kind, true);
+        if (button && button.getAttribute("aria-pressed") !== "true") {
+          await react(post, button, kind as Kind, true);
+          // A brief "Liked" or "Reposted", so it's clear it went through.
+          if (button.getAttribute("aria-pressed") === "true") showDone(button, t(kind === "like" ? "actions.liked" : "actions.reposted"));
+        }
       };
 
       // Back from signing in or allowing posting: open the Reply or Quote box they pressed.

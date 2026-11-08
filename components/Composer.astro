@@ -12,6 +12,7 @@
 //   cancel   show a Cancel button that closes an overlay (default false)
 import { translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
+import PostPreview from "./PostPreview.astro";
 
 interface Props {
   id: string;
@@ -31,6 +32,10 @@ const th = (key: string, html: Record<string, string>) => translateHtml(messages
     <span data-context-text></span>
     <button type="button" class="atmo__link-button" data-cancel-context>{t("composer.cancel")}</button>
   </p>
+  <!-- The post being replied to, when it won't be on this page (AtmosphereReactions). -->
+  <div class="atmo__quoted atmo__parent" data-parent hidden>
+    <PostPreview />
+  </div>
   <label for={`${id}-text`} class="atmo__as">
     <span class="atmo__avatar atmo__avatar--me" data-me-avatar aria-hidden="true"></span>
     <span set:html={th("composer.commentAs", { verb: `<span data-verb>${escapeHtml(t("composer.comment"))}</span>`, handle: "<strong data-handle></strong>" })} />
@@ -53,23 +58,8 @@ const th = (key: string, html: Record<string, string>) => translateHtml(messages
       <div class="atmo__preview-body">
         <p class="atmo__preview-author"><strong data-preview-name></strong> <span data-preview-handle></span> <span>· {t("composer.now")}</span></p>
         <p class="atmo__preview-text" data-preview-text></p>
-        <div class="atmo__quoted">
-          <p class="atmo__preview-author">
-            <span class="atmo__avatar atmo__avatar--small" data-quoted-avatar aria-hidden="true"></span>
-            <strong data-quoted-name></strong> <span data-quoted-handle></span> <span data-quoted-age></span>
-          </p>
-          <p class="atmo__preview-text" data-quoted-text></p>
-          <div class="atmo__card" data-card hidden>
-            <img data-card-image alt="" hidden />
-            <div>
-              <strong data-card-title></strong>
-              <span data-card-description></span>
-              <span class="atmo__card-domain">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9s1.3-6.5 3.8-9Z" /></svg>
-                <span data-card-domain></span>
-              </span>
-            </div>
-          </div>
+        <div class="atmo__quoted" data-quoted-post>
+          <PostPreview />
         </div>
       </div>
     </div>
