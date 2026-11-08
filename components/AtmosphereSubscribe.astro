@@ -30,7 +30,6 @@
 // AtmosphereReactions turns into the button; the link itself is never shown
 // here, and CSS swaps the sentences once the button is there).
 //   locale, messages  as for AtmosphereComments
-import logo from "../assets/union.svg?url";
 import settings from "../lib/settings";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
@@ -87,7 +86,8 @@ const followNote = (key: string) => escapeHtml(translate(messages, lang, key, { 
 {publication && !Astro.props.button && (
   <atmosphere-subscribe class:list={["atmo-subscribe", align === "end" && "atmo-subscribe--end"]} data-subscribe-panel data-pagefind-ignore hidden>
     <button type="button" class="atmo__action atmo-subscribe__button" data-atmosphere-subscribe hidden>
-      <span class="atmo-subscribe__logo" style={`--atmo-logo: url("${logo}")`} aria-hidden="true"></span>
+      <!-- A newspaper, after Lucide's (ISC licence): blog posts, not Bluesky's short ones. -->
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18h-5M18 14h-8M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="10" y="6" rx="1" /></svg>
       <span data-atmosphere-subscribe-label>{t("subscribe.subscribe")}</span>
     </button>
     <button type="button" class="atmo__action atmo-subscribe__more" aria-label={t("subscribe.more")} title={t("subscribe.more")} aria-expanded="false" data-subscribe-more>

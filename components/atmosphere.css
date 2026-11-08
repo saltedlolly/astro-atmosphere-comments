@@ -236,14 +236,6 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   cursor: progress;
 }
 
-.atmo-subscribe__logo {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  background-color: currentColor;
-  mask: var(--atmo-logo) center / contain no-repeat;
-}
-
 .atmo-subscribe .atmo-subscribe__more {
   padding: 0 10px 0 8px;
   border-left: 0;
