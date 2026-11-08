@@ -28,7 +28,8 @@ const render = () => {
     // it (and shows the state with [aria-pressed]), so it needs its full name.
     const label = button.querySelector("[data-atmosphere-subscribe-label]");
     if (label) label.textContent = t(isSubscribed ? "subscribe.subscribed" : "subscribe.subscribe");
-    else button.setAttribute("aria-label", button.title);
+    // The `button` style swaps its own visible words, which name it.
+    else if (!button.querySelector("[data-label-off]")) button.setAttribute("aria-label", button.title);
     button.setAttribute("aria-pressed", String(isSubscribed));
     button.hidden = false;
   }

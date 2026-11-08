@@ -416,6 +416,30 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   display: inline;
 }
 
+/* AtmosphereSubscribe's and AtmosphereFollow's `button` style: matching
+   pills, shown once the script has set them up. */
+.atmo-button[hidden] {
+  display: none;
+}
+
+.atmo-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.atmo-button svg.atmo-button__filled {
+  fill: currentColor;
+  stroke: none;
+}
+
+.atmo-button .atmo-button__me {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .atmo__context {
   display: flex;
   flex-wrap: wrap;

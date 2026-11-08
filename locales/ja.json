@@ -90,6 +90,8 @@
   "follow.followAs": "{{me}}として{{handle}}をフォロー",
   "follow.followingLabel": "{{handle}}をフォローしています",
   "follow.link": "Blueskyで{{handle}}をフォロー",
+  "follow.signIn": "ログインして{{handle}}をフォロー",
+  "subscribe.blogPosts": "ブログ記事を購読",
   "credit": "{{link}}で動作しています",
   "callback.signingIn": "ログインしています…",
   "signIn.policy": "このサイトでのデータの取り扱い",

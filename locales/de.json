@@ -93,6 +93,8 @@
   "follow.followAs": "{{handle}} als {{me}} folgen",
   "follow.followingLabel": "Du folgst {{handle}}",
   "follow.link": "{{handle}} auf Bluesky folgen",
+  "follow.signIn": "Melde dich an, um {{handle}} zu folgen",
+  "subscribe.blogPosts": "Blogbeiträge abonnieren",
   "credit": "Bereitgestellt von {{link}}",
   "callback.signingIn": "Anmeldung läuft …",
   "signIn.policy": "Wie diese Seite mit deinen Daten umgeht",

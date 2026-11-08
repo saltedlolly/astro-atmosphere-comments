@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.0 (8 November 2026)
+
+- **Matching buttons for a follow page:** a new `button` prop on `AtmosphereSubscribe` and `AtmosphereFollow` gives a pair of matching pills with no menu: a newspaper and "Subscribe to blog posts" (new key `subscribe.blogPosts`), and Bluesky's butterfly and "Follow on Bluesky". Both show to readers who aren't signed in: pressing one opens the sign-in overlay (Follow's headed "Sign in to follow @handle", new key `follow.signIn`), then subscribes or follows once they're back. Once done, each shows "✓ Subscribed" or "✓ Following" with the reader's own avatar (`img[data-atmosphere-me-avatar]`). `label` and `class` work with both. Without `button`, nothing changes. Made for Friendly Feed for Astro's page. Styles `.atmo-button`; the newspaper icon is based on Lucide's (ISC).
+- Follow buttons for the same account still stay in step, including the new ones (`followStateFor` in `AtmosphereReactions`).
+
 ## 0.9.0 (8 November 2026)
 
 - **The Subscribe menu is Atmosphere only:** Copy link and RSS feed are gone (feeds are a different thing, best offered on the site's own pages), and the note no longer mentions feed readers. The `copyUrl` prop and `standardSite.feed` are ignored. Keys removed: `subscribe.copyLink`, `subscribe.copied`, `subscribe.feed`, `subscribe.panelTextFeed`.

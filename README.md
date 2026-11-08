@@ -122,6 +122,14 @@ import AtmosphereFollow from "astro-atmosphere-comments/AtmosphereFollow.astro";
    data-atmosphere-follow="did:plc:…" data-atmosphere-follow-handle="you.bsky.social">Follow me on Bluesky</a>
 ```
 
+**Matching buttons for a follow page.** On a page all about following (such as [Friendly Feed for Astro](https://github.com/saltedlolly/astro-friendly-feed)'s), `button` gives `AtmosphereSubscribe` and `AtmosphereFollow` a pair of matching buttons, with no menu: a newspaper and "Subscribe to blog posts", and Bluesky's butterfly and "Follow on Bluesky". Unlike everywhere else, both show to readers who aren't signed in: pressing one offers the sign-in form, then subscribes or follows once they're back. Once done, each shows "✓ Subscribed" or "✓ Following" with the reader's own avatar; a second press undoes it. `label` replaces the wording, and `class` styles the button. Nothing else changes: without `button`, both components work as above.
+
+```astro
+<AtmosphereSubscribe button />
+<AtmosphereFollow button />
+<AtmosphereFollow account="you.bsky.social" button label="Follow @you.bsky.social" />
+```
+
 **Publishing to Standard.site:** [Atmosphere Publishing for Astro](https://github.com/saltedlolly/astro-atmosphere-publishing) is the companion integration made to work with this one. It publishes your posts' Standard.site records, announces new posts on Bluesky and adds each page's `<link rel="site.standard.document">` tag, so the comment box finds each post's announcement without a `post` prop. Its `publicationFromState()` helper gives the `standardSite` option your publication (below). Other publishers work too, as long as they add that tag and set the record's `bskyPostRef`, as [Sequoia](https://sequoia.pub) does.
 
 If you publish [Standard.site](https://standard.site) records, set the integration's `standardSite` option. Readers can then **subscribe** to your publication from your site, and read new posts in apps such as Leaflet or Standard Reader. `AtmosphereComments` shows a Subscribe button under each post, with Like and Repost, and a ⌄ menu of more ways to follow your site on the Atmosphere: a note on what subscribing does (with a Follow / Following button for signed-in readers), then View on Bluesky (your publication's account), View post on Bluesky (the post's thread), View on Standard Reader and View on Leaflet. Feeds (RSS) aren't in it: they're a different thing, best offered on your own pages ([Friendly Feed for Astro](https://github.com/saltedlolly/astro-friendly-feed) makes a page for them).
@@ -269,7 +277,7 @@ It's free to use (MIT), with no strings attached. If it's useful to you, I'd be 
 
 ## Credits
 
-Made by [Olly Stedall](https://saltedlolly.com) for [saltedlolly.com](https://saltedlolly.com). The Atmosphere Account logo is from [Atmosphere Account](https://github.com/jobiwanken0bi/atmosphere-account) (MIT, © 2026 Joseph Basser).
+Made by [Olly Stedall](https://saltedlolly.com) for [saltedlolly.com](https://saltedlolly.com). The Atmosphere Account logo is from [Atmosphere Account](https://github.com/jobiwanken0bi/atmosphere-account) (MIT, © 2026 Joseph Basser). The newspaper icon is based on [Lucide](https://lucide.dev)'s (ISC licence).
 
 ## License
 

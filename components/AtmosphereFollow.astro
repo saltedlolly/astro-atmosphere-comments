@@ -8,17 +8,29 @@
 //   account   the account to follow, by DID or handle (default: the
 //             `standardSite` publication's account). Must be one of the
 //             integration's `allowedAuthors` for the button to work.
-//   label     the link's text, instead of "Follow @handle on Bluesky"
-//   class     classes for the link
+//   label     the link's text, instead of "Follow @handle on Bluesky" (with
+//             `button`: instead of "Follow on Bluesky")
+//   button    a button instead of the link, for a page all about following
+//             (such as Friendly Feed's): the butterfly and "Follow on Bluesky",
+//             shown signed out too, where pressing it offers signing in and
+//             then follows; once following, "✓ Following" with the reader's
+//             own avatar. Needs JavaScript, so it shows only once that runs.
+//   class     classes for the link or button
 //   locale, messages  as for AtmosphereComments
 import settings from "../lib/settings";
 import { messagesFor, pickLocale, translate } from "../lib/i18n";
 import { profileFor } from "../lib/profile";
 import { resolveHandle } from "../lib/resolve";
+import "./atmosphere.css";
+
+// Bluesky's butterfly.
+const BUTTERFLY =
+  "M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z";
 
 interface Props {
   account?: string;
   label?: string;
+  button?: boolean;
   class?: string;
   locale?: string;
   messages?: Record<string, string>;
@@ -46,18 +58,35 @@ if (given && !did) {
     `[atmosphere-comments] AtmosphereFollow: ${handle || did} isn't in allowedAuthors, so it stays a link for everyone.`,
   );
 }
+const canFollow = !!did && settings.allowedAuthors.includes(did);
+const asButton = !!Astro.props.button && canFollow;
 const label =
   Astro.props.label ??
-  (handle ? translate(messages, lang, "follow.link", { handle: `@${handle}` }) : translate(messages, lang, "subscribe.follow"));
+  (asButton ? translate(messages, lang, "subscribe.follow") : handle ? translate(messages, lang, "follow.link", { handle: `@${handle}` }) : translate(messages, lang, "subscribe.follow"));
 ---
 
-{(did || handle) && (
+{asButton && (
+  <button
+    type="button"
+    class:list={["atmo__action", "atmo-button", Astro.props.class]}
+    data-atmosphere-follow-button={did}
+    data-atmosphere-follow-handle={handle || undefined}
+    data-pagefind-ignore
+    hidden
+  >
+    <svg class="atmo-button__filled" viewBox="0 0 24 24" aria-hidden="true"><path d={BUTTERFLY} /></svg>
+    <img class="atmo-button__me" data-label-on data-atmosphere-me-avatar alt="" />
+    <span data-label-on>✓ {translate(messages, lang, "follow.following")}</span>
+    <span data-label-off>{label}</span>
+  </button>
+)}
+{!asButton && (did || handle) && (
   <a
     class:list={["atmo-follow-link", Astro.props.class]}
     href={`https://bsky.app/profile/${handle || did}`}
     target="_blank"
     rel="noopener"
-    data-atmosphere-follow={did && settings.allowedAuthors.includes(did) ? did : undefined}
+    data-atmosphere-follow={canFollow ? did : undefined}
     data-atmosphere-follow-handle={handle || undefined}
   >{label} →</a>
 )}
