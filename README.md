@@ -124,7 +124,7 @@ import AtmosphereFollow from "astro-atmosphere-comments/AtmosphereFollow.astro";
 
 **Publishing to Standard.site:** [Atmosphere Publishing for Astro](https://github.com/saltedlolly/astro-atmosphere-publishing) is the companion integration made to work with this one. It publishes your posts' Standard.site records, announces new posts on Bluesky and adds each page's `<link rel="site.standard.document">` tag, so the comment box finds each post's announcement without a `post` prop. Its `publicationFromState()` helper gives the `standardSite` option your publication (below). Other publishers work too, as long as they add that tag and set the record's `bskyPostRef`, as [Sequoia](https://sequoia.pub) does.
 
-If you publish [Standard.site](https://standard.site) records, set the integration's `standardSite` option. Readers can then **subscribe** to your publication from your site, and read new posts in apps such as Leaflet or Standard Reader. `AtmosphereComments` shows a Subscribe button under each post, with Like and Repost, and a ⌄ menu of more ways to follow your site: a note on what subscribing does with a Follow on Bluesky link, Copy link, your feed (the option's `feed`), View on Bluesky (the post's thread), View on Standard Reader and View on Leaflet.
+If you publish [Standard.site](https://standard.site) records, set the integration's `standardSite` option. Readers can then **subscribe** to your publication from your site, and read new posts in apps such as Leaflet or Standard Reader. `AtmosphereComments` shows a Subscribe button under each post, with Like and Repost, and a ⌄ menu of more ways to follow your site on the Atmosphere: a note on what subscribing does (with a Follow / Following button for signed-in readers), then View on Bluesky (your publication's account), View post on Bluesky (the post's thread), View on Standard Reader and View on Leaflet. Feeds (RSS) aren't in it: they're a different thing, best offered on your own pages ([Friendly Feed for Astro](https://github.com/saltedlolly/astro-friendly-feed) makes a page for them).
 
 The same button and menu can go anywhere, such as at the top of your blog's list of posts, with `AtmosphereSubscribe` (and `AtmosphereReactions` in your layout, which works the button and offers signing in):
 
@@ -135,12 +135,11 @@ import AtmosphereSubscribe from "astro-atmosphere-comments/AtmosphereSubscribe.a
 
 <AtmosphereSubscribe
   align="end"
-  copyUrl="https://example.com/blog/"
-  links={[{ label: "Add to Feedly", href: "https://feedly.com/i/subscription/feed%2Fhttps%3A%2F%2Fexample.com%2Ffeed%2F" }]}
+  links={[{ label: "Our page on Example Reader", href: "https://reader.example/p/example.com" }]}
 />
 ```
 
-All its props are optional. `align="end"` lines the menu up with the button's right-hand edge, for a button near the right of the page (the default, `"start"`, lines it up on the left). `copyUrl` is what Copy link copies (default: your site's address). `links` adds items to the end of the menu. `bluesky` adds a View on Bluesky item going there (under each post it's the post's thread). The menu's note also suggests following your publication's account on Bluesky, with a link to its profile that becomes a Follow / Following button for signed-in readers; subscribing itself never follows. It shows nothing without the `standardSite` option, and needs JavaScript.
+All its props are optional. `align="end"` lines the menu up with the button's right-hand edge, for a button near the right of the page (the default, `"start"`, lines it up on the left). `links` adds items to the end of the menu. `bluesky` adds a View post on Bluesky item going there (under each post it's the post's thread). The menu always starts with View on Bluesky, your publication's account. Its note ends by suggesting following that account: signed out, "To see everything @you posts, follow it on Bluesky."; signed in, "…, Follow on Bluesky." with a Follow / Following button under it. Subscribing itself never follows. (`copyUrl`, from before 0.9.0, is ignored.) It shows nothing without the `standardSite` option, and needs JavaScript.
 
 For a button of your own design instead (with `AtmosphereReactions` in your layout), mark it as below; it stays hidden without the option or JavaScript. Anyone not signed in is offered the sign-in form, and subscribed once they're back; a second press unsubscribes.
 
@@ -176,7 +175,7 @@ Locally the integration uses the protocol's development mode, so it works withou
 | `allowedAuthors` | yes | DIDs of the accounts whose posts can be commented on through your site. Comments from these accounts get the Author badge. |
 | `logoUri` | | A square logo for the sign-in screen (absolute `https://` address). |
 | `policyUri`, `tosUri` | | Your privacy policy and terms, shown on the sign-in screen. The privacy policy is also linked under the sign-in form. |
-| `standardSite` | | `{ publication: "at://did:…/site.standard.publication/…", feed: "/feed/" }`, your [Standard.site](https://standard.site) publication and, optionally, your feed for the Subscribe menu (Copy link, RSS feed, View on Bluesky, View on Standard Reader). Turns on the Subscribe button (above), and makes Like under a post also recommend the post's record, when its page has `<link rel="site.standard.document">` (the button's tooltip says so); un-liking removes the recommend. Likes on comments stay Bluesky likes. Adds Standard.site's permission to the one approval. This package doesn't publish the records: use your own script or a publishing tool. |
+| `standardSite` | | `{ publication: "at://did:…/site.standard.publication/…" }`, your [Standard.site](https://standard.site) publication (a `feed` there, from before 0.9.0, is ignored). Turns on the Subscribe button (above), and makes Like under a post also recommend the post's record, when its page has `<link rel="site.standard.document">` (the button's tooltip says so); un-liking removes the recommend. Likes on comments stay Bluesky likes. Adds Standard.site's permission to the one approval. This package doesn't publish the records: use your own script or a publishing tool. |
 | `hidden` | | Comments never to show: bsky.app post or profile addresses, AT URIs, handles or DIDs. Replies you hide in the Bluesky app, and posts with Bluesky's moderation labels (spam and so on), are left out anyway. |
 | `base` | | Where the integration's routes live. Default `/atmosphere`. |
 | `locale` | | The language of the wording, such as `"fr"` or `"pt-BR"` (see Languages). |

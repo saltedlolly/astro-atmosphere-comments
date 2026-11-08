@@ -112,8 +112,8 @@
   "signInFirst.view": "ログインすると非表示のコメントを表示できます",
   "reactions.hiddenPerson": "ログインしている人にだけアカウントを表示している人",
   "subscribe.panelText": "購読すると、{{leaflet}}、{{standardReader}}などのアプリでブログの新しい投稿を読めます。",
-  "subscribe.panelTextFeed": "購読すると、{{leaflet}}、{{standardReader}}などのアプリでブログの新しい投稿を読めます。フィードリーダーでフィードをフォローすることもできます。",
   "subscribe.followNote": "{{handle}}のすべての投稿を見るには：Blueskyでフォロー。",
+  "subscribe.followNoteSignedOut": "{{handle}}のすべての投稿を見るには、Blueskyでフォローしてください。",
   "subscribe.follow": "Blueskyでフォロー",
   "subscribe.leaflet": "Leafletで見る"
 }

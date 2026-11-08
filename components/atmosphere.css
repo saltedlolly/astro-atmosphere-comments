@@ -299,12 +299,21 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   margin: 0;
 }
 
-/* "Follow on Bluesky →" under the note, which AtmosphereReactions turns into
-   a Follow / Following button for signed-in readers. */
-.atmo-subscribe__follow {
-  display: inline-block;
-  margin-top: 8px;
-  font-weight: 700;
+/* Following the account: signed out, the note says "…, follow it on Bluesky."
+   (View on Bluesky is just below) and the Follow link stays hidden; signed
+   in, AtmosphereReactions puts a Follow / Following button after that link,
+   and the note says "…, Follow on Bluesky." instead. */
+.atmo-subscribe__note .atmo-subscribe__follow,
+.atmo-subscribe__note-in {
+  display: none;
+}
+
+.atmo-subscribe__note:has(.atmo-follow) .atmo-subscribe__note-out {
+  display: none;
+}
+
+.atmo-subscribe__note:has(.atmo-follow) .atmo-subscribe__note-in {
+  display: inline;
 }
 
 .atmo-subscribe__note .atmo-follow {

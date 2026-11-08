@@ -118,8 +118,8 @@
   "signInFirst.view": "Connectez-vous pour voir les commentaires masqués",
   "reactions.hiddenPerson": "Une personne qui ne montre son compte qu'aux personnes connectées",
   "subscribe.panelText": "Abonnez-vous pour lire les nouveaux articles du blog dans des applications comme {{leaflet}} ou {{standardReader}}.",
-  "subscribe.panelTextFeed": "Abonnez-vous pour lire les nouveaux articles du blog dans des applications comme {{leaflet}} ou {{standardReader}}, ou suivez le flux dans n'importe quel lecteur de flux.",
   "subscribe.followNote": "Pour voir tout ce que publie {{handle}} : Suivre sur Bluesky.",
+  "subscribe.followNoteSignedOut": "Pour voir tout ce que publie {{handle}}, suivez ce compte sur Bluesky.",
   "subscribe.follow": "Suivre sur Bluesky",
   "subscribe.leaflet": "Voir sur Leaflet"
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 (8 November 2026)
+
+- **The Subscribe menu is Atmosphere only:** Copy link and RSS feed are gone (feeds are a different thing, best offered on the site's own pages), and the note no longer mentions feed readers. The `copyUrl` prop and `standardSite.feed` are ignored. Keys removed: `subscribe.copyLink`, `subscribe.copied`, `subscribe.feed`, `subscribe.panelTextFeed`.
+- **"View on Bluesky" now leads the menu** and opens the publication's account. Under a post, the post's thread is "View post on Bluesky" (with the `bluesky` prop; new key `subscribe.viewPostBluesky`).
+- **Following, signed out and in:** signed out, the note ends "To see everything @handle posts, follow it on Bluesky." (new key `subscribe.followNoteSignedOut`) and no Follow link is shown, since View on Bluesky is just below. Signed in, it ends "…, Follow on Bluesky." (`subscribe.followNote`) with the Follow / Following button under it. CSS swaps the two (`:has(.atmo-follow)`).
+
 ## 0.8.1 (8 November 2026)
 
 - **The Subscribe menu's follow note ends with the button's words:** "To see everything @handle posts, Follow on Bluesky." (was "…, follow it on Bluesky."), leading straight into the "Follow on Bluesky →" button beneath it. Key `subscribe.followNote`, reworded in all eight languages to end with that language's `subscribe.follow` text.
