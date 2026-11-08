@@ -87,6 +87,9 @@
   "postActions.quoteAs": "{{handle}}として引用",
   "follow.follow": "{{handle}}をフォロー",
   "follow.following": "フォロー中",
+  "follow.button": "フォロー",
+  "follow.more": "フォローについて",
+  "follow.menuNote": "{{handle}}の投稿をすべて見るには、Blueskyでフォローしてください。",
   "follow.followAs": "{{me}}として{{handle}}をフォロー",
   "follow.followingLabel": "{{handle}}をフォローしています",
   "follow.link": "Blueskyで{{handle}}をフォロー",
@@ -113,9 +116,7 @@
   "comment.withheldSignedIn": "読み込めませんでした。ページを再読み込みしてください。",
   "signInFirst.view": "ログインすると非表示のコメントを表示できます",
   "reactions.hiddenPerson": "ログインしている人にだけアカウントを表示している人",
-  "subscribe.panelText": "購読すると、{{leaflet}}、{{standardReader}}などのアプリでブログの新しい投稿を読めます。",
-  "subscribe.followNote": "{{handle}}のすべての投稿を見るには：Blueskyでフォロー。",
-  "subscribe.followNoteSignedOut": "{{handle}}のすべての投稿を見るには、Blueskyでフォローしてください。",
+  "subscribe.panelText": "購読すると、{{standardReader}}や{{leaflet}}など、{{standardSite}}に対応したアプリでブログの新しい投稿を読めます。",
   "subscribe.follow": "Blueskyでフォロー",
   "subscribe.leaflet": "Leafletで見る"
 }

@@ -15,6 +15,11 @@
 //             shown signed out too, where pressing it offers signing in and
 //             then follows; once following, "✓ Following" with the reader's
 //             own avatar. Needs JavaScript, so it shows only once that runs.
+//   menu      for the row under a post (AtmosphereComments uses it): "Follow"
+//             with the butterfly, and a ⌄ menu saying "To see everything
+//             @handle posts, follow on Bluesky." with View on Bluesky. Like
+//             Subscribe beside it, it shows signed out too, offering sign-in.
+//   align     with `menu`: "start" (default) or "end", as for AtmosphereSubscribe
 //   class     classes for the link or button
 //   locale, messages  as for AtmosphereComments
 import settings from "../lib/settings";
@@ -31,6 +36,8 @@ interface Props {
   account?: string;
   label?: string;
   button?: boolean;
+  menu?: boolean;
+  align?: "start" | "end";
   class?: string;
   locale?: string;
   messages?: Record<string, string>;
@@ -59,12 +66,44 @@ if (given && !did) {
   );
 }
 const canFollow = !!did && settings.allowedAuthors.includes(did);
-const asButton = !!Astro.props.button && canFollow;
+const asMenu = !!Astro.props.menu && canFollow;
+const asButton = !asMenu && !!Astro.props.button && canFollow;
+const t = (key: string, vars: Record<string, string> = {}) => translate(messages, lang, key, vars);
+const profileUrl = `https://bsky.app/profile/${handle || did}`;
 const label =
   Astro.props.label ??
   (asButton ? translate(messages, lang, "subscribe.follow") : handle ? translate(messages, lang, "follow.link", { handle: `@${handle}` }) : translate(messages, lang, "subscribe.follow"));
 ---
 
+{asMenu && (
+  <atmosphere-follow-menu
+    class:list={["atmo-subscribe", "atmo-follow-menu", Astro.props.align === "end" && "atmo-subscribe--end", Astro.props.class]}
+    data-follow-panel
+    data-pagefind-ignore
+    hidden
+  >
+    <button
+      type="button"
+      class="atmo__action atmo-subscribe__button"
+      data-atmosphere-follow-button={did}
+      data-atmosphere-follow-handle={handle || undefined}
+      aria-pressed="false"
+    >
+      <svg class="atmo-button__filled" viewBox="0 0 24 24" aria-hidden="true"><path d={BUTTERFLY} /></svg>
+      <span data-label-off>{t("follow.button")}</span>
+      <span data-label-on>✓ {t("follow.following")}</span>
+    </button>
+    <button type="button" class="atmo__action atmo-subscribe__more" aria-label={t("follow.more")} title={t("follow.more")} aria-expanded="false" data-menu-more>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+    </button>
+    <div class="atmo-subscribe__menu" data-menu hidden>
+      <div class="atmo-subscribe__note">
+        <p>{t("follow.menuNote", { handle: `@${handle || did}` })}</p>
+      </div>
+      <a href={profileUrl} target="_blank" rel="noopener"><svg class="atmo-subscribe__filled" viewBox="0 0 24 24" aria-hidden="true"><path d={BUTTERFLY} /></svg><span>{t("subscribe.viewBluesky")}</span></a>
+    </div>
+  </atmosphere-follow-menu>
+)}
 {asButton && (
   <button
     type="button"
@@ -80,7 +119,7 @@ const label =
     <span data-label-off>{label}</span>
   </button>
 )}
-{!asButton && (did || handle) && (
+{!asMenu && !asButton && !Astro.props.menu && (did || handle) && (
   <a
     class:list={["atmo-follow-link", Astro.props.class]}
     href={`https://bsky.app/profile/${handle || did}`}
@@ -90,3 +129,18 @@ const label =
     data-atmosphere-follow-handle={handle || undefined}
   >{label} →</a>
 )}
+
+<script>
+  // The ⌄ menu (lib/client/menu.ts). Shows itself once this runs, except
+  // under a post, where AtmosphereComments shows it when the comments are
+  // ready. The Follow button is worked by AtmosphereReactions, or under a
+  // post by AtmosphereComments.
+  import { setUpMenu } from "../lib/client/menu";
+  class AtmosphereFollowMenu extends HTMLElement {
+    connectedCallback() {
+      if (this.dataset.ready === undefined && !this.closest("atmosphere-comments")) this.hidden = false;
+      setUpMenu(this);
+    }
+  }
+  if (!customElements.get("atmosphere-follow-menu")) customElements.define("atmosphere-follow-menu", AtmosphereFollowMenu);
+</script>

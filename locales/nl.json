@@ -90,6 +90,9 @@
   "postActions.quoteAs": "Citeren als {{handle}}",
   "follow.follow": "{{handle}} volgen",
   "follow.following": "Volgend",
+  "follow.button": "Volgen",
+  "follow.more": "Meer over volgen",
+  "follow.menuNote": "Volg {{handle}} op Bluesky om alles te zien wat het plaatst.",
   "follow.followAs": "{{handle}} volgen als {{me}}",
   "follow.followingLabel": "Je volgt {{handle}}",
   "follow.link": "Volg {{handle}} op Bluesky",
@@ -116,9 +119,7 @@
   "comment.withheldSignedIn": "De reactie kon nu niet worden geladen. Probeer de pagina opnieuw te laden.",
   "signInFirst.view": "Log in om verborgen reacties te zien",
   "reactions.hiddenPerson": "Iemand die zijn of haar account alleen toont aan mensen die zijn ingelogd",
-  "subscribe.panelText": "Abonneer je om nieuwe blogberichten te lezen in apps zoals {{leaflet}} of {{standardReader}}.",
-  "subscribe.followNote": "Om alles te zien wat {{handle}} plaatst: Volgen op Bluesky.",
-  "subscribe.followNoteSignedOut": "Volg {{handle}} op Bluesky om alles te zien wat het account plaatst.",
+  "subscribe.panelText": "Abonneer je om nieuwe blogberichten te lezen in apps die {{standardSite}} ondersteunen, zoals {{standardReader}} of {{leaflet}}.",
   "subscribe.follow": "Volgen op Bluesky",
   "subscribe.leaflet": "Bekijk op Leaflet"
 }

@@ -90,6 +90,9 @@
   "postActions.quoteAs": "Als {{handle}} zitieren",
   "follow.follow": "{{handle}} folgen",
   "follow.following": "Folge ich",
+  "follow.button": "Folgen",
+  "follow.more": "Mehr zum Folgen",
+  "follow.menuNote": "Um alles zu sehen, was {{handle}} postet, folge auf Bluesky.",
   "follow.followAs": "{{handle}} als {{me}} folgen",
   "follow.followingLabel": "Du folgst {{handle}}",
   "follow.link": "{{handle}} auf Bluesky folgen",
@@ -116,9 +119,7 @@
   "comment.withheldSignedIn": "Er konnte gerade nicht geladen werden. Lade die Seite neu.",
   "signInFirst.view": "Melde dich an, um ausgeblendete Kommentare zu sehen",
   "reactions.hiddenPerson": "Jemand, der sein Konto nur angemeldeten Leuten zeigt",
-  "subscribe.panelText": "Abonniere, um neue Blogbeiträge in Apps wie {{leaflet}} oder {{standardReader}} zu lesen.",
-  "subscribe.followNote": "Um alles zu sehen, was {{handle}} postet: Auf Bluesky folgen.",
-  "subscribe.followNoteSignedOut": "Um alles zu sehen, was {{handle}} postet, folge dem Konto auf Bluesky.",
+  "subscribe.panelText": "Abonniere, um neue Blogbeiträge in Apps zu lesen, die {{standardSite}} unterstützen, etwa {{standardReader}} oder {{leaflet}}.",
   "subscribe.follow": "Auf Bluesky folgen",
   "subscribe.leaflet": "Auf Leaflet ansehen"
 }

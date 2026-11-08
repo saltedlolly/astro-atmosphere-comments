@@ -1,9 +1,11 @@
 ---
-// Subscribe to the site's Standard.site publication, with a ⌄ menu of more
-// ways to follow it on the Atmosphere (the account on Bluesky, Standard
-// Reader, Leaflet and any links of the site's own). Feeds (RSS) aren't here:
-// they're a different thing, for the site's own pages. Shown only with the integration's
-// `standardSite` option, and only with JavaScript (the menu needs it).
+// Subscribe to the site's Standard.site publication, with a ⌄ menu: a note
+// on what subscribing does, then the publication on Standard Reader and
+// Leaflet (and any links of the site's own). Following on Bluesky is
+// separate: AtmosphereFollow's `menu` style, beside this one under each
+// post. Feeds (RSS) aren't here either: they're for the site's own pages.
+// Shown only with the integration's `standardSite` option, and only with
+// JavaScript.
 //
 // Placed anywhere, such as a blog's list of posts. The Subscribe button
 // itself is worked by AtmosphereReactions, which offers signing in, so put
@@ -14,27 +16,18 @@
 //   align     which edge the menu lines up with: "start" (default) or "end"
 //             (for a button near the right-hand edge, so the menu opens leftwards)
 //   links     more menu items, after the built-in ones: [{ label, href }]
-//   bluesky   adds "View post on Bluesky", going here (under a post: its thread)
 //   button    just a button, with no menu, for a page all about following
 //             (such as Friendly Feed's): a newspaper and "Subscribe to blog
 //             posts" (or `label`), then "✓ Subscribed" with the reader's own
 //             avatar. Signed out, pressing it offers signing in, as usual.
 //   label     the button's text with `button`
 //   class     classes for the button, with `button`
-//   (copyUrl, from before 0.9.0, is accepted and ignored.)
-//
-// The menu starts with "View on Bluesky" (the publication's account). Its note
-// ends by suggesting following that account: signed out, "…, follow it on
-// Bluesky." (pointing at View on Bluesky); signed in, "…, Follow on Bluesky."
-// with a Follow / Following button under it (AtmosphereFollow's link, which
-// AtmosphereReactions turns into the button; the link itself is never shown
-// here, and CSS swaps the sentences once the button is there).
+//   (copyUrl, from before 0.9.0, and bluesky, from before 0.10.0, are
+//   accepted and ignored.)
 //   locale, messages  as for AtmosphereComments
 import settings from "../lib/settings";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
-import { profileFor } from "../lib/profile";
-import AtmosphereFollow from "./AtmosphereFollow.astro";
 import "./atmosphere.css";
 
 interface Props {
@@ -59,13 +52,6 @@ const link = (href: string, text: string) => `<a href="${escapeHtml(href)}" targ
 const publication = settings.standardSite?.publication ?? "";
 // at://<did>/site.standard.publication/<rkey>
 const [, , did = "", , rkey = ""] = publication.split("/");
-const bluesky = Astro.props.bluesky ?? "";
-// The publication's account, by handle, for the note and the Follow link
-// (looked up when the page is built; without it, the note leaves that part out).
-const account = did ? await profileFor(did).catch(() => null) : null;
-const accountHandle = account && account.handle !== did ? account.handle : "";
-const profileUrl = did ? `https://bsky.app/profile/${accountHandle || did}` : "";
-const followNote = (key: string) => escapeHtml(translate(messages, lang, key, { handle: `@${accountHandle}` }));
 ---
 
 {publication && Astro.props.button && (
@@ -90,30 +76,21 @@ const followNote = (key: string) => escapeHtml(translate(messages, lang, key, { 
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18h-5M18 14h-8M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="10" y="6" rx="1" /></svg>
       <span data-atmosphere-subscribe-label>{t("subscribe.subscribe")}</span>
     </button>
-    <button type="button" class="atmo__action atmo-subscribe__more" aria-label={t("subscribe.more")} title={t("subscribe.more")} aria-expanded="false" data-subscribe-more>
+    <button type="button" class="atmo__action atmo-subscribe__more" aria-label={t("subscribe.more")} title={t("subscribe.more")} aria-expanded="false" data-menu-more>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
-    <div class="atmo-subscribe__menu" data-subscribe-menu hidden>
+    <div class="atmo-subscribe__menu" data-menu hidden>
       <div class="atmo-subscribe__note">
         <p>
           <Fragment
             set:html={th("subscribe.panelText", {
-              leaflet: link("https://leaflet.pub", "Leaflet"),
+              standardSite: link("https://standard.site", "Standard.site"),
               standardReader: link("https://standard-reader.app", "Standard Reader"),
+              leaflet: link("https://leaflet.pub", "Leaflet"),
             })}
           />
-          {accountHandle && (
-            <>
-              {" "}
-              <span class="atmo-subscribe__note-out" set:html={followNote("subscribe.followNoteSignedOut")} />
-              <span class="atmo-subscribe__note-in" set:html={followNote("subscribe.followNote")} />
-            </>
-          )}
         </p>
-        {accountHandle && <AtmosphereFollow account={did} label={t("subscribe.follow")} class="atmo-subscribe__follow" locale={lang} messages={messages} />}
       </div>
-      {profileUrl && <a href={profileUrl} target="_blank" rel="noopener" data-subscribe-profile><svg class="atmo-subscribe__filled" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8Z" /></svg><span>{t("subscribe.viewBluesky")}</span></a>}
-      <a href={bluesky || undefined} hidden={!bluesky} data-subscribe-bluesky target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg><span>{t("subscribe.viewPostBluesky")}</span></a>
       <a href={`https://standard-reader.app/p/${did}/${rkey}`} target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg><span>{t("subscribe.standardReader")}</span></a>
       <a href={`https://leaflet.pub/lish/${did}/${rkey}`} target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg><span>{t("subscribe.leaflet")}</span></a>
       {links.map(({ label, href }) => (
@@ -124,32 +101,13 @@ const followNote = (key: string) => escapeHtml(translate(messages, lang, key, { 
 )}
 
 <script>
-  // The ⌄ menu: opens and closes (click, a click elsewhere, Escape). Shows itself once this runs, except under a post, where
-  // AtmosphereComments shows it when the comments are ready.
+  // The ⌄ menu (lib/client/menu.ts). Shows itself once this runs, except
+  // under a post, where AtmosphereComments shows it when the comments are ready.
+  import { setUpMenu } from "../lib/client/menu";
   class AtmosphereSubscribe extends HTMLElement {
     connectedCallback() {
-      const more = this.querySelector<HTMLButtonElement>("[data-subscribe-more]");
-      const menu = this.querySelector<HTMLElement>("[data-subscribe-menu]");
-      if (!more || !menu || this.dataset.ready !== undefined) return;
-      this.dataset.ready = "";
-      if (!this.closest("atmosphere-comments")) this.hidden = false;
-      const setMenu = (open: boolean) => {
-        menu.hidden = !open;
-        more.setAttribute("aria-expanded", String(open));
-      };
-      more.addEventListener("click", () => {
-        setMenu(menu.hidden);
-        if (!menu.hidden) menu.querySelector<HTMLElement>("a:not([hidden]), button")?.focus();
-      });
-      document.addEventListener("click", (event) => {
-        if (!this.contains(event.target as Node)) setMenu(false);
-      });
-      this.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && !menu.hidden) {
-          setMenu(false);
-          more.focus();
-        }
-      });
+      if (this.dataset.ready === undefined && !this.closest("atmosphere-comments")) this.hidden = false;
+      setUpMenu(this);
     }
   }
   if (!customElements.get("atmosphere-subscribe")) customElements.define("atmosphere-subscribe", AtmosphereSubscribe);

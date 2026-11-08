@@ -39,6 +39,7 @@ import settings from "../lib/settings";
 import SignInForm from "./SignInForm.astro";
 import Composer from "./Composer.astro";
 import AtmosphereSubscribe from "./AtmosphereSubscribe.astro";
+import AtmosphereFollow from "./AtmosphereFollow.astro";
 import "./atmosphere.css";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
@@ -110,8 +111,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h5v-5H6.5A4.5 4.5 0 0 1 11 8.5V7a6 6 0 0 0-6 6Zm9 0h5v-5h-3.5A4.5 4.5 0 0 1 20 8.5V7a6 6 0 0 0-6 6Z" /></svg>
         <span>{t("actions.quote")}</span>
       </button>
-      {/* With the `standardSite` option: Subscribe and its ⌄ menu. "View on Bluesky" is this post's thread. */}
-      <AtmosphereSubscribe bluesky={blueskyUrl || undefined} locale={lang} messages={messages} />
+      {/* With the `standardSite` option: Subscribe and Follow (the publication's account), each with a ⌄ menu. */}
+      <AtmosphereSubscribe locale={lang} messages={messages} />
+      <AtmosphereFollow menu locale={lang} messages={messages} />
     </div>
 
     {/* A sign-in from before posting was asked for: one more permission. */}
@@ -177,6 +179,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
   import publicSettings from "../lib/public-settings";
   import { segments } from "../lib/richtext";
   import { addSubscribeButtons, finishPendingSubscribe, forgetSubscribed, loadSubscribed } from "../lib/client/subscribe";
+  import { forgetFollowing, isFollowing, loadFollowing, pressFollow, takePendingFollow, watchFollow } from "../lib/client/follow";
   import type { Permission } from "../lib/permissions";
   import { authorOf } from "../lib/uris";
 
@@ -409,7 +412,7 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       // Nothing to respond to: hide the box and likes, but keep whatever the
       // site put in the slots.
       const deactivate = () => {
-        for (const part of this.querySelectorAll<HTMLElement>("[data-view], [data-reactions], [data-replies], [data-credit], [data-subscribe-panel]")) {
+        for (const part of this.querySelectorAll<HTMLElement>("[data-view], [data-reactions], [data-replies], [data-credit], [data-subscribe-panel], [data-follow-panel]")) {
           part.hidden = true;
         }
         this.classList.add("is-inactive");
@@ -431,11 +434,6 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           }
           thread = data.thread;
           post = thread.uri;
-          const viewOnBluesky = this.querySelector<HTMLAnchorElement>("[data-subscribe-bluesky]");
-          if (viewOnBluesky && thread.url) {
-            viewOnBluesky.href = thread.url;
-            viewOnBluesky.hidden = false;
-          }
           const elsewhere = this.querySelector<HTMLElement>("[data-elsewhere]");
           if (elsewhere && thread.url) {
             elsewhere.querySelector("a")!.href = thread.url;
@@ -647,7 +645,38 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
       const askToSubscribe = (problem?: string) => openSignIn(t("subscribe.signIn"), "#atmo-subscribe", problem);
       if (subscribePanel) addSubscribeButtons([...subscribePanel.querySelectorAll<HTMLButtonElement>("[data-atmosphere-subscribe]")], t, askToSubscribe);
 
-      // The ⌄ menu beside Subscribe is worked by AtmosphereSubscribe itself.
+      // Follow (AtmosphereFollow's `menu` style, the publication's account):
+      // not signed in, the overlay, coming back to follow; signed in, it
+      // follows from here. Every Follow button for the account on the page
+      // agrees (lib/client/follow.ts).
+      const followPanel = this.querySelector<HTMLElement>("[data-follow-panel]");
+      const followButton = followPanel?.querySelector<HTMLButtonElement>("[data-atmosphere-follow-button]") ?? null;
+      const followSubject = followButton?.dataset.atmosphereFollowButton ?? "";
+      const followWho = followButton?.dataset.atmosphereFollowHandle ? `@${followButton.dataset.atmosphereFollowHandle}` : t("comment.someone");
+      const followHash = `#atmo-follow=${encodeURIComponent(followSubject)}`;
+      const askToFollow = (problem?: string) => openSignIn(t("follow.signIn", { handle: followWho }), followHash, problem);
+      const pressFollowHere = async () => {
+        if (!isSignedIn) return askToFollow();
+        const result = await pressFollow(followSubject);
+        if (result === "signed-out") askToFollow();
+        else if (result === "needs-permission") void askPermission("follow", followHash);
+        else if (result === "error") say(t("messages.error"));
+      };
+      const labelFollow = (on: boolean) => {
+        if (!followButton) return;
+        followButton.setAttribute("aria-pressed", String(on));
+        followButton.title = !isSignedIn
+          ? t("follow.signIn", { handle: followWho })
+          : on
+            ? t("follow.followingLabel", { handle: followWho })
+            : t("follow.followAs", { handle: followWho, me: `@${me.handle ?? ""}` });
+      };
+      if (followButton && followSubject) {
+        watchFollow(followSubject, followButton, labelFollow);
+        followButton.addEventListener("click", () => void pressFollowHere());
+      }
+
+      // The ⌄ menus beside Subscribe and Follow are worked by those components.
 
       // What the reader has liked or reposted, by post (filled in by loadState).
       let known: Record<string, { liked: boolean; reposted: boolean }> = {};
@@ -963,6 +992,18 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         if (this.classList.contains("is-inactive")) return;
         isSignedIn = signed;
         commentPrompt.hidden = signed;
+        if (followPanel && followSubject) {
+          // Nobody can follow themselves.
+          followPanel.hidden = signed && me.did === followSubject;
+          if (signed) {
+            await loadFollowing(followSubject);
+            labelFollow(isFollowing(followSubject));
+            // Back from signing in after pressing Follow: follow, as they asked.
+            if (takePendingFollow((subject) => subject === followSubject) && !isFollowing(followSubject)) await pressFollowHere();
+          } else {
+            forgetFollowing();
+          }
+        }
         if (subscribePanel) {
           subscribePanel.hidden = false;
           if (signed) void loadSubscribed();
