@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1 (8 November 2026)
+
+- **"Replying to" never shows a DID.** In `AtmosphereReactions`, a post whose `data-atmosphere-url` names its author by DID (`https://bsky.app/profile/did:plc:…/post/…`), or that has no address (the author is then taken from `data-atmosphere-post`), used to show "Replying to @did:plc:…". It now shows "Replying to someone", and swaps in `@handle` once it's looked up through the site's `profile` route (once per DID for the page). If the lookup fails, it stays "someone". Addresses with a handle are shown straight away, as before, with no lookup.
+- **Clearer sign-in overlay wording.** The link for readers who'd rather not sign in now says "Respond on Bluesky →" (was "Reply on Bluesky instead →", even when they'd pressed Like or Repost), after "Rather not sign in here?". "How does signing in work?" no longer says the site "can't post for you", which overstated it: it now says the sign-in is kept in the browser, out of other sites' reach, and used only for what the reader approved. Changed keys: `signIn.anyAccount`, `signIn.privacy`, `signIn.access`, `elsewhere.text`, `elsewhere.link`, in all eight languages.
+
 ## 0.7.0 (8 November 2026)
 
 **Comments from people who show their posts only to signed-in readers.** Those accounts use Bluesky's "Discourage apps from showing my account to logged-out users".

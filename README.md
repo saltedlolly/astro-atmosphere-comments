@@ -25,7 +25,7 @@ See it on [saltedlolly.com](https://saltedlolly.com/2005/07/13/summer-jam-party-
 3. **The sign-in stays in the reader's browser.** Your server never sees it: comments, likes and reposts go from the reader's browser straight to their own account host. So your server has no way to post for anyone, a copy of your server's files holds nothing about your readers, and when a reader signs out, the sign-in is cancelled at their host and deleted from their browser. That's it: nothing is left anywhere.
 4. Your site asks, in one approval, only for what readers can do on it: to create posts, to like and repost, to delete their comments and to follow your accounts (and, when one of your own accounts signs in, to hide comments; with the `standardSite` option, to subscribe and recommend). Each is used only on your posts, the comments under them and your accounts. Readers can see and cancel it all at their account host.
 
-Everyone sees Like, Repost, Quote and a box to write a comment. Pressing any of them signed out opens an overlay to sign in, and what they pressed is finished once they're back. Readers who'd rather not sign in can use the **Reply on Bluesky instead** link in the overlay.
+Everyone sees Like, Repost, Quote and a box to write a comment. Pressing any of them signed out opens an overlay to sign in, and what they pressed is finished once they're back. Readers who'd rather not sign in can use the **Respond on Bluesky** link in the overlay.
 
 Images (avatars, link-card pictures), account searches (the suggestions under the sign-in box and for @mentions) and account lookups when signing in go through your server, so readers' browsers contact only their own account host, never Bluesky's other servers.
 
@@ -101,6 +101,8 @@ import AtmosphereReactions from "astro-atmosphere-comments/AtmosphereReactions.a
 <AtmosphereReactions />
 ```
 
+Give `data-atmosphere-url` with the author's handle, as above. An address with a DID instead (`/profile/did:plc:…/post/…`) works too: the reply box then shows "Replying to someone" until it has looked the handle up through your site, and never shows the DID.
+
 Each marked post gets a row of icons: Reply, Repost, Quote and Like, with counts for Repost and Like. Readers already signed in on your site like and repost straight away, and Reply and Quote open the comment box in an overlay (with the quote preview); what they post goes to Bluesky, not your page, and the overlay says so with a link to it. Anyone else is offered the sign-in form in an overlay when they press Like or Repost (their like or repost is done when they come back), and Reply and Quote open the post on Bluesky. It works with posts from loaders such as [`@ascorbic/bluesky-loader`](https://www.npmjs.com/package/@ascorbic/bluesky-loader) or embeds such as [`@astro-community/astro-embed-bluesky`](https://www.npmjs.com/package/@astro-community/astro-embed-bluesky) (wrap the embed in the marked element). Only posts by your `allowedAuthors` can be liked or reposted through your site.
 
 A "follow me" link can become a **Follow** button for signed-in readers: mark it with the account's DID and handle. It shows "Following" once they do (a second press unfollows, as on Bluesky). Only your `allowedAuthors` can be followed through your site, and the account's owner (who can't follow themselves) keeps the plain link.
@@ -159,7 +161,7 @@ Locally the integration uses the protocol's development mode, so it works withou
 | `post` | The announcement: bsky.app address or AT URI. Optional with Standard.site (above). |
 | `label` | The sign-in overlay's heading when commenting. Default "Sign in to leave a comment". |
 | `authorLabel` | The badge on your own comments. Default "Author". |
-| `blueskyLink` | "Rather not sign in here? Reply on Bluesky instead →" in the sign-in overlay, linking to the announcement (with `u-syndication`, so microformats readers learn it's the post's copy on Bluesky). Default `true`; `blueskyLink={false}` hides it. |
+| `blueskyLink` | "Rather not sign in here? Respond on Bluesky →" in the sign-in overlay, linking to the announcement (with `u-syndication`, so microformats readers learn it's the post's copy on Bluesky). Default `true`; `blueskyLink={false}` hides it. |
 | `locale`, `messages` | The same as the integration's options, for this one component. |
 | `locale`, `messages` (also on `AtmosphereReactions`) | See Languages. |
 | `credit` | A small "Powered by Atmosphere Comments for Astro" link at the end. Default `true`; set `credit={false}` to hide it. |

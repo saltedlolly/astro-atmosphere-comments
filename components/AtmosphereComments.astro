@@ -7,7 +7,7 @@
 // Props:
 //   post   the announcement's AT URI (at://did/app.bsky.feed.post/rkey).
 //   label   the sign-in overlay's heading when commenting (default "Sign in to leave a comment").
-//   blueskyLink  "Rather not sign in here? Reply on Bluesky instead →" in the
+//   blueskyLink  "Rather not sign in here? Respond on Bluesky →" in the
 //           sign-in overlay (default true; false hides it).
 //   credit  a small "Powered by Atmosphere Comments for Astro" link under the
 //           comments (default true; false hides it).
@@ -56,7 +56,7 @@ interface Props {
   authorLabel?: string;
   /** A small "Powered by Atmosphere Comments for Astro" link under the comments. Default true. */
   credit?: boolean;
-  /** "Rather not sign in here? Reply on Bluesky instead →" in the sign-in overlay. Default true. */
+  /** "Rather not sign in here? Respond on Bluesky →" in the sign-in overlay. Default true. */
   blueskyLink?: boolean;
   /** The language of the wording, e.g. "fr". Overrides the integration's `locale`. */
   locale?: string;

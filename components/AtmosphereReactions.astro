@@ -211,13 +211,51 @@ const { base } = settings;
       const quote = quotePreview(composeForm, composer.textarea, composerContext);
       $c<HTMLElement>("[data-cancel-context]").hidden = true;
 
+      // A post's address may name its author by DID rather than handle (Bluesky
+      // accepts both). A DID is never shown: the handle is looked up through
+      // the site's profile route, once per DID for the page.
+      const handles = new Map<string, Promise<string | null>>();
+      const handleOf = (did: string) => {
+        if (!handles.has(did)) {
+          handles.set(
+            did,
+            fetch(`${base}/profile?did=${encodeURIComponent(did)}`)
+              .then((response) => (response.ok ? response.json() : null))
+              .then((profile) => {
+                const handle = typeof profile?.handle === "string" ? profile.handle : "";
+                return handle && !handle.startsWith("did:") && handle !== "handle.invalid" ? handle : null;
+              })
+              .catch(() => null),
+          );
+        }
+        return handles.get(did)!;
+      };
+      const replyingTo = (handle?: string | null) =>
+        t("composer.replyingTo", { name: handle ? `@${handle}` : t("comment.someone") });
+
       const openCompose = (post: HTMLElement, mode: "reply" | "quote") => {
         composeRoot = post.dataset.atmospherePost!;
         composeMode = mode;
-        const author = post.dataset.atmosphereUrl?.match(/\/profile\/([^/]+)\//)?.[1];
+        // From the bsky.app address, or else the post's at:// URI.
+        const named =
+          post.dataset.atmosphereUrl?.match(/\/profile\/([^/]+)\//)?.[1] ?? composeRoot.match(/^at:\/\/([^/]+)\//)?.[1];
+        let author: string | undefined;
+        try {
+          author = named && decodeURIComponent(named);
+        } catch {
+          author = undefined;
+        }
+        const context = $c<HTMLElement>("[data-context-text]");
         $c<HTMLElement>("[data-context]").hidden = false;
-        $c<HTMLElement>("[data-context-text]").textContent =
-          mode === "quote" ? t("composer.quoting") : t("composer.replyingTo", { name: author ? `@${author}` : t("comment.someone") });
+        if (mode === "quote") context.textContent = t("composer.quoting");
+        else if (author?.startsWith("did:")) {
+          // "someone" until the handle is known, and if it can't be found.
+          context.textContent = replyingTo(null);
+          const root = composeRoot;
+          void handleOf(author).then((handle) => {
+            if (handle && composeRoot === root && composeMode === "reply") context.textContent = replyingTo(handle);
+          });
+        } else context.textContent = replyingTo(author);
         $c<HTMLElement>("[data-verb]").textContent = t(mode === "quote" ? "composer.quote" : "comment.reply");
         $c<HTMLElement>("[data-submit]").textContent = t(mode === "quote" ? "composer.postQuote" : "composer.postReply");
         $c<HTMLElement>("[data-preview]").hidden = mode !== "quote";
