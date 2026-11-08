@@ -69,7 +69,6 @@ const accountHandle = account && account.handle !== did ? account.handle : "";
         <p
           set:html={th(feed ? "subscribe.panelTextFeed" : "subscribe.panelText", {
             leaflet: link("https://leaflet.pub", "Leaflet"),
-            pckt: link("https://pckt.blog", "pckt"),
             standardReader: link("https://standard-reader.app", "Standard Reader"),
           }) + (accountHandle ? ` ${escapeHtml(translate(messages, lang, "subscribe.followNote", { handle: `@${accountHandle}` }))}` : "")}
         />
