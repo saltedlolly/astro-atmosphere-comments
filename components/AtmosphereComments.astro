@@ -111,9 +111,9 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h5v-5H6.5A4.5 4.5 0 0 1 11 8.5V7a6 6 0 0 0-6 6Zm9 0h5v-5h-3.5A4.5 4.5 0 0 1 20 8.5V7a6 6 0 0 0-6 6Z" /></svg>
         <span>{t("actions.quote")}</span>
       </button>
-      {/* With the `standardSite` option: Subscribe and Follow (the publication's account), each with a ⌄ menu. */}
+      {/* With the `standardSite` option: Subscribe and Follow (the publication's account), each with a ⌄ menu; Follow's has View post on Bluesky. */}
       <AtmosphereSubscribe locale={lang} messages={messages} />
-      <AtmosphereFollow menu locale={lang} messages={messages} />
+      <AtmosphereFollow menu bluesky={blueskyUrl || undefined} locale={lang} messages={messages} />
     </div>
 
     {/* A sign-in from before posting was asked for: one more permission. */}
@@ -434,6 +434,11 @@ const returnTo = `${Astro.url.pathname}#atmosphere-comments`;
           }
           thread = data.thread;
           post = thread.uri;
+          const viewPost = this.querySelector<HTMLAnchorElement>("[data-follow-post]");
+          if (viewPost && thread.url) {
+            viewPost.href = thread.url;
+            viewPost.hidden = false;
+          }
           const elsewhere = this.querySelector<HTMLElement>("[data-elsewhere]");
           if (elsewhere && thread.url) {
             elsewhere.querySelector("a")!.href = thread.url;

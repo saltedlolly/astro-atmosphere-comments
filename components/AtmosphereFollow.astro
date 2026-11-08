@@ -19,6 +19,9 @@
 //             with the butterfly, and a ⌄ menu saying "To see everything
 //             @handle posts, follow on Bluesky." with View on Bluesky. Like
 //             Subscribe beside it, it shows signed out too, offering sign-in.
+//             Under a post, the menu also has "View post on Bluesky".
+//   bluesky   with `menu`: adds "View post on Bluesky", going here (under a
+//             post, AtmosphereComments fills in the post's thread)
 //   align     with `menu`: "start" (default) or "end", as for AtmosphereSubscribe
 //   class     classes for the link or button
 //   locale, messages  as for AtmosphereComments
@@ -37,6 +40,7 @@ interface Props {
   label?: string;
   button?: boolean;
   menu?: boolean;
+  bluesky?: string;
   align?: "start" | "end";
   class?: string;
   locale?: string;
@@ -101,6 +105,7 @@ const label =
         <p>{t("follow.menuNote", { handle: `@${handle || did}` })}</p>
       </div>
       <a href={profileUrl} target="_blank" rel="noopener"><svg class="atmo-subscribe__filled" viewBox="0 0 24 24" aria-hidden="true"><path d={BUTTERFLY} /></svg><span>{t("subscribe.viewBluesky")}</span></a>
+      <a href={Astro.props.bluesky || undefined} hidden={!Astro.props.bluesky} data-follow-post target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4" /></svg><span>{t("follow.viewPost")}</span></a>
     </div>
   </atmosphere-follow-menu>
 )}
