@@ -277,7 +277,7 @@ It's free to use (MIT), with no strings attached. If it's useful to you, I'd be 
 
 ## Credits
 
-Made by [Olly Stedall](https://saltedlolly.com) for [saltedlolly.com](https://saltedlolly.com). The Atmosphere Account logo is from [Atmosphere Account](https://github.com/jobiwanken0bi/atmosphere-account) (MIT, © 2026 Joseph Basser). The newspaper icon is based on [Lucide](https://lucide.dev)'s (ISC licence).
+Made by [Olly Stedall](https://saltedlolly.com) for [saltedlolly.com](https://saltedlolly.com). The Atmosphere Account logo is from [Atmosphere Account](https://atmosphereaccount.com) ([@atmosphereaccount.com](https://bsky.app/profile/atmosphereaccount.com), [source](https://github.com/jobiwanken0bi/atmosphere-account)) by Joe Basser ([@joebasser.com](https://bsky.app/profile/joebasser.com)), MIT, © 2026 Joseph Basser. The newspaper icon is based on [Lucide](https://lucide.dev)'s (ISC licence).
 
 ## License
 
