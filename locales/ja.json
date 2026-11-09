@@ -90,6 +90,7 @@
   "follow.button": "フォロー",
   "follow.more": "フォローについて",
   "follow.menuNote": "{{handle}}の投稿をすべて見るには、Blueskyでフォローしてください。",
+  "follow.viewAccount": "Blueskyで{{handle}}を見る",
   "follow.viewPost": "Blueskyで投稿を見る",
   "follow.followAs": "{{me}}として{{handle}}をフォロー",
   "follow.followingLabel": "{{handle}}をフォローしています",

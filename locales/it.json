@@ -96,6 +96,7 @@
   "follow.button": "Segui",
   "follow.more": "Altro sul seguire",
   "follow.menuNote": "Per vedere tutto ciò che pubblica {{handle}}, seguilo su Bluesky.",
+  "follow.viewAccount": "Vedi {{handle}} su Bluesky",
   "follow.viewPost": "Vedi il post su Bluesky",
   "follow.followAs": "Segui {{handle}} come {{me}}",
   "follow.followingLabel": "Segui {{handle}}",

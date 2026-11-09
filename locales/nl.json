@@ -93,6 +93,7 @@
   "follow.button": "Volgen",
   "follow.more": "Meer over volgen",
   "follow.menuNote": "Volg {{handle}} op Bluesky om alles te zien wat het plaatst.",
+  "follow.viewAccount": "{{handle}} bekijken op Bluesky",
   "follow.viewPost": "Bericht bekijken op Bluesky",
   "follow.followAs": "{{handle}} volgen als {{me}}",
   "follow.followingLabel": "Je volgt {{handle}}",
