@@ -122,12 +122,12 @@ import AtmosphereFollow from "astro-atmosphere-comments/AtmosphereFollow.astro";
    data-atmosphere-follow="did:plc:…" data-atmosphere-follow-handle="you.bsky.social">Follow me on Bluesky</a>
 ```
 
-**Matching buttons for a follow page.** On a page all about following (such as [Friendly Feed for Astro](https://github.com/saltedlolly/astro-friendly-feed)'s), `button` gives `AtmosphereSubscribe` and `AtmosphereFollow` a pair of matching buttons, with no menu: the Standard.site logo and "Subscribe to blog posts", and Bluesky's butterfly and "Follow on Bluesky". Both show to readers who aren't signed in: pressing one offers the sign-in form, then subscribes or follows once they're back. Once done, each shows "✓ Subscribed" or "✓ Following" with the reader's own avatar; a second press undoes it. `label` replaces the wording, and `class` styles the button. Nothing else changes: without `button`, both components work as above.
+**Matching buttons for a follow page.** On a page all about following (such as [Friendly Feed for Astro](https://github.com/saltedlolly/astro-friendly-feed)'s), `button` gives `AtmosphereSubscribe` and `AtmosphereFollow` a pair of matching buttons, with no menu, each saying where it goes: the Standard.site logo and "Subscribe via Standard.site", and Bluesky's butterfly and "Follow @you.bsky.social". Both show to readers who aren't signed in: pressing one offers the sign-in form, then subscribes or follows once they're back. Once done, each shows "✓ Subscribed via Standard.site" or "✓ Following @you.bsky.social" with the reader's own avatar; a second press undoes it. Signed in as the account itself, its Follow button is greyed out ("This is your account"). `label` replaces the wording, and `class` styles the button. Nothing else changes: without `button`, both components work as above.
 
 ```astro
 <AtmosphereSubscribe button />
 <AtmosphereFollow button />
-<AtmosphereFollow account="you.bsky.social" button label="Follow @you.bsky.social" />
+<AtmosphereFollow account="you.bsky.social" button />
 ```
 
 **Publishing to Standard.site:** [Atmosphere Publishing for Astro](https://github.com/saltedlolly/astro-atmosphere-publishing) is the companion integration made to work with this one. It publishes your posts' Standard.site records, announces new posts on Bluesky and adds each page's `<link rel="site.standard.document">` tag, so the comment box finds each post's announcement without a `post` prop. Its `publicationFromState()` helper gives the `standardSite` option your publication (below). Other publishers work too, as long as they add that tag and set the record's `bskyPostRef`, as [Sequoia](https://sequoia.pub) does.

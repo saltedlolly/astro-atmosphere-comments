@@ -9,12 +9,13 @@
 //             `standardSite` publication's account). Must be one of the
 //             integration's `allowedAuthors` for the button to work.
 //   label     the link's text, instead of "Follow @handle on Bluesky" (with
-//             `button`: instead of "Follow on Bluesky")
+//             `button`: instead of "Follow @handle")
 //   button    a button instead of the link, for a page all about following
-//             (such as Friendly Feed's): the butterfly and "Follow on Bluesky",
+//             (such as Friendly Feed's): the butterfly and "Follow @handle",
 //             shown signed out too, where pressing it offers signing in and
-//             then follows; once following, "✓ Following" with the reader's
-//             own avatar. Needs JavaScript, so it shows only once that runs.
+//             then follows; once following, "✓ Following @handle" with the
+//             reader's own avatar. For the account's owner, greyed out ("This
+//             is your account"). Needs JavaScript, so it shows only once that runs.
 //   menu      for the row under a post (AtmosphereComments uses it): "Follow"
 //             with the butterfly, and a ⌄ menu saying "To see everything
 //             @handle posts, follow on Bluesky." with View @handle on Bluesky. Like
@@ -76,7 +77,7 @@ const t = (key: string, vars: Record<string, string> = {}) => translate(messages
 const profileUrl = `https://bsky.app/profile/${handle || did}`;
 const label =
   Astro.props.label ??
-  (asButton ? translate(messages, lang, "subscribe.follow") : handle ? translate(messages, lang, "follow.link", { handle: `@${handle}` }) : translate(messages, lang, "subscribe.follow"));
+  (asButton ? translate(messages, lang, "follow.follow", { handle: `@${handle || did}` }) : handle ? translate(messages, lang, "follow.link", { handle: `@${handle}` }) : translate(messages, lang, "subscribe.follow"));
 ---
 
 {asMenu && (
@@ -120,7 +121,7 @@ const label =
   >
     <svg class="atmo-button__filled" viewBox="0 0 24 24" aria-hidden="true"><path d={BUTTERFLY} /></svg>
     <img class="atmo-button__me" data-label-on data-atmosphere-me-avatar alt="" />
-    <span data-label-on>✓ {translate(messages, lang, "follow.following")}</span>
+    <span data-label-on>{translate(messages, lang, "follow.followingHandle", { handle: `@${handle || did}` })}</span>
     <span data-label-off>{label}</span>
   </button>
 )}

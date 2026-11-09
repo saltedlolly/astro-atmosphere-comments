@@ -397,6 +397,18 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   cursor: progress;
 }
 
+/* The account's owner can't follow themselves: greyed out, not busy. */
+.atmo-button[data-self] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.atmo-button[data-self]:hover,
+.atmo-button[data-self]:focus-visible {
+  border-color: var(--atmo-border, #8886);
+  color: inherit;
+}
+
 .atmo__action svg.atmo-button__filled {
   fill: currentColor;
   stroke: none;

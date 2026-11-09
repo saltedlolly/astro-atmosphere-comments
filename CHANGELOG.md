@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.2 (9 November 2026)
+
+- **The `button` style says where each button goes:** "Subscribe via Standard.site", then "✓ Subscribed via Standard.site" (keys `subscribe.viaStandardSite` and `subscribe.subscribedVia`; `subscribe.blogPosts` removed), and "Follow @handle", then "✓ Following @handle" (new key `follow.followingHandle`). Before, they said "Subscribe to blog posts" and "Follow on Bluesky", which didn't say which publication or account. The buttons under posts are unchanged.
+- **Your own account's Follow button is greyed out** rather than hidden, with "This is your account" (new key `follow.self`), so a page listing several accounts doesn't seem to be missing one.
+
 ## 0.10.1 (9 November 2026)
 
 - **The Subscribe button shows the Standard.site logo** instead of the newspaper, under posts and with `button` ("Subscribe to blog posts"), so it says where the subscription goes: subscribing saves a Standard.site subscription, readable in any app that supports it. It's the mark Bluesky also shows on Standard.site publications' link cards. Drawn in the text colour, like the Follow button's butterfly. The logo is from Standard.site's repository (MIT, © 2025 Standard.site), with its licence in `assets/LICENSE-standard-site`; the Lucide-based newspaper is gone.

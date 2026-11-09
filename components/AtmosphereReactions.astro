@@ -474,8 +474,14 @@ const { base } = settings;
             button.hidden = false;
             continue;
           }
-          // Nobody can follow themselves.
-          if (subject === me.did) continue;
+          // Nobody can follow themselves: the account's owner sees it greyed out.
+          if (subject === me.did) {
+            button.disabled = true;
+            button.dataset.self = "";
+            button.title = t("follow.self");
+            button.hidden = false;
+            continue;
+          }
           watchFollow(subject, button, (on) => {
             button.setAttribute("aria-pressed", String(on));
             button.title = on ? t("follow.followingLabel", { handle: who }) : t("follow.followAs", { handle: who, me: handle });
