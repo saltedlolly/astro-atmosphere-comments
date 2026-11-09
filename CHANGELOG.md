@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1 (9 November 2026)
+
+- **The Subscribe button shows the Standard.site logo** instead of the newspaper, under posts and with `button` ("Subscribe to blog posts"), so it says where the subscription goes: subscribing saves a Standard.site subscription, readable in any app that supports it. It's the mark Bluesky also shows on Standard.site publications' link cards. Drawn in the text colour, like the Follow button's butterfly. The logo is from Standard.site's repository (MIT, © 2025 Standard.site), credited in the README; the Lucide-based newspaper is gone.
+
 ## 0.10.0 (8 November 2026)
 
 - **Subscribe and Follow are separate.** Under each post, after Like, Repost and Quote: Subscribe with its ⌄ menu, then a new **Follow** button (Bluesky's butterfly) with its own ⌄ menu. Follow follows the publication's account; its menu says "To see everything @handle posts, follow on Bluesky." (new key `follow.menuNote`), then View @handle on Bluesky (new key `follow.viewAccount`; `subscribe.viewBluesky` removed) and View post on Bluesky (the post's thread, which works signed out too; new key `follow.viewPost`, and `bluesky` prop). Like Subscribe, it shows signed out too, offering sign-in ("Sign in to follow @handle", new key `follow.signIn`), then follows once they're back. It's `AtmosphereFollow`'s new `menu` style (with `align`), so a site can place it beside an `AtmosphereSubscribe` anywhere. New keys `follow.button` and `follow.more`.

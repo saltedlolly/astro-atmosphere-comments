@@ -122,7 +122,7 @@ import AtmosphereFollow from "astro-atmosphere-comments/AtmosphereFollow.astro";
    data-atmosphere-follow="did:plc:…" data-atmosphere-follow-handle="you.bsky.social">Follow me on Bluesky</a>
 ```
 
-**Matching buttons for a follow page.** On a page all about following (such as [Friendly Feed for Astro](https://github.com/saltedlolly/astro-friendly-feed)'s), `button` gives `AtmosphereSubscribe` and `AtmosphereFollow` a pair of matching buttons, with no menu: a newspaper and "Subscribe to blog posts", and Bluesky's butterfly and "Follow on Bluesky". Both show to readers who aren't signed in: pressing one offers the sign-in form, then subscribes or follows once they're back. Once done, each shows "✓ Subscribed" or "✓ Following" with the reader's own avatar; a second press undoes it. `label` replaces the wording, and `class` styles the button. Nothing else changes: without `button`, both components work as above.
+**Matching buttons for a follow page.** On a page all about following (such as [Friendly Feed for Astro](https://github.com/saltedlolly/astro-friendly-feed)'s), `button` gives `AtmosphereSubscribe` and `AtmosphereFollow` a pair of matching buttons, with no menu: the Standard.site logo and "Subscribe to blog posts", and Bluesky's butterfly and "Follow on Bluesky". Both show to readers who aren't signed in: pressing one offers the sign-in form, then subscribes or follows once they're back. Once done, each shows "✓ Subscribed" or "✓ Following" with the reader's own avatar; a second press undoes it. `label` replaces the wording, and `class` styles the button. Nothing else changes: without `button`, both components work as above.
 
 ```astro
 <AtmosphereSubscribe button />
@@ -277,7 +277,7 @@ It's free to use (MIT), with no strings attached. If it's useful to you, I'd be 
 
 ## Credits
 
-Made by [Olly Stedall](https://saltedlolly.com) for [saltedlolly.com](https://saltedlolly.com). The Atmosphere Account logo is from [Atmosphere Account](https://atmosphereaccount.com) ([@atmosphereaccount.com](https://bsky.app/profile/atmosphereaccount.com), [source](https://github.com/jobiwanken0bi/atmosphere-account)) by Joe Basser ([@joebasser.com](https://bsky.app/profile/joebasser.com)), MIT, © 2026 Joseph Basser. The newspaper icon is based on [Lucide](https://lucide.dev)'s (ISC licence).
+Made by [Olly Stedall](https://saltedlolly.com) for [saltedlolly.com](https://saltedlolly.com). The Atmosphere Account logo is from [Atmosphere Account](https://atmosphereaccount.com) ([@atmosphereaccount.com](https://bsky.app/profile/atmosphereaccount.com), [source](https://github.com/jobiwanken0bi/atmosphere-account)) by Joe Basser ([@joebasser.com](https://bsky.app/profile/joebasser.com)), MIT, © 2026 Joseph Basser. The Standard.site logo on the Subscribe button is from [Standard.site](https://standard.site) ([source](https://tangled.org/standard.site/standard.site)), MIT, © 2025 Standard.site.
 
 ## License
 
