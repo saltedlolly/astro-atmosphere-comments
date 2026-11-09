@@ -306,8 +306,7 @@ dialog.atmo.atmo-signin:has(> .atmo__login) {
   stroke-linejoin: round;
 }
 
-.atmo-subscribe__menu svg circle,
-.atmo-subscribe__menu svg.atmo-subscribe__filled {
+.atmo-subscribe__menu svg circle {
   fill: currentColor;
   stroke: none;
 }
