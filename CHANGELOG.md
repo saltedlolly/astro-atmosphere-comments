@@ -2,7 +2,7 @@
 
 ## 0.10.1 (9 November 2026)
 
-- **The Subscribe button shows the Standard.site logo** instead of the newspaper, under posts and with `button` ("Subscribe to blog posts"), so it says where the subscription goes: subscribing saves a Standard.site subscription, readable in any app that supports it. It's the mark Bluesky also shows on Standard.site publications' link cards. Drawn in the text colour, like the Follow button's butterfly. The logo is from Standard.site's repository (MIT, © 2025 Standard.site), credited in the README; the Lucide-based newspaper is gone.
+- **The Subscribe button shows the Standard.site logo** instead of the newspaper, under posts and with `button` ("Subscribe to blog posts"), so it says where the subscription goes: subscribing saves a Standard.site subscription, readable in any app that supports it. It's the mark Bluesky also shows on Standard.site publications' link cards. Drawn in the text colour, like the Follow button's butterfly. The logo is from Standard.site's repository (MIT, © 2025 Standard.site), with its licence in `assets/LICENSE-standard-site`; the Lucide-based newspaper is gone.
 
 ## 0.10.0 (8 November 2026)
 
