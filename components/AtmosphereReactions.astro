@@ -10,7 +10,9 @@
 // It also fills any element marked `data-atmosphere-account` (in your
 // header, say) with the signed-in reader's avatar, which opens a small menu
 // saying who they're signed in as, with Sign out. Signed out, the element
-// stays empty (give it `hidden` so it takes no space).
+// stays empty (give it `hidden` so it takes no space), unless it's marked
+// `data-atmosphere-account="sign-in"`: then it shows an Atmosphere logo
+// button that opens the sign-in overlay, coming back to the same page.
 //
 // A link marked `data-atmosphere-follow="<DID>"` (and
 // `data-atmosphere-follow-handle="you.bsky.social"`), such as "Follow me on
@@ -36,6 +38,7 @@ import settings from "../lib/settings";
 import { messagesFor, pickLocale, translate, translateHtml } from "../lib/i18n";
 import { escapeHtml } from "../lib/translate";
 import SignInForm from "./SignInForm.astro";
+import logo from "../assets/union.svg?url";
 import Composer from "./Composer.astro";
 import "./atmosphere.css";
 
@@ -52,7 +55,7 @@ const t = (key: string) => translate(messages, lang, key);
 const { base } = settings;
 ---
 
-<atmosphere-reactions data-base={base} data-locale={lang} data-messages={JSON.stringify(messages)}>
+<atmosphere-reactions data-base={base} data-locale={lang} data-logo={logo} data-messages={JSON.stringify(messages)}>
   <dialog class="atmo atmo-signin" aria-label={t("dialog.heading")} data-signin-dialog>
     <button type="button" class="atmo-signin__close" aria-label={t("dialog.close")} data-close>×</button>
     <SignInForm id="atmo-dialog" returnTo={Astro.url.pathname} messages={messages} lang={lang} heading={t("dialog.heading")} />
@@ -659,6 +662,24 @@ const { base } = settings;
         }
       };
 
+      // Signed out: an Atmosphere logo button in any slot marked
+      // data-atmosphere-account="sign-in", opening the sign-in overlay and
+      // coming back to this page.
+      const showSignInButtons = () => {
+        for (const slot of document.querySelectorAll<HTMLElement>('[data-atmosphere-account="sign-in"]')) {
+          if (slot.querySelector(".atmo-account-sign-in")) continue;
+          const button = make("button", "atmo-account__button atmo-account-sign-in");
+          button.type = "button";
+          button.title = t("account.signIn");
+          button.setAttribute("aria-label", button.title);
+          button.style.setProperty("--atmo-logo", `url("${this.dataset.logo}")`);
+          button.append(make("span", "atmo-account-sign-in__logo"));
+          button.addEventListener("click", () => openSignIn(t("account.signIn"), ""));
+          slot.append(button);
+          slot.hidden = false;
+        }
+      };
+
       whoIsSignedIn()
         .then((found) => {
           me = found;
@@ -682,6 +703,7 @@ const { base } = settings;
         })
         .catch(() => undefined)
         .finally(async () => {
+          if (!signedIn) showSignInButtons();
           addActions();
           await loadState();
           await finishPending();
@@ -844,6 +866,15 @@ const { base } = settings;
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+  }
+
+  /* Signed out: the Atmosphere logo, drawn in the text colour. */
+  :global(:where(.atmo-account-sign-in__logo)) {
+    width: 58%;
+    height: 58%;
+    background: currentColor;
+    -webkit-mask: var(--atmo-logo) center / contain no-repeat;
+    mask: var(--atmo-logo) center / contain no-repeat;
   }
 
   :global(:where(.atmo-account__button img)) {

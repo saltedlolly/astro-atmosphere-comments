@@ -140,5 +140,6 @@
   "comment.withheldTitle": "Comment hidden",
   "comment.withheldSignedIn": "It couldn't be loaded just now. Try reloading the page.",
   "signInFirst.view": "Sign in to see hidden comments",
-  "reactions.hiddenPerson": "Someone who shows their account only to people who are signed in"
+  "reactions.hiddenPerson": "Someone who shows their account only to people who are signed in",
+  "account.signIn": "Sign in with your Atmosphere account"
 }

@@ -165,6 +165,12 @@ So readers can see which account they're using, `AtmosphereReactions` also fills
 <span data-atmosphere-account hidden></span>
 ```
 
+To offer signing in there instead, mark it `data-atmosphere-account="sign-in"`. Signed out, it then shows the Atmosphere logo as a round button (`.atmo-account__button.atmo-account-sign-in`, the logo drawn in the text colour), which opens the sign-in overlay ("Sign in with your Atmosphere account", key `account.signIn`) and brings the reader back to the same page:
+
+```astro
+<span data-atmosphere-account="sign-in" hidden></span>
+```
+
 ### Trying it on your own computer
 
 Run the dev server on `127.0.0.1` and open the site there, not at `localhost`:

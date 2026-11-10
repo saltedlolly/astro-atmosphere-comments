@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0 (10 November 2026)
+
+- **A sign-in button where the reader's avatar goes:** an element marked `data-atmosphere-account="sign-in"` shows the Atmosphere logo as a round button when nobody's signed in (`.atmo-account-sign-in`, logo `.atmo-account-sign-in__logo` in the text colour). It opens the sign-in overlay, headed "Sign in with your Atmosphere account" (new key `account.signIn`), and brings the reader back to the same page, where their avatar then takes its place. Plain `data-atmosphere-account` slots behave as before (empty when signed out).
+
 ## 0.10.2 (9 November 2026)
 
 - **The `button` style says where each button goes:** "Subscribe via Standard.site", then "✓ Subscribed via Standard.site" (keys `subscribe.viaStandardSite` and `subscribe.subscribedVia`; `subscribe.blogPosts` removed), and "Follow @handle", then "✓ Following @handle" (new key `follow.followingHandle`). Before, they said "Subscribe to blog posts" and "Follow on Bluesky", which didn't say which publication or account. The buttons under posts are unchanged.
