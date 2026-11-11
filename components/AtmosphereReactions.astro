@@ -891,9 +891,13 @@ const { base } = settings;
   }
 
   /* The signed-in reader's avatar and its menu. */
+  /* Aligned to the top of its line, so a picture inside leaves no gap for
+     letters' descenders below it (which made the slot taller than the
+     avatar and lifted it above icons beside it). */
   :global(:where(.atmo-account)) {
     position: relative;
     display: inline-block;
+    vertical-align: top;
   }
 
   :global(:where(.atmo-account__button)) {

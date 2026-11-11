@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1 (11 November 2026)
+
+- **The reader's avatar lines up with icons beside it.** In a `data-atmosphere-account` slot, the avatar's wrapper (`.atmo-account`, an inline-block) sat on the text baseline, so with a picture inside it the slot was taller than the avatar (49px for a 42px avatar) and the avatar sat a few pixels above its neighbours. It's now `vertical-align: top`. The signed-out logo wasn't affected.
+
 ## 0.12.0 (11 November 2026)
 
 - **Choose which buttons a post gets:** `data-atmosphere-actions="repost like"` on an element marked `data-atmosphere-post` keeps only those buttons (any of `reply`, `repost`, `quote`, `like`, in Bluesky's order). Without it, all four as before. Made for lists of a site's articles, where commenting belongs on the article.
