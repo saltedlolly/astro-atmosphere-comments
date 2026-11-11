@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.0 (11 November 2026)
+
+- **Choose which buttons a post gets:** `data-atmosphere-actions="repost like"` on an element marked `data-atmosphere-post` keeps only those buttons (any of `reply`, `repost`, `quote`, `like`, in Bluesky's order). Without it, all four as before. Made for lists of a site's articles, where commenting belongs on the article.
+- **Live counts on prerendered pages:** a post without `data-atmosphere-likes` gets its like and repost counts from a new route, `counts` (`GET <base>/counts?uri=…`, at most 25, the site's own posts only, from Bluesky's public API, remembered for 2 minutes, limited per address and overall). Posts that carry their counts are unchanged.
+
 ## 0.11.0 (10 November 2026)
 
 - **A sign-in button where the reader's avatar goes:** an element marked `data-atmosphere-account="sign-in"` shows the Atmosphere logo as a round button when nobody's signed in (`.atmo-account-sign-in`, logo `.atmo-account-sign-in__logo` in the text colour). It opens the sign-in overlay, headed "Sign in with your Atmosphere account" (new key `account.signIn`), and brings the reader back to the same page, where their avatar then takes its place. Plain `data-atmosphere-account` slots behave as before (empty when signed out).

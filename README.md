@@ -101,6 +101,10 @@ import AtmosphereReactions from "astro-atmosphere-comments/AtmosphereReactions.a
 <AtmosphereReactions />
 ```
 
+Each post gets Reply, Repost, Quote and Like. To show only some of them, list them in `data-atmosphere-actions`: `data-atmosphere-actions="repost like"` gives just Repost and Like, which suits a list of your articles where commenting belongs on the article itself.
+
+The counts are optional. Leave out `data-atmosphere-likes` and `data-atmosphere-reposts` (on a prerendered page, whose counts would be as old as its build) and they're fetched through your site once the page has loaded, from Bluesky's public API, at most 25 posts at a time, remembered for 2 minutes. Readers' browsers still never contact Bluesky.
+
 Give `data-atmosphere-url` with the author's handle, as above. An address with a DID instead (`/profile/did:plc:…/post/…`) works too: the reply box then shows "Replying to someone" until the post has loaded through your site, then the handle, and never the DID.
 
 Each marked post gets a row of icons: Reply, Repost, Quote and Like, with counts for Repost and Like. Readers already signed in on your site like and repost straight away, and Reply and Quote open the comment box in an overlay (Reply with the post being replied to above the box, Quote with the quote preview); what they post goes to Bluesky, not your page, and the overlay says so with a link to it. Anyone else is offered the sign-in form in an overlay when they press Like or Repost (their like or repost is done when they come back, with a brief "Liked" or "Reposted" over the button), and Reply and Quote open the post on Bluesky. It works with posts from loaders such as [`@ascorbic/bluesky-loader`](https://www.npmjs.com/package/@ascorbic/bluesky-loader) or embeds such as [`@astro-community/astro-embed-bluesky`](https://www.npmjs.com/package/@astro-community/astro-embed-bluesky) (wrap the embed in the marked element). Only posts by your `allowedAuthors` can be liked or reposted through your site.

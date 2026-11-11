@@ -41,6 +41,7 @@ const ROUTES = {
   media: "media.ts",
   typeahead: "typeahead.ts",
   thread: "thread.ts",
+  counts: "counts.ts",
 };
 
 const DID = /^did:[a-z0-9]+:[a-zA-Z0-9._:%-]+$/;

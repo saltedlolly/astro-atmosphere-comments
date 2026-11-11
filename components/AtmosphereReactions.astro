@@ -7,6 +7,10 @@
 //            data-atmosphere-url="https://bsky.app/profile/…/post/…"
 //            data-atmosphere-likes="3" data-atmosphere-reposts="1">
 //
+// Leave out the counts (on a prerendered page, say) and they're fetched from
+// the site once the page has loaded. `data-atmosphere-actions="repost like"`
+// keeps just those buttons (any of reply, repost, quote, like).
+//
 // It also fills any element marked `data-atmosphere-account` (in your
 // header, say) with the signed-in reader's avatar, which opens a small menu
 // saying who they're signed in as, with Sign out. Signed out, the element
@@ -403,6 +407,14 @@ const { base } = settings;
 
       const posts = () => [...document.querySelectorAll<HTMLElement>("[data-atmosphere-post]")];
 
+      // Which buttons a post gets: all four, in Bluesky's order, unless it's
+      // marked data-atmosphere-actions="repost like" (say), which keeps just those.
+      const ACTIONS = ["reply", "repost", "quote", "like"] as const;
+      const actionsFor = (post: HTMLElement) => {
+        const chosen = (post.dataset.atmosphereActions ?? "").split(/[\s,]+/).filter(Boolean);
+        return ACTIONS.filter((action) => !chosen.length || chosen.includes(action));
+      };
+
       // Returns how many posts got buttons, so new arrivals can be checked.
       const addActions = (): number => {
         let added = 0;
@@ -411,14 +423,42 @@ const { base } = settings;
           added += 1;
           const actions = make("div", "atmo-post-actions");
           actions.append(
-            bskyLink(post, BUBBLE),
-            reactButton(post, "repost"),
-            bskyLink(post, QUOTE),
-            reactButton(post, "like"),
+            ...actionsFor(post).map((action) =>
+              action === "reply" ? bskyLink(post, BUBBLE) : action === "quote" ? bskyLink(post, QUOTE) : reactButton(post, action),
+            ),
           );
           post.append(actions);
         }
         return added;
+      };
+
+      // Posts without their counts written in (data-atmosphere-likes) get
+      // them from the site, so a prerendered page's counts aren't as old as
+      // its build. Asked once per post, 25 at a time.
+      const loadCounts = async () => {
+        const waiting = posts().filter((post) => post.dataset.atmosphereLikes === undefined && post.dataset.countsAsked === undefined);
+        for (const post of waiting) post.dataset.countsAsked = "";
+        const uris = [...new Set(waiting.map((post) => post.dataset.atmospherePost!))];
+        for (let start = 0; start < uris.length; start += 25) {
+          const query = uris.slice(start, start + 25).map((uri) => `uri=${encodeURIComponent(uri)}`).join("&");
+          try {
+            const response = await fetch(`${base}/counts?${query}`);
+            if (!response.ok) continue;
+            const found = ((await response.json()) as { posts?: Record<string, { likes: number; reposts: number }> }).posts ?? {};
+            for (const post of waiting) {
+              const counts = found[post.dataset.atmospherePost!];
+              if (!counts) continue;
+              post.dataset.atmosphereLikes = String(counts.likes);
+              post.dataset.atmosphereReposts = String(counts.reposts);
+              const like = post.querySelector<HTMLElement>(":scope > .atmo-post-actions > [data-kind='like']");
+              const repost = post.querySelector<HTMLElement>(":scope > .atmo-post-actions > [data-kind='repost']");
+              if (like) setCount(like, counts.likes);
+              if (repost) setCount(repost, counts.reposts);
+            }
+          } catch {
+            // The buttons keep showing no count; they still work.
+          }
+        }
       };
 
       // Which of the posts the reader has already liked or reposted.
@@ -705,7 +745,8 @@ const { base } = settings;
         .finally(async () => {
           if (!signedIn) showSignInButtons();
           addActions();
-          await loadState();
+          // Counts first, so a like finished after signing in adds to the real count.
+          await Promise.all([loadCounts(), loadState()]);
           await finishPending();
           await finishPendingCompose();
           await setUpFollowButtons();
@@ -720,9 +761,12 @@ const { base } = settings;
       // Posts that arrive later (a server island, say) get buttons too.
       let recheck: number | undefined;
       new MutationObserver(() => {
-        if (!addActions() || !signedIn) return;
+        if (!addActions()) return;
         window.clearTimeout(recheck);
-        recheck = window.setTimeout(loadState, 300);
+        recheck = window.setTimeout(() => {
+          void loadCounts();
+          if (signedIn) void loadState();
+        }, 300);
       }).observe(document.body, { childList: true, subtree: true });
     }
   }
